@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CipherLab — Cryptanalysis &amp; Cyber Toolkit</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="top">
+  <div class="logo">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/><circle cx="12" cy="16" r="1.5"/></svg>
+    <div><div class="lt">CIPHERLAB</div><div class="ls">Cryptanalysis &amp; Cyber Toolkit • 100% Offline</div></div>
+  </div>
+  <button class="nb on" onclick="go('dec',this)">DECRYPT</button>
+  <button class="nb" onclick="go('enc',this)">ENCRYPT / ENCODE</button>
+  <button class="nb" onclick="go('ctf',this)">CTF TOOLKIT</button>
+  <button class="nb" onclick="go('deob',this)">DEOBFUSCATOR</button>
+  <button class="nb" onclick="go('ir',this)">INCIDENT RESPONSE</button>
+  <button class="nb" onclick="go('train',this)"><span id="tDot"></span>TRAINING</button>
+  <button class="nb" onclick="go('kb',this)">KNOWLEDGE</button>
+  <button class="nb" onclick="go('ml',this)">ML MODEL</button>
+</div>
+<div class="ctr">
+
+<!-- Decrypt page -->
+<div id="pg-dec" class="pg on">
+  <h2>Decrypt &amp; Analyze</h2>
+  <p class="sub">Auto-detect encoding, classify cipher type with ML, and decode.</p>
+  <div class="sec"><div class="st">INPUT</div>
+    <textarea id="dIn" rows="5" placeholder="Paste ciphertext, binary, hex, base64, morse, or encrypted text..."></textarea>
+    <div class="row" style="margin-top:10px">
+      <label style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.63rem;color:var(--dim)"><input type="checkbox" id="dML" checked> ML Classifier</label>
+    </div>
+    <button class="btn bp" onclick="doDec()">ANALYZE &amp; DECRYPT</button>
+  </div>
+  <div id="dOut"></div>
+</div>
+
+<!-- Encrypt/Encode page -->
+<div id="pg-enc" class="pg">
+  <h2>Encrypt &amp; Encode</h2>
+  <p class="sub">Encrypt plaintext with ciphers or encode it in different formats.</p>
+  <div class="sec"><div class="st">CIPHERS</div>
+    <div class="row" id="cBtns"><button class="bs on" onclick="selC('caesar',this)">CAESAR</button><button class="bs" onclick="selC('rot13',this)">ROT13</button><button class="bs" onclick="selC('vigenere',this)">VIGENÈRE</button><button class="bs" onclick="selC('vigenere_autokey',this)">AUTOKEY</button><button class="bs" onclick="selC('atbash',this)">ATBASH</button><button class="bs" onclick="selC('affine',this)">AFFINE</button><button class="bs" onclick="selC('substitution',this)">SUBSTITUTION</button><button class="bs" onclick="selC('beaufort',this)">BEAUFORT</button><button class="bs" onclick="selC('porta',this)">PORTA</button><button class="bs" onclick="selC('playfair',this)">PLAYFAIR</button><button class="bs" onclick="selC('bifid',this)">BIFID</button><button class="bs" onclick="selC('columnar',this)">COLUMNAR</button><button class="bs" onclick="selC('rail_fence',this)">RAIL FENCE</button><button class="bs" onclick="selC('reverse',this)">REVERSE</button><button class="bs" onclick="selC('scytale',this)">SCYTALE</button><button class="bs" onclick="selC('route_cipher',this)">ROUTE</button><button class="bs" onclick="selC('rot47',this)">ROT47</button><button class="bs" onclick="selC('xor',this)">XOR</button><button class="bs" onclick="selC('rc4',this)">RC4</button><button class="bs" onclick="selC('enigma',this)">ENIGMA</button><button class="bs" onclick="selC('word_sub',this)">WORD SUB</button><button class="bs" onclick="selC('hex_shuffle',this)">HEX SHUFFLE</button></div>
+    <div class="st" style="margin-top:16px">ENCODINGS</div>
+    <div class="row" id="eBtns"><button class="bs" onclick="selC('binary',this)">BINARY</button><button class="bs" onclick="selC('hex',this)">HEX</button><button class="bs" onclick="selC('base64',this)">BASE64</button><button class="bs" onclick="selC('base32',this)">BASE32</button><button class="bs" onclick="selC('base58',this)">BASE58</button><button class="bs" onclick="selC('ascii85',this)">ASCII85</button><button class="bs" onclick="selC('morse',this)">MORSE</button><button class="bs" onclick="selC('octal',this)">OCTAL</button><button class="bs" onclick="selC('decimal',this)">DECIMAL</button><button class="bs" onclick="selC('url',this)">URL</button><button class="bs" onclick="selC('a1z26',this)">A1Z26</button><button class="bs" onclick="selC('html_entities',this)">HTML ENT</button><button class="bs" onclick="selC('polybius',this)">POLYBIUS</button><button class="bs" onclick="selC('adfgvx',this)">ADFGVX</button><button class="bs" onclick="selC('tap_code',this)">TAP CODE</button><button class="bs" onclick="selC('phone_keypad',this)">PHONE</button><button class="bs" onclick="selC('nato_phonetic',this)">NATO</button><button class="bs" onclick="selC('bacon',this)">BACON</button><button class="bs" onclick="selC('uuencode',this)">UUENCODE</button><button class="bs" onclick="selC('multi_layer',this)">MULTI-LAYER</button></div>
+  </div>
+  <div class="sec"><div class="st">PLAINTEXT</div>
+    <textarea id="eIn" rows="3" placeholder="Enter text to encrypt or encode..."></textarea>
+    <div id="cOpts"></div>
+    <button class="btn bp" onclick="doEnc()">ENCRYPT / ENCODE</button>
+  </div>
+  <div id="eOut"></div>
+</div>
+
+<!-- CTF Toolkit page -->
+<div id="pg-ctf" class="pg">
+  <h2>CTF Toolkit</h2>
+  <p class="sub">Auto-solve challenges, chain decode operations, and extract flags from encoded data.</p>
+  <div class="sec"><div class="st">INPUT</div>
+    <textarea id="ctfInput" rows="5" placeholder="Paste a CTF challenge string, encoded flag, or obfuscated data..."></textarea>
+    <button class="btn bp" onclick="ctfAutoSolve()">AUTO-SOLVE (try everything)</button>
+  </div>
+  <div id="ctfAutoOut"></div>
+  <div class="sec"><div class="st">RECIPE BUILDER</div>
+    <p class="sub" style="margin-bottom:12px">Chain multiple decode/transform operations in sequence. Add steps, reorder them, and the output updates live.</p>
+    <div class="row"><button class="bs on" onclick="addRecipeStep()">+ ADD STEP</button><button class="bs" onclick="recipeSteps=[];renderRecipe();$('ctfRecipeOut').innerHTML=''">CLEAR ALL</button></div>
+    <div id="recipeSteps"><span class="ldim">No steps added. Click "Add Step" to build a recipe.</span></div>
+  </div>
+  <div id="ctfRecipeOut"></div>
+</div>
+
+<!-- Deobfuscator page -->
+<div id="pg-deob" class="pg">
+  <h2>Deobfuscator</h2>
+  <p class="sub">Analyze obfuscated malware strings, encoded payloads, and script obfuscation. Detects XOR, char code arrays, hex/unicode escapes, PowerShell encoded commands, Base64 stacking, and reversed strings.</p>
+  <div class="sec"><div class="st">SUSPICIOUS DATA</div>
+    <textarea id="deobInput" rows="6" placeholder="Paste obfuscated code, encoded malware strings, or suspicious payloads...&#10;&#10;Examples:&#10;  PowerShell -EncodedCommand base64...&#10;  String.fromCharCode(104,116,116,112)&#10;  \x68\x74\x74\x70\x3a\x2f\x2f&#10;  XOR-obfuscated binary data"></textarea>
+    <button class="btn bp" onclick="deobfuscate()">ANALYZE &amp; DEOBFUSCATE</button>
+  </div>
+  <div id="deobOut"></div>
+</div>
+
+<!-- Incident Response page -->
+<div id="pg-ir" class="pg">
+  <h2>Incident Response</h2>
+  <p class="sub">Extract IOCs, decode encoded commands, parse tokens, and identify artifacts from log data, packet captures, and forensic evidence.</p>
+  <div class="sec"><div class="st">EVIDENCE / LOG DATA</div>
+    <textarea id="irInput" rows="6" placeholder="Paste log entries, HTTP headers, encoded commands, JWT tokens, or any data from an investigation...&#10;&#10;Extracts: JWTs, Base64 commands, IPs, URLs, emails, hashes (MD5/SHA1/SHA256),&#10;          timestamps, registry keys, file paths, HTTP Basic auth"></textarea>
+    <button class="btn bp" onclick="irAnalyze()">EXTRACT &amp; ANALYZE</button>
+  </div>
+  <div id="irOut"></div>
+</div>
+
+<!-- Training page -->
+<div id="pg-train" class="pg">
+  <h2>Training Center</h2>
+  <p class="sub">Generate data, train ML models, discover patterns, build knowledge — all in your browser.</p>
+  <div class="g4">
+    <div class="sc"><div class="sn" id="tsS">IDLE</div><div class="sl">STATUS</div></div>
+    <div class="sc bl"><div class="sn" id="tsI">0</div><div class="sl">ITERATION</div></div>
+    <div class="sc or"><div class="sn" id="tsA">—</div><div class="sl">LATEST ACCURACY</div></div>
+    <div class="sc tl"><div class="sn" id="tsT">0</div><div class="sl">EVAL TESTS (ALL TIME)</div></div>
+  </div>
+  <div class="sec"><div class="st">CONTROLS</div>
+    <div class="g2">
+      <div><div class="lbl">ITERATIONS</div><input type="number" id="tIter" value="3" min="1" max="500" style="width:100px"></div>
+      <div><div class="lbl">SAMPLES PER TYPE</div><input type="number" id="tSamp" value="25" min="10" max="500" style="width:100px"></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <label style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.63rem;color:var(--dim);cursor:pointer;user-select:none"><input type="checkbox" id="tContinuous"> RUN UNTIL STOPPED (ignores iteration count)</label>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn bp" id="bStart" onclick="startTrain()" style="flex:1">START ML TRAINING</button>
+      <button class="btn bp" id="bStop" onclick="stopTrain()" style="flex:0 0 160px;border-color:rgba(255,92,92,.35);color:var(--red);display:none">STOP</button>
+    </div>
+    <div class="pbar"><div class="pfill" id="tBar" style="width:0"></div></div>
+  </div>
+  <div class="sec"><div class="st">LIVE LOG</div><div class="logbox" id="tLog"><span class="ldim">Training log appears here...</span></div></div>
+  <div class="sec" id="tTypeSection" style="display:none"><div class="st">PER-TYPE ACCURACY</div><div id="tTypeAcc"></div></div>
+</div>
+
+<!-- Knowledge Base page -->
+<div id="pg-kb" class="pg">
+  <h2>Cipher Knowledge Base</h2>
+  <p class="sub">Everything learned about each encryption algorithm — stored locally in your browser.</p>
+  <div class="g4">
+    <div class="sc"><div class="sn" id="kbT">—</div><div class="sl">CIPHER TYPES</div></div>
+    <div class="sc bl"><div class="sn" id="kbD">—</div><div class="sl">DISCOVERIES</div></div>
+    <div class="sc or"><div class="sn" id="kbTe">—</div><div class="sl">EVAL TESTS (ALL TIME)</div></div>
+    <div class="sc tl"><div class="sn" id="kbC">—</div><div class="sl">CORRECTLY CLASSIFIED</div></div>
+  </div>
+  <div class="sec"><div class="st">CIPHER TYPES</div><div class="g3" id="kbG"></div></div>
+  <div id="kbDet"></div>
+</div>
+
+<!-- ML Model page -->
+<div id="pg-ml" class="pg">
+  <h2>ML Model &amp; Learning Intelligence</h2>
+  <p class="sub">Random Forest (20 trees, depth 14) with confusion tracking, confidence calibration, and incremental learning across sessions.</p>
+  <div class="g4">
+    <div class="sc"><div class="sn" id="mlS">—</div><div class="sl">MODEL STATUS</div></div>
+    <div class="sc bl"><div class="sn" id="mlN">—</div><div class="sl">TRAINING SAMPLES</div></div>
+    <div class="sc or"><div class="sn" id="mlK">—</div><div class="sl">CIPHER TYPES</div></div>
+    <div class="sc tl"><div class="sn" id="mlStore">0</div><div class="sl">STORED SAMPLES</div></div>
+  </div>
+  <div class="g4" style="margin-top:8px">
+    <div class="sc"><div class="sn" id="mlUserSamples">0</div><div class="sl">USER SAMPLES (5A+5B)</div></div>
+    <div class="sc bl"><div class="sn" id="mlCentroidCount">0</div><div class="sl">CENTROID PROFILES (3A)</div></div>
+    <div class="sc or"><div class="sn" id="mlOOB">—</div><div class="sl">OOB ACCURACY</div></div>
+    <div class="sc tl"><div class="sn">4A</div><div class="sl">WEB WORKER</div></div>
+  </div>
+  <div class="sec"><div class="st">MODEL MANAGEMENT</div>
+    <div class="row"><button class="bs" onclick="exportModel()">EXPORT MODEL (JSON)</button><button class="bs" onclick="$('mlImpFile').click()">IMPORT MODEL</button><input type="file" id="mlImpFile" accept=".json" style="display:none" onchange="importModel(this)"><button class="bs" style="border-color:rgba(255,92,92,.3);color:var(--red)" onclick="if(confirm('Reset model and all learning data?')){ModelStore.wipeAll();mlModel=new DecisionForest();ConfusionTracker.reset();CalibrationTracker.reset();CentroidStore.reset();DataStore.clear().then(()=>renderML());}">RESET ALL</button></div>
+  </div>
+  <div class="sec"><div class="st">FEATURE IMPORTANCES</div><div id="mlImp"><p style="color:var(--dim);font-size:.8rem">Train the model to see feature importances.</p></div></div>
+  <div class="sec"><div class="st">ACCURACY HISTORY</div><div id="mlHistory"><p style="color:var(--dim);font-size:.8rem">Train the model to see accuracy progression over time.</p></div></div>
+  <div class="sec"><div class="st">CONFUSION MATRIX (TOP MISCLASSIFICATIONS)</div><div id="mlConfusion"><p style="color:var(--dim);font-size:.8rem">Train the model to see which cipher types confuse the classifier.</p></div></div>
+  <div class="sec"><div class="st">CONFIDENCE CALIBRATION</div><div id="mlCalibration"><p style="color:var(--dim);font-size:.8rem">Train the model to see how well confidence scores predict actual accuracy.</p></div></div>
+  <div class="sec"><div class="st">CENTROID PROFILES (3A — compressed knowledge)</div><div id="mlCentroids"><p style="color:var(--dim);font-size:.8rem">Train the model to build per-type statistical profiles from millions of samples.</p></div></div>
+  <div class="sec"><div class="st">TEST CLASSIFICATION</div>
+    <textarea id="mlIn" rows="3" placeholder="Paste text to classify with ML..."></textarea>
+    <button class="btn bp" onclick="mlCls()">CLASSIFY</button>
+    <div id="mlOut"></div>
+  </div>
+  <div class="sec"><div class="st">EXTRACT METADATA</div>
+    <textarea id="mlFIn" rows="2" placeholder="Paste text to extract metadata (128 statistical features)..."></textarea>
+    <button class="btn bp" onclick="mlFeat()">EXTRACT</button>
+    <div id="mlFOut"></div>
+  </div>
+</div>
+</div>
+
+<!-- Load order matters: each file depends on the ones above it -->
+<script src="js/ciphers.js?v=3"></script>
+<script src="js/encoders.js?v=3"></script>
+<script src="js/ml.js?v=3"></script>
+<script src="js/storage.js?v=3"></script>
+<script>ModelStore.load(mlModel);</script>
+<script src="js/kb.js?v=3"></script>
+<script src="js/crackers.js?v=3"></script>
+<script src="js/cyber.js?v=3"></script>
+<script src="js/ui.js?v=3"></script>
+</body>
+</html>
