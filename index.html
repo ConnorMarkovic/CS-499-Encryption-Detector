@@ -107,7 +107,7 @@
   <div class="sec"><div class="st">CONTROLS</div>
     <div class="g2">
       <div><div class="lbl">ITERATIONS</div><input type="number" id="tIter" value="3" min="1" max="500" style="width:100px"></div>
-      <div><div class="lbl">SAMPLES PER TYPE</div><input type="number" id="tSamp" value="25" min="10" max="500" style="width:100px"></div>
+      <div><div class="lbl">SAMPLES PER TYPE</div><input type="number" id="tSamp" value="500" min="10" max="500" style="width:100px"></div>
     </div>
     <div class="row" style="margin-top:10px">
       <label style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.63rem;color:var(--dim);cursor:pointer;user-select:none"><input type="checkbox" id="tContinuous"> RUN UNTIL STOPPED (ignores iteration count)</label>
@@ -147,10 +147,8 @@
     <div class="sc tl"><div class="sn" id="mlStore">0</div><div class="sl">STORED SAMPLES</div></div>
   </div>
   <div class="g4" style="margin-top:8px">
-    <div class="sc"><div class="sn" id="mlUserSamples">0</div><div class="sl">USER SAMPLES (5A+5B)</div></div>
-    <div class="sc bl"><div class="sn" id="mlCentroidCount">0</div><div class="sl">CENTROID PROFILES (3A)</div></div>
-    <div class="sc or"><div class="sn" id="mlOOB">—</div><div class="sl">OOB ACCURACY</div></div>
-    <div class="sc tl"><div class="sn">4A</div><div class="sl">WEB WORKER</div></div>
+    <div class="sc"><div class="sn" id="mlUserSamples">0</div><div class="sl">USER SAMPLES</div></div>
+    <div class="sc bl"><div class="sn" id="mlOOB">—</div><div class="sl">OOB ACCURACY</div></div>
   </div>
   <div class="sec"><div class="st">MODEL MANAGEMENT</div>
     <div class="row"><button class="bs" onclick="exportModel()">EXPORT MODEL (JSON)</button><button class="bs" onclick="$('mlImpFile').click()">IMPORT MODEL</button><input type="file" id="mlImpFile" accept=".json" style="display:none" onchange="importModel(this)"><button class="bs" style="border-color:rgba(255,92,92,.3);color:var(--red)" onclick="if(confirm('Reset model and all learning data?')){ModelStore.wipeAll();mlModel=new DecisionForest();ConfusionTracker.reset();CalibrationTracker.reset();CentroidStore.reset();DataStore.clear().then(()=>renderML());}">RESET ALL</button></div>
@@ -159,7 +157,6 @@
   <div class="sec"><div class="st">ACCURACY HISTORY</div><div id="mlHistory"><p style="color:var(--dim);font-size:.8rem">Train the model to see accuracy progression over time.</p></div></div>
   <div class="sec"><div class="st">CONFUSION MATRIX (TOP MISCLASSIFICATIONS)</div><div id="mlConfusion"><p style="color:var(--dim);font-size:.8rem">Train the model to see which cipher types confuse the classifier.</p></div></div>
   <div class="sec"><div class="st">CONFIDENCE CALIBRATION</div><div id="mlCalibration"><p style="color:var(--dim);font-size:.8rem">Train the model to see how well confidence scores predict actual accuracy.</p></div></div>
-  <div class="sec"><div class="st">CENTROID PROFILES (3A — compressed knowledge)</div><div id="mlCentroids"><p style="color:var(--dim);font-size:.8rem">Train the model to build per-type statistical profiles from millions of samples.</p></div></div>
   <div class="sec"><div class="st">TEST CLASSIFICATION</div>
     <textarea id="mlIn" rows="3" placeholder="Paste text to classify with ML..."></textarea>
     <button class="btn bp" onclick="mlCls()">CLASSIFY</button>

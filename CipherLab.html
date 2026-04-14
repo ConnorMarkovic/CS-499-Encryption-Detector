@@ -113,7 +113,7 @@ select{background:var(--bg3);border:1px solid var(--brd);border-radius:7px;color
     <div class="st" style="margin-top:16px">ENCODINGS</div>
     <div class="row" id="eBtns"><button class="bs" onclick="selC('binary',this)">BINARY</button><button class="bs" onclick="selC('hex',this)">HEX</button><button class="bs" onclick="selC('base64',this)">BASE64</button><button class="bs" onclick="selC('base32',this)">BASE32</button><button class="bs" onclick="selC('base58',this)">BASE58</button><button class="bs" onclick="selC('ascii85',this)">ASCII85</button><button class="bs" onclick="selC('morse',this)">MORSE</button><button class="bs" onclick="selC('octal',this)">OCTAL</button><button class="bs" onclick="selC('decimal',this)">DECIMAL</button><button class="bs" onclick="selC('url',this)">URL</button><button class="bs" onclick="selC('a1z26',this)">A1Z26</button><button class="bs" onclick="selC('html_entities',this)">HTML ENT</button><button class="bs" onclick="selC('polybius',this)">POLYBIUS</button><button class="bs" onclick="selC('adfgvx',this)">ADFGVX</button><button class="bs" onclick="selC('tap_code',this)">TAP CODE</button><button class="bs" onclick="selC('phone_keypad',this)">PHONE</button><button class="bs" onclick="selC('nato_phonetic',this)">NATO</button><button class="bs" onclick="selC('bacon',this)">BACON</button><button class="bs" onclick="selC('uuencode',this)">UUENCODE</button><button class="bs" onclick="selC('multi_layer',this)">MULTI-LAYER</button></div>
   </div>
-  <div class="sec"><div class="st">PLAINTEXT</div>
+  <div class="sec"><div class="st">PLAINTEXT / CIPHERTEXT</div>
     <textarea id="eIn" rows="3" placeholder="Enter text to encrypt or encode..."></textarea>
     <div id="cOpts"></div>
     <button class="btn bp" onclick="doEnc()">ENCRYPT / ENCODE</button>
@@ -173,7 +173,7 @@ select{background:var(--bg3);border:1px solid var(--brd);border-radius:7px;color
   <div class="sec"><div class="st">CONTROLS</div>
     <div class="g2">
       <div><div class="lbl">ITERATIONS</div><input type="number" id="tIter" value="3" min="1" max="500" style="width:100px"></div>
-      <div><div class="lbl">SAMPLES PER TYPE</div><input type="number" id="tSamp" value="25" min="10" max="500" style="width:100px"></div>
+      <div><div class="lbl">SAMPLES PER TYPE</div><input type="number" id="tSamp" value="500" min="10" max="500" style="width:100px"></div>
     </div>
     <div class="row" style="margin-top:10px">
       <label style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.63rem;color:var(--dim);cursor:pointer;user-select:none"><input type="checkbox" id="tContinuous"> RUN UNTIL STOPPED (ignores iteration count)</label>
@@ -213,19 +213,16 @@ select{background:var(--bg3);border:1px solid var(--brd);border-radius:7px;color
     <div class="sc tl"><div class="sn" id="mlStore">0</div><div class="sl">STORED SAMPLES</div></div>
   </div>
   <div class="g4" style="margin-top:8px">
-    <div class="sc"><div class="sn" id="mlUserSamples">0</div><div class="sl">USER SAMPLES (5A+5B)</div></div>
-    <div class="sc bl"><div class="sn" id="mlCentroidCount">0</div><div class="sl">CENTROID PROFILES (3A)</div></div>
-    <div class="sc or"><div class="sn" id="mlOOB">—</div><div class="sl">OOB ACCURACY</div></div>
-    <div class="sc tl"><div class="sn">4A</div><div class="sl">WEB WORKER</div></div>
+    <div class="sc"><div class="sn" id="mlUserSamples">0</div><div class="sl">USER SAMPLES</div></div>
+    <div class="sc bl"><div class="sn" id="mlOOB">—</div><div class="sl">OOB ACCURACY</div></div>
   </div>
   <div class="sec"><div class="st">MODEL MANAGEMENT</div>
-    <div class="row"><button class="bs" onclick="exportModel()">EXPORT MODEL (JSON)</button><button class="bs" onclick="$('mlImpFile').click()">IMPORT MODEL</button><input type="file" id="mlImpFile" accept=".json" style="display:none" onchange="importModel(this)"><button class="bs" style="border-color:rgba(255,92,92,.3);color:var(--red)" onclick="if(confirm('Reset model and all learning data?')){ModelStore.wipeAll();mlModel=new DecisionForest();ConfusionTracker.reset();CalibrationTracker.reset();CentroidStore.reset();DataStore.clear().then(()=>renderML());}">RESET ALL</button></div>
+    <div class="row"><button class="bs" onclick="exportModel()">EXPORT MODEL (JSON)</button><button class="bs" onclick="$('mlImpFile').click()">IMPORT MODEL</button><input type="file" id="mlImpFile" accept=".json" style="display:none" onchange="importModel(this)"><button class="bs" style="border-color:rgba(255,92,92,.3);color:var(--red)" onclick="if(confirm('Reset model and all learning data?')){ModelStore.wipeAll().then(()=>{mlModel=new DecisionForest();Promise.all([ConfusionTracker.reset(),CalibrationTracker.reset(),CentroidStore.reset(),DataStore.clear()]).then(()=>renderML())});}">RESET ALL</button></div>
   </div>
   <div class="sec"><div class="st">FEATURE IMPORTANCES</div><div id="mlImp"><p style="color:var(--dim);font-size:.8rem">Train the model to see feature importances.</p></div></div>
   <div class="sec"><div class="st">ACCURACY HISTORY</div><div id="mlHistory"><p style="color:var(--dim);font-size:.8rem">Train the model to see accuracy progression over time.</p></div></div>
   <div class="sec"><div class="st">CONFUSION MATRIX (TOP MISCLASSIFICATIONS)</div><div id="mlConfusion"><p style="color:var(--dim);font-size:.8rem">Train the model to see which cipher types confuse the classifier.</p></div></div>
   <div class="sec"><div class="st">CONFIDENCE CALIBRATION</div><div id="mlCalibration"><p style="color:var(--dim);font-size:.8rem">Train the model to see how well confidence scores predict actual accuracy.</p></div></div>
-  <div class="sec"><div class="st">CENTROID PROFILES (3A — compressed knowledge)</div><div id="mlCentroids"><p style="color:var(--dim);font-size:.8rem">Train the model to build per-type statistical profiles from millions of samples.</p></div></div>
   <div class="sec"><div class="st">TEST CLASSIFICATION</div>
     <textarea id="mlIn" rows="3" placeholder="Paste text to classify with ML..."></textarea>
     <button class="btn bp" onclick="mlCls()">CLASSIFY</button>
@@ -389,8 +386,6 @@ const Columnar={
 // ROT47
 const ROT47={transform(text){return[...text].map(c=>{const code=c.charCodeAt(0);if(code>=33&&code<=126)return String.fromCharCode(33+((code-33+47)%94));return c;}).join('');}};
 
-// ── Missing Crackers ──────────────────────────────────────────────────
-
 // Affine brute-force (312 keys: 12 valid a values × 26 b values)
 const AFFINE_VALID_A=[1,3,5,7,9,11,15,17,19,21,23,25];
 function modInverse(a,m){for(let x=1;x<m;x++){if((a*x)%m===1)return x;}return 1;}
@@ -437,20 +432,16 @@ const ColumnarCracker={
     results.sort((a,b)=>b.score-a.score);return results.slice(0,10);}
 };
 
-// ═══════════════════════════════════════════════════════════════════════
-//  NEW CIPHER IMPLEMENTATIONS (20 additional types)
-// ═══════════════════════════════════════════════════════════════════════
-
-// 1. ROT13
+// ROT13
 const ROT13_cipher={encrypt(t){return Caesar.encrypt(t,13)},decrypt(t){return Caesar.encrypt(t,13)}};
 
-// 2. A1Z26
+// A1Z26
 const A1Z26={
   encode(t){return[...t.toUpperCase()].map(c=>{const code=c.charCodeAt(0);if(code>=65&&code<=90)return String(code-64);return c;}).join(' ').replace(/ {2,}/g,' ').trim();},
   decode(t){return t.split(/[\s,]+/).map(n=>{const v=parseInt(n);if(v>=1&&v<=26)return String.fromCharCode(v+64);return n;}).join('');}
 };
 
-// 3. Playfair
+// Playfair
 const Playfair={
   _grid(key){const seen=new Set();const chars=[];for(const c of(key+'ABCDEFGHIKLMNOPQRSTUVWXYZ').toUpperCase()){const ch=c==='J'?'I':c;if(ch>='A'&&ch<='Z'&&!seen.has(ch)){seen.add(ch);chars.push(ch);}}return chars;},
   _pos(grid,c){const idx=grid.indexOf(c==='J'?'I':c);return[Math.floor(idx/5),idx%5];},
@@ -464,22 +455,22 @@ const Playfair={
       return grid[ar*5+bc]+grid[br*5+ac];}).join('');}
 };
 
-// 4. Vigenere Autokey
+// Vigenere Autokey
 const VigenereAutokey={
   encrypt(text,key){const k=key.toUpperCase();const clean=text.toUpperCase().replace(/[^A-Z]/g,'');let out='',fullKey=k;
     for(let i=0;i<clean.length;i++){const s=fullKey.charCodeAt(i)-65;out+=String.fromCharCode((clean.charCodeAt(i)-65+s)%26+65);fullKey+=clean[i];}return out;}
 };
 
-// 5. Reverse
+// Reverse
 const ReverseText={encrypt(t){return[...t].reverse().join('');}};
 
-// 6. Scytale
+// Scytale
 const Scytale={
   encrypt(text,cols){const clean=text.replace(/[^a-zA-Z]/g,'');const rows=Math.ceil(clean.length/cols);const padded=clean+'X'.repeat(rows*cols-clean.length);
     let out='';for(let c=0;c<cols;c++)for(let r=0;r<rows;r++)out+=padded[r*cols+c];return out;}
 };
 
-// 7. Route cipher (spiral)
+// Route cipher (spiral)
 const RouteCipher={
   encrypt(text,cols){const clean=text.replace(/[^a-zA-Z]/g,'');const rows=Math.ceil(clean.length/cols);const padded=clean+'X'.repeat(rows*cols-clean.length);
     const grid=[];for(let i=0;i<rows;i++)grid.push([...padded.substring(i*cols,i*cols+cols)]);
@@ -490,7 +481,7 @@ const RouteCipher={
       if(left<=right){for(let i=bot;i>=top;i--)out+=grid[i][left];left++;}}return out;}
 };
 
-// 8. Base32
+// Base32
 const Base32={
   _c:'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567',
   encode(t){const bytes=[...t].map(c=>c.charCodeAt(0));let bits='';for(const b of bytes)bits+=b.toString(2).padStart(8,'0');
@@ -500,7 +491,7 @@ const Base32={
     let out='';for(let i=0;i+8<=bits.length;i+=8)out+=String.fromCharCode(parseInt(bits.substring(i,i+8),2));return out;}
 };
 
-// 9. Base58
+// Base58
 const Base58={
   _c:'123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz',
   encode(t){let bytes=[...t].map(c=>c.charCodeAt(0));let num=0n;for(const b of bytes)num=num*256n+BigInt(b);
@@ -508,7 +499,7 @@ const Base58={
     for(const b of bytes){if(b===0)out=this._c[0]+out;else break;}return out||this._c[0];}
 };
 
-// 10. Ascii85
+// Ascii85
 const Ascii85={
   encode(t){const bytes=[...t].map(c=>c.charCodeAt(0));while(bytes.length%4)bytes.push(0);
     let out='<~';for(let i=0;i<bytes.length;i+=4){
@@ -522,7 +513,7 @@ const Ascii85={
     return out.map(b=>String.fromCharCode(b)).join('');}
 };
 
-// 11. UUEncode
+// UUEncode
 const UUEncode={
   encode(t){const bytes=[...t].map(c=>c.charCodeAt(0));let out='begin 644 data\n';
     for(let i=0;i<bytes.length;i+=45){const chunk=bytes.slice(i,i+45);out+=String.fromCharCode(chunk.length+32);
@@ -536,13 +527,13 @@ const UUEncode={
     return out.map(b=>String.fromCharCode(b)).join('');}
 };
 
-// 12. HTML Entities
+// HTML Entities
 const HTMLEntities={
   encode(t){return[...t].map(c=>'&#'+c.charCodeAt(0)+';').join('');},
   decode(t){return t.replace(/&#(\d+);/g,(_,n)=>String.fromCharCode(+n));}
 };
 
-// 13. Bifid
+// Bifid
 const Bifid={
   _grid(key){const seen=new Set();const chars=[];for(const c of(key+'ABCDEFGHIKLMNOPQRSTUVWXYZ').toUpperCase()){const ch=c==='J'?'I':c;if(ch>='A'&&ch<='Z'&&!seen.has(ch)){seen.add(ch);chars.push(ch);}}return chars;},
   encrypt(text,key){const grid=this._grid(key);const clean=text.toUpperCase().replace(/J/g,'I').replace(/[^A-Z]/g,'');
@@ -550,14 +541,14 @@ const Bifid={
     const combined=[...rows,...cols];let out='';for(let i=0;i<combined.length;i+=2)out+=grid[combined[i]*5+combined[i+1]];return out;}
 };
 
-// 14. Polybius
+// Polybius
 const PolybiusSquare={
   encode(t){const clean=t.toUpperCase().replace(/J/g,'I').replace(/[^A-Z]/g,'');
     return[...clean].map(c=>{let idx=c.charCodeAt(0)-65;if(idx>8)idx--;return String(Math.floor(idx/5)+1)+String(idx%5+1);}).join(' ');},
   decode(t){const pairs=t.match(/\d{2}/g)||[];return pairs.map(p=>{const r=+p[0]-1,c=+p[1]-1;let idx=r*5+c;if(idx>=8)idx++;return String.fromCharCode(idx+65);}).join('');}
 };
 
-// 15. ADFGVX
+// ADFGVX
 const ADFGVX={
   _c:'ADFGVX',_g:'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
   encode(t){const clean=t.toUpperCase().replace(/[^A-Z0-9]/g,'');
@@ -566,7 +557,7 @@ const ADFGVX={
     return pairs.map(p=>{const r=this._c.indexOf(p[0]),c=this._c.indexOf(p[1]);if(r<0||c<0)return'';return this._g[r*6+c]||'';}).join('');}
 };
 
-// 16. Tap code
+// Tap code
 const TapCode={
   encode(t){const clean=t.toUpperCase().replace(/K/g,'C').replace(/[^A-Z]/g,'');
     return[...clean].map(c=>{let idx=c.charCodeAt(0)-65;if(idx>10)idx--;return(Math.floor(idx/5)+1)+'.'+(idx%5+1);}).join(' ');},
@@ -574,7 +565,7 @@ const TapCode={
     return pairs.map(p=>{const r=+p[0]-1,c=+p[2]-1;let idx=r*5+c;if(idx>=10)idx++;return String.fromCharCode(idx+65);}).join('');}
 };
 
-// 17. Phone keypad
+// Phone keypad
 const PhoneKeypad={
   _m:{A:'2',B:'2',C:'2',D:'3',E:'3',F:'3',G:'4',H:'4',I:'4',J:'5',K:'5',L:'5',M:'6',N:'6',O:'6',P:'7',Q:'7',R:'7',S:'7',T:'8',U:'8',V:'8',W:'9',X:'9',Y:'9',Z:'9',' ':'0'},
   _r:{'2':'ABC','3':'DEF','4':'GHI','5':'JKL','6':'MNO','7':'PQRS','8':'TUV','9':'WXYZ','0':' '},
@@ -582,7 +573,7 @@ const PhoneKeypad={
   decode(t){return[...t].map(c=>this._r[c]?this._r[c][0]:c).join('');}
 };
 
-// 18. NATO phonetic
+// NATO phonetic
 const NATOPhonetic={
   _w:{A:'Alpha',B:'Bravo',C:'Charlie',D:'Delta',E:'Echo',F:'Foxtrot',G:'Golf',H:'Hotel',I:'India',J:'Juliet',K:'Kilo',L:'Lima',M:'Mike',N:'November',O:'Oscar',P:'Papa',Q:'Quebec',R:'Romeo',S:'Sierra',T:'Tango',U:'Uniform',V:'Victor',W:'Whiskey',X:'Xray',Y:'Yankee',Z:'Zulu'},
   _r:null,
@@ -591,7 +582,7 @@ const NATOPhonetic={
   decode(t){const rev=this._rev();return t.split(/\s+/).map(w=>{const l=w.toLowerCase();return rev[l]||w;}).join('');}
 };
 
-// 19. Word substitution
+// Word substitution
 const WordSub={
   _pool:['alpha','bravo','charlie','delta','echo','foxtrot','golf','hotel','india','juliet','kilo','lima','mike','november','oscar','papa','quebec','romeo','sierra','tango','uniform','victor','whiskey','xray','yankee','zulu','one','two','three','four','five','six','seven','eight','nine','zero','red','blue','green','black','white','iron','steel','stone','fire','water','earth','wind','star','moon','sun'],
   encrypt(text,seed){let s=seed||Date.now();const rng=()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;};
@@ -599,7 +590,7 @@ const WordSub={
     return words.map(w=>{const clean=w.replace(/[^a-z]/g,'');if(clean.length<=2)return w;if(!map[clean])map[clean]=this._pool[Math.floor(rng()*this._pool.length)];return map[clean];}).join(' ');}
 };
 
-// 20. Hex shuffle
+// Hex shuffle
 const HexShuffle={
   encrypt(text,seed){const hex=[...text].map(c=>c.charCodeAt(0).toString(16).padStart(2,'0')).join('');
     const pairs=[];for(let i=0;i<hex.length;i+=2)pairs.push(hex.substring(i,i+2));
@@ -1161,6 +1152,38 @@ class DecisionForest{
     for(const k in this.importances)this.importances[k]/=maxImp;
     this.trained=true;this.total=X.length;
   }
+  // Async version of train — yields the event loop between each tree so the
+  // main thread stays responsive. Used by the fallback training path in ui.js.
+  // The worker uses the synchronous train() instead since it runs off-thread.
+  async trainAsync(X,Y,nTrees=20,maxDepth=14,minSize=3,onProgress=null){
+    const data=X.map((x,i)=>({x,y:Y[i]}));
+    this.classes=[...new Set(Y)];
+    const nFeatures=Math.max(4,Math.floor(Math.sqrt(X[0].length)));
+    this.trees=[];
+    let seed=Date.now()%100000;const rng=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;};
+    const oobVotes=new Array(data.length);for(let i=0;i<data.length;i++)oobVotes[i]={};
+    const oobUsed=new Uint8Array(data.length);
+    for(let t=0;t<nTrees;t++){
+      const inBag=new Uint8Array(data.length);
+      const sample=new Array(data.length);
+      for(let i=0;i<data.length;i++){const idx=Math.floor(rng()*data.length);sample[i]=data[idx];inBag[idx]=1;}
+      const tree=buildTree(sample,maxDepth,minSize,nFeatures,rng,0);
+      this.trees.push(tree);
+      for(let i=0;i<data.length;i++){if(!inBag[i]){const pred=treePredict(tree,data[i].x);oobVotes[i][pred]=(oobVotes[i][pred]||0)+1;oobUsed[i]=1;}}
+      // Yield to the event loop every 2 trees so the UI stays alive
+      if(t%2===1)await new Promise(r=>setTimeout(r,0));
+      if(onProgress)onProgress(t+1,nTrees);
+    }
+    let oobC=0,oobT=0;
+    for(let i=0;i<data.length;i++){if(!oobUsed[i])continue;const votes=oobVotes[i];
+      let best='',bestV=0;for(const k in votes)if(votes[k]>bestV){bestV=votes[k];best=k;}
+      if(best===data[i].y)oobC++;oobT++;}
+    this.oobAccuracy=oobT?oobC/oobT:0;
+    this.importances={};for(const tree of this.trees)treeFeatureImportance(tree,this.importances,0);
+    const maxImp=Math.max(...Object.values(this.importances),1);
+    for(const k in this.importances)this.importances[k]/=maxImp;
+    this.trained=true;this.total=X.length;
+  }
   predict(features){
     if(!this.trained)return{cls:'unknown',probs:{},confidence:0};
     // Average leaf probability distributions across all trees
@@ -1296,21 +1319,116 @@ let mlModel=new DecisionForest();
 //  Features:
 //    - Binary-chunked IndexedDB for millions of samples
 //    - Stratified loading with confusion-weighted oversampling (1A+1B)
-//    - Per-type centroid profiles via Welford's algorithm (3A)
-//    - User correction + encrypt capture stores (5A+5B)
+//    - Per-type centroid profiles via Welford's algorithm
+//    - User correction + encrypt capture stores
 //  Dependencies: ml.js must define FEATURE_COUNT before this loads
 // ═══════════════════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════════════════
+//  OPFS HELPER — wraps the Origin Private File System API so the rest
+//  of the stores don't have to deal with file handles directly.
+//  Each key maps to a file in the private storage root. Reads return
+//  parsed JSON; writes serialize to JSON and flush to disk atomically
+//  via a writable stream. Falls back if OPFS isn't available.
+// ═══════════════════════════════════════════════════════════════════════
+
+const OPFS = {
+  _root: null,
+  _supported: typeof navigator !== 'undefined' && !!navigator.storage && !!navigator.storage.getDirectory,
+
+  // Get (or lazily initialize) the OPFS root directory handle
+  async _getRoot() {
+    if (this._root) return this._root;
+    if (!this._supported) return null;
+    try {
+      this._root = await navigator.storage.getDirectory();
+      return this._root;
+    } catch (e) {
+      console.warn('[OPFS] Could not get storage root:', e.message);
+      this._supported = false;
+      return null;
+    }
+  },
+
+  // Read a JSON value from OPFS — returns parsed object or null if missing
+  async get(key) {
+    const root = await this._getRoot();
+    if (!root) return null;
+    try {
+      const fileHandle = await root.getFileHandle(key + '.json');
+      const file = await fileHandle.getFile();
+      const text = await file.text();
+      return JSON.parse(text);
+    } catch (e) {
+      // File doesn't exist yet — that's fine, just return null
+      return null;
+    }
+  },
+
+  // Write a JSON value to OPFS atomically
+  async set(key, value) {
+    const root = await this._getRoot();
+    if (!root) return false;
+    try {
+      const fileHandle = await root.getFileHandle(key + '.json', { create: true });
+      const writable = await fileHandle.createWritable();
+      await writable.write(JSON.stringify(value));
+      await writable.close();
+      return true;
+    } catch (e) {
+      console.warn('[OPFS] Write failed for key "' + key + '":', e.message);
+      return false;
+    }
+  },
+
+  // Delete a file from OPFS — silently ignores missing files
+  async remove(key) {
+    const root = await this._getRoot();
+    if (!root) return;
+    try {
+      await root.removeEntry(key + '.json');
+    } catch (e) {
+      // Already gone — nothing to do
+    }
+  },
+
+  // Wipe all CipherLab OPFS files at once
+  async wipeAll(keys) {
+    for (const k of keys) await this.remove(k);
+  }
+};
+
 const ModelStore = {
   _key: 'cipherlab_ml',
-  save(model) { try { localStorage.setItem(this._key, model.save()); } catch (e) { console.warn('[ModelStore] Save failed:', e.message); } },
-  load(model) {
-    try { const saved = localStorage.getItem(this._key); if (saved) { const ok = model.load(saved); if (!ok) { this.wipeAll(); return false; } return true; } } catch (e) {}
+
+  async save(model) {
+    try {
+      const ok = await OPFS.set(this._key, model.save());
+      if (!ok) console.warn('[ModelStore] Save failed — OPFS unavailable.');
+    } catch (e) { console.warn('[ModelStore] Save failed:', e.message); }
+  },
+
+  async load(model) {
+    try {
+      const saved = await OPFS.get(this._key);
+      if (saved) {
+        // OPFS.get parses JSON, but model.load() expects the raw serialized string
+        const raw = typeof saved === 'string' ? saved : JSON.stringify(saved);
+        const ok = model.load(raw);
+        if (!ok) { await this.wipeAll(); return false; }
+        return true;
+      }
+    } catch (e) {}
     return false;
   },
-  wipeAll() {
-    ['cipherlab_ml','cipherlab_datastore','cipherlab_confusion','cipherlab_calibration','cipherlab_acc_history','cipherlab_kb','cipherlab_centroids'].forEach(k => localStorage.removeItem(k));
-    try { indexedDB.deleteDatabase('cipherlab_v3'); } catch(e){}
+
+  async wipeAll() {
+    await OPFS.wipeAll([
+      'cipherlab_ml', 'cipherlab_datastore', 'cipherlab_confusion',
+      'cipherlab_calibration', 'cipherlab_acc_history', 'cipherlab_kb',
+      'cipherlab_centroids', 'cipherlab_unsolved'
+    ]);
+    try { indexedDB.deleteDatabase('cipherlab_v3'); } catch (e) {}
     console.warn('[CipherLab] Wiped all learning data.');
   }
 };
@@ -1365,7 +1483,7 @@ const SampleDB = {
     });
   },
 
-  // 1A+1B: Stratified loading with confusion-weighted oversampling
+  // Stratified loading - balance the dataset with oversampling for confused types
   async loadStratified(perType, confusionMatrix, boostFactor) {
     if (!this._db) return this._fbLoad();
     const boostedTypes = new Set();
@@ -1435,13 +1553,13 @@ const SampleDB = {
       req.onsuccess = () => { const byType = {}; let total = 0; for (const c of req.result) { if (c.fc !== FEATURE_COUNT) continue; total += c.count; for (const l of c.labels) byType[l] = (byType[l] || 0) + 1; } this._totalCached = total; resolve({ total, byType }); };
       req.onerror = () => resolve({ total: 0, byType: {} }); }); },
 
-  async clear() { this._totalCached = null; if (!this._db) { localStorage.removeItem('cipherlab_datastore'); return; }
+  async clear() { this._totalCached = null; if (!this._db) { await OPFS.remove('cipherlab_datastore'); return; }
     return new Promise((resolve) => { const tx = this._db.transaction([this._chunkStore, this._userStore], 'readwrite'); tx.objectStore(this._chunkStore).clear(); tx.objectStore(this._userStore).clear(); tx.oncomplete = () => resolve(); tx.onerror = () => resolve(); }); },
 
   async setMeta(key, value) { if (!this._db) return; return new Promise((resolve) => { const tx = this._db.transaction(this._metaStore, 'readwrite'); tx.objectStore(this._metaStore).put({ key, value }); tx.oncomplete = () => resolve(); tx.onerror = () => resolve(); }); },
   async getMeta(key) { if (!this._db) return null; return new Promise((resolve) => { const tx = this._db.transaction(this._metaStore, 'readonly'); const req = tx.objectStore(this._metaStore).get(key); req.onsuccess = () => resolve(req.result ? req.result.value : null); req.onerror = () => resolve(null); }); },
 
-  // 5A+5B: User samples
+  // User-submitted samples from corrections and encrypt captures
   async addUserSample(text, type, features, source) {
     if (!this._db) return;
     return new Promise((resolve) => { const tx = this._db.transaction(this._userStore, 'readwrite');
@@ -1516,13 +1634,31 @@ const SampleDB = {
     });
   },
 
-  _fbSave(X, Y) { const max = 8000; const s = Math.max(0, X.length - max); try { localStorage.setItem('cipherlab_datastore', JSON.stringify({ X: X.slice(s).map(x => Array.from(x)), Y: Y.slice(s), fc: FEATURE_COUNT })); } catch (e) {} },
-  _fbLoad() { try { const raw = localStorage.getItem('cipherlab_datastore'); if (raw) { const d = JSON.parse(raw); if (d.X && d.X.length > 0 && d.X[0].length !== FEATURE_COUNT) { localStorage.removeItem('cipherlab_datastore'); return { X: [], Y: [], count: 0 }; } return { X: d.X.map(x => new Float64Array(x)), Y: d.Y, count: d.Y.length }; } } catch (e) {} return { X: [], Y: [], count: 0 }; },
-  _fbCount() { try { const raw = localStorage.getItem('cipherlab_datastore'); if (raw) return JSON.parse(raw).Y.length; } catch (e) {} return 0; },
-  _fbStats() { try { const raw = localStorage.getItem('cipherlab_datastore'); if (raw) { const d = JSON.parse(raw); const c = {}; for (const y of d.Y) c[y] = (c[y] || 0) + 1; return { total: d.Y.length, byType: c }; } } catch (e) {} return { total: 0, byType: {} }; }
+  // OPFS-based fallback for when IndexedDB isn't available
+  async _fbSave(X, Y) {
+    const max = 8000; const s = Math.max(0, X.length - max);
+    await OPFS.set('cipherlab_datastore', { X: X.slice(s).map(x => Array.from(x)), Y: Y.slice(s), fc: FEATURE_COUNT });
+  },
+  async _fbLoad() {
+    const d = await OPFS.get('cipherlab_datastore');
+    if (d) {
+      if (d.X && d.X.length > 0 && d.X[0].length !== FEATURE_COUNT) { await OPFS.remove('cipherlab_datastore'); return { X: [], Y: [], count: 0 }; }
+      return { X: d.X.map(x => new Float64Array(x)), Y: d.Y, count: d.Y.length };
+    }
+    return { X: [], Y: [], count: 0 };
+  },
+  async _fbCount() {
+    const d = await OPFS.get('cipherlab_datastore');
+    return d ? d.Y.length : 0;
+  },
+  async _fbStats() {
+    const d = await OPFS.get('cipherlab_datastore');
+    if (d) { const c = {}; for (const y of d.Y) c[y] = (c[y] || 0) + 1; return { total: d.Y.length, byType: c }; }
+    return { total: 0, byType: {} };
+  }
 };
 
-SampleDB.init().then(ok => { if (ok) SampleDB.getCount().then(n => console.log('[CipherLab] IndexedDB ready — ' + n.toLocaleString() + ' samples')); else console.log('[CipherLab] Using localStorage fallback'); });
+SampleDB.init().then(ok => { if (ok) SampleDB.getCount().then(n => console.log('[CipherLab] IndexedDB ready — ' + n.toLocaleString() + ' samples')); else console.log('[CipherLab] Using OPFS fallback'); });
 
 // DataStore wrapper
 const DataStore = {
@@ -1542,15 +1678,34 @@ const DataStore = {
   async getCount() { return SampleDB.getCount(); },
   async getUserCount() { return SampleDB.getUserSampleCount(); },
   async clear() { return SampleDB.clear(); },
-  loadSync() { return SampleDB._fbLoad(); },
-  getStatsSync() { return SampleDB._fbStats(); }
+  loadSync() { return { X: [], Y: [], count: 0 }; }, // sync path removed — use async load()
+  getStatsSync() { return { total: 0, byType: {} }; }
 };
 
-// 3A: Centroid Store — per-type mean + variance via Welford's algorithm
+// CentroidStore — per-type mean + variance via Welford's online algorithm.
+// Keeps a running statistical profile for each cipher type so we can do
+// fast nearest-centroid ranking as a second opinion alongside the forest.
 const CentroidStore = {
   _key: 'cipherlab_centroids', _profiles: {},
-  load() { try { const raw = localStorage.getItem(this._key); if (raw) { const d = JSON.parse(raw); this._profiles = {}; for (const type in d) this._profiles[type] = { count: d[type].count, mean: new Float64Array(d[type].mean), m2: new Float64Array(d[type].m2) }; } } catch (e) { this._profiles = {}; } },
-  save() { const d = {}; for (const type in this._profiles) { const p = this._profiles[type]; d[type] = { count: p.count, mean: Array.from(p.mean), m2: Array.from(p.m2) }; } try { localStorage.setItem(this._key, JSON.stringify(d)); } catch (e) {} },
+
+  // Pull profiles from OPFS on startup
+  async load() {
+    try {
+      const d = await OPFS.get(this._key);
+      if (d) {
+        this._profiles = {};
+        for (const type in d) this._profiles[type] = { count: d[type].count, mean: new Float64Array(d[type].mean), m2: new Float64Array(d[type].m2) };
+      }
+    } catch (e) { this._profiles = {}; }
+  },
+
+  // Persist profiles back to OPFS
+  async save() {
+    const d = {};
+    for (const type in this._profiles) { const p = this._profiles[type]; d[type] = { count: p.count, mean: Array.from(p.mean), m2: Array.from(p.m2) }; }
+    await OPFS.set(this._key, d);
+  },
+
   update(type, features) {
     if (!this._profiles[type]) this._profiles[type] = { count: 0, mean: new Float64Array(FEATURE_COUNT), m2: new Float64Array(FEATURE_COUNT) };
     const p = this._profiles[type]; p.count++;
@@ -1561,51 +1716,68 @@ const CentroidStore = {
   getAllProfiles() { const r = {}; for (const type in this._profiles) r[type] = this.getProfile(type); return r; },
   distance(features, type) { const p = this._profiles[type]; if (!p || p.count < 10) return Infinity; let sum = 0; for (let i = 0; i < FEATURE_COUNT; i++) { const v = p.m2[i] / (p.count - 1); if (v > 1e-10) { const d = features[i] - p.mean[i]; sum += (d * d) / v; } } return Math.sqrt(sum / FEATURE_COUNT); },
   rank(features) { const d = []; for (const type in this._profiles) { const dist = this.distance(features, type); if (dist !== Infinity) d.push({ type, distance: dist }); } d.sort((a, b) => a.distance - b.distance); return d; },
-  reset() { this._profiles = {}; this.save(); }
+  async reset() { this._profiles = {}; await this.save(); }
 };
-CentroidStore.load();
+// CentroidStore.load() is called at startup via Promise.all in kb.js,
+// ensuring profiles are ready before the first render.
 
 // Confusion, Calibration, AccuracyHistory, KBStore
+// All four of these used to live in localStorage — now they go through OPFS
+// so data actually survives across sessions in a private, origin-bound store.
 const ConfusionTracker = {
   _key: 'cipherlab_confusion', matrix: {},
-  load() { try { this.matrix = JSON.parse(localStorage.getItem(this._key)) || {}; } catch (e) { this.matrix = {}; } },
-  save() { localStorage.setItem(this._key, JSON.stringify(this.matrix)); },
+
+  async load() {
+    try { const d = await OPFS.get(this._key); this.matrix = d || {}; } catch (e) { this.matrix = {}; }
+  },
+  async save() { await OPFS.set(this._key, this.matrix); },
   record(actual, predicted) { if (!this.matrix[actual]) this.matrix[actual] = {}; this.matrix[actual][predicted] = (this.matrix[actual][predicted] || 0) + 1; this.save(); },
   recordBatch(actual, predicted) { if (!this.matrix[actual]) this.matrix[actual] = {}; this.matrix[actual][predicted] = (this.matrix[actual][predicted] || 0) + 1; },
   getConfusedPairs(minConfusion) { const pairs = []; for (const [a, preds] of Object.entries(this.matrix)) { const t = Object.values(preds).reduce((s, v) => s + v, 0); for (const [p, c] of Object.entries(preds)) if (p !== a && c >= (minConfusion||5)) pairs.push({ actual: a, predicted: p, count: c, rate: c / t }); } pairs.sort((a, b) => b.rate - a.rate); return pairs; },
   getAccuracyByType() { const r = {}; for (const [a, preds] of Object.entries(this.matrix)) { const t = Object.values(preds).reduce((s, v) => s + v, 0); r[a] = { total: t, correct: preds[a] || 0, accuracy: t ? (preds[a] || 0) / t : 0 }; } return r; },
-  reset() { this.matrix = {}; this.save(); }
+  async reset() { this.matrix = {}; await this.save(); }
 };
-ConfusionTracker.load();
+// ConfusionTracker.load() is called at startup via Promise.all in kb.js.
 
 const CalibrationTracker = {
   _key: 'cipherlab_calibration', buckets: {},
-  load() { try { this.buckets = JSON.parse(localStorage.getItem(this._key)) || {}; } catch (e) { this.buckets = {}; } },
-  save() { localStorage.setItem(this._key, JSON.stringify(this.buckets)); },
+
+  async load() {
+    try { const d = await OPFS.get(this._key); this.buckets = d || {}; } catch (e) { this.buckets = {}; }
+  },
+  async save() { await OPFS.set(this._key, this.buckets); },
   record(confidence, correct) { const k = (Math.floor(confidence * 10) / 10).toFixed(1); if (!this.buckets[k]) this.buckets[k] = { total: 0, correct: 0 }; this.buckets[k].total++; if (correct) this.buckets[k].correct++; this.save(); },
   recordBatch(confidence, correct) { const k = (Math.floor(confidence * 10) / 10).toFixed(1); if (!this.buckets[k]) this.buckets[k] = { total: 0, correct: 0 }; this.buckets[k].total++; if (correct) this.buckets[k].correct++; },
   getCalibration() { const r = []; for (const [k, d] of Object.entries(this.buckets)) r.push({ confidence: +k, total: d.total, correct: d.correct, accuracy: d.total ? d.correct / d.total : 0 }); r.sort((a, b) => a.confidence - b.confidence); return r; },
   getCalibratedConfidence(raw) { const d = this.buckets[(Math.floor(raw * 10) / 10).toFixed(1)]; if (d && d.total >= 10) return d.correct / d.total; return raw; },
-  reset() { this.buckets = {}; this.save(); }
+  async reset() { this.buckets = {}; await this.save(); }
 };
-CalibrationTracker.load();
+// CalibrationTracker.load() is called at startup via Promise.all in kb.js.
 
 const AccuracyHistory = {
   _key: 'cipherlab_acc_history',
-  load() { try { return JSON.parse(localStorage.getItem(this._key)) || []; } catch (e) { return []; } },
-  save(h) { localStorage.setItem(this._key, JSON.stringify(h.slice(-500))); },
-  record(accuracy, samples, iteration) { const h = this.load(); h.push({ accuracy, samples, iteration, timestamp: Date.now() }); this.save(h); }
+
+  async load() {
+    try { const d = await OPFS.get(this._key); return d || []; } catch (e) { return []; }
+  },
+  async save(h) { await OPFS.set(this._key, h.slice(-500)); },
+  async record(accuracy, samples, iteration) {
+    const h = await this.load();
+    h.push({ accuracy, samples, iteration, timestamp: Date.now() });
+    await this.save(h);
+  }
 };
 
 const KBStore = {
   _key: 'cipherlab_kb',
-  load() { try { return JSON.parse(localStorage.getItem(this._key)) || {}; } catch (e) { return {}; } },
-  save(kb) { try { localStorage.setItem(this._key, JSON.stringify(kb)); } catch (e) {} },
-  clear() { localStorage.removeItem(this._key); }
+
+  async load() { try { return await OPFS.get(this._key) || {}; } catch (e) { return {}; } },
+  async save(kb) { try { await OPFS.set(this._key, kb); } catch (e) {} },
+  async clear() { await OPFS.remove(this._key); }
 };
 
 // ═══════════════════════════════════════════════════════════════════════
-//  UNSOLVED STORE — persistent JSON file of samples the AI cannot classify
+//  UNSOLVED STORE — persistent store of samples the AI cannot classify
 //  Stores up to 100,000 samples that were misclassified. Each sample is
 //  marked 'unsolved' until a future training iteration correctly identifies
 //  its actual type, at which point it becomes 'solved'.
@@ -1616,14 +1788,14 @@ const UnsolvedStore = {
   _maxSamples: 100000,
   _data: null, // {samples: [], stats: {total, unsolved, solved, solvedByType}}
 
-  // Load from localStorage (or initialize empty)
-  load() {
+  // Pull from OPFS (or initialize empty if this is a fresh install)
+  async load() {
     if (this._data) return this._data;
     try {
-      const raw = localStorage.getItem(this._key);
+      const raw = await OPFS.get(this._key);
       if (raw) {
-        this._data = JSON.parse(raw);
-        // Validate structure
+        this._data = raw;
+        // Validate structure in case the file got corrupted somehow
         if (!this._data.samples) this._data = this._createEmpty();
       } else {
         this._data = this._createEmpty();
@@ -1636,29 +1808,29 @@ const UnsolvedStore = {
     return { samples: [], stats: { total: 0, unsolved: 0, solved: 0, solvedByType: {}, addedTotal: 0, solvedTotal: 0 } };
   },
 
-  // Save to localStorage — compresses by only keeping unsolved + recently solved
-  save() {
+  // Persist to OPFS — prune solved samples if we're near the size limit
+  async save() {
     if (!this._data) return;
     this._updateStats();
     try {
-      // Only persist unsolved samples + solved samples from last 5 iterations (for reference)
       const toSave = {
         samples: this._data.samples,
         stats: this._data.stats
       };
-      localStorage.setItem(this._key, JSON.stringify(toSave));
-    } catch (e) {
-      // localStorage full — prune oldest solved samples and retry
-      this._data.samples = this._data.samples.filter(s => s.status === 'unsolved');
-      this._updateStats();
-      try { localStorage.setItem(this._key, JSON.stringify(this._data)); } catch (e2) {}
-    }
+      const ok = await OPFS.set(this._key, toSave);
+      if (!ok) {
+        // OPFS write failed — prune solved samples and try once more
+        this._data.samples = this._data.samples.filter(s => s.status === 'unsolved');
+        this._updateStats();
+        await OPFS.set(this._key, this._data);
+      }
+    } catch (e) {}
   },
 
   // Add misclassified samples as unsolved
   // Each sample: {features: number[128], actual: string, predicted: string, status: 'unsolved', addedAt: timestamp}
-  addUnsolved(items) {
-    this.load();
+  async addUnsolved(items) {
+    await this.load();
     for (const item of items) {
       if (this._data.samples.length >= this._maxSamples) {
         // At cap — remove oldest solved first, then oldest unsolved
@@ -1684,9 +1856,9 @@ const UnsolvedStore = {
 
   // During training: test unsolved samples against the current model
   // Returns {solved: number, tested: number, remaining: number, solvedSamples: []}
-  testAndSolve(model) {
-    this.load();
-    if (!model || !model.trained) return { solved: 0, tested: 0, remaining: this.getUnsolvedCount() };
+  async testAndSolve(model) {
+    await this.load();
+    if (!model || !model.trained) return { solved: 0, tested: 0, remaining: await this.getUnsolvedCount() };
     
     let solved = 0, tested = 0;
     const solvedSamples = [];
@@ -1715,12 +1887,12 @@ const UnsolvedStore = {
     
     this._data.stats.solvedTotal += solved;
     this._updateStats();
-    return { solved, tested, remaining: this.getUnsolvedCount(), solvedSamples };
+    return { solved, tested, remaining: this._data.samples.filter(s => s.status === 'unsolved').length, solvedSamples };
   },
 
   // Get unsolved samples for training reinforcement (returns features + labels)
-  getUnsolved(maxPerType = 500) {
-    this.load();
+  async getUnsolved(maxPerType = 500) {
+    await this.load();
     const byType = {};
     const unsolved = this._data.samples.filter(s => s.status === 'unsolved' && s.fc === FEATURE_COUNT);
     
@@ -1739,18 +1911,18 @@ const UnsolvedStore = {
     };
   },
 
-  getUnsolvedCount() {
-    this.load();
+  async getUnsolvedCount() {
+    await this.load();
     return this._data.samples.filter(s => s.status === 'unsolved').length;
   },
 
-  getSolvedCount() {
-    this.load();
+  async getSolvedCount() {
+    await this.load();
     return this._data.samples.filter(s => s.status === 'solved').length;
   },
 
-  getStats() {
-    this.load();
+  async getStats() {
+    await this.load();
     this._updateStats();
     return { ...this._data.stats };
   },
@@ -1764,8 +1936,8 @@ const UnsolvedStore = {
   },
 
   // Export unsolved samples as downloadable JSON
-  exportJSON() {
-    this.load();
+  async exportJSON() {
+    await this.load();
     const unsolved = this._data.samples.filter(s => s.status === 'unsolved' && s.fc === FEATURE_COUNT);
     return JSON.stringify({
       version: 1,
@@ -1783,13 +1955,13 @@ const UnsolvedStore = {
   },
 
   // Import unsolved samples from JSON file
-  importJSON(jsonString) {
+  async importJSON(jsonString) {
     try {
       const data = JSON.parse(jsonString);
       if (data.fc !== FEATURE_COUNT) return { success: false, reason: 'Feature count mismatch: expected ' + FEATURE_COUNT + ', got ' + data.fc };
       if (!data.samples || !data.samples.length) return { success: false, reason: 'No samples in file' };
       
-      this.load();
+      await this.load();
       let imported = 0;
       for (const s of data.samples) {
         if (this._data.samples.length >= this._maxSamples) break;
@@ -1804,24 +1976,23 @@ const UnsolvedStore = {
         imported++;
       }
       this._updateStats();
-      this.save();
+      await this.save();
       return { success: true, imported, total: this._data.samples.length };
     } catch (e) { return { success: false, reason: e.message }; }
   },
 
   // Purge all solved samples to free space
-  purgeSolved() {
-    this.load();
+  async purgeSolved() {
+    await this.load();
     const before = this._data.samples.length;
     this._data.samples = this._data.samples.filter(s => s.status === 'unsolved');
     this._updateStats();
-    this.save();
+    await this.save();
     return before - this._data.samples.length;
   },
 
-  reset() { this._data = this._createEmpty(); this.save(); }
-};
-</script><script>ModelStore.load(mlModel);</script><script>
+  async reset() { this._data = this._createEmpty(); await this.save(); }
+};</script><script>ModelStore.load(mlModel).then(loaded => { if (loaded) console.log('[CipherLab] Model loaded from OPFS'); });</script><script>
 // ═══════════════════════════════════════════════════════════════════════
 //  kb.js — Knowledge Base + Feature Descriptions + Tooltips
 //  Dependencies: ciphers.js (ENGLISH_FREQ), ml.js (mlModel)
@@ -1876,18 +2047,25 @@ const SEED_KB={
   nato_phonetic:{name:'NATO Phonetic Alphabet',cat:'encoding',desc:'Spells each letter as its NATO phonetic word: Alpha, Bravo, Charlie, ..., Zulu.',enc:'Replace each letter with its NATO word, space-separated.',dec:'Map each NATO word back to its letter.',ic:[0,0],weakness:['Not encryption — standard public alphabet','Fixed 26-word vocabulary is instantly recognizable','Word lengths follow a distinctive pattern'],hist:'Adopted by NATO and ICAO in 1956. Used in aviation, military, and radio communications worldwide.'},
   word_sub:{name:'Word Substitution',cat:'word_level_substitution',desc:'Replaces each content word with a random word from a fixed pool. Preserves sentence structure and function words.',enc:'Map each content word to a random replacement from a 50-word pool. Short words (≤2 chars) pass through unchanged.',dec:'Without the word mapping, decryption requires frequency analysis on word patterns.',ic:[.060,.070],weakness:['Sentence structure preserved','Function words unchanged','Word frequency analysis possible'],hist:'Conceptual extension of letter-level substitution to word level. Used in some code languages.'},
   hex_shuffle:{name:'Hex Shuffle',cat:'modern_obfuscation',desc:'Encodes to hexadecimal then randomly shuffles the byte pairs. Same charset as hex but with destroyed positional order.',enc:'Convert to hex, split into 2-char pairs, Fisher-Yates shuffle the pairs.',dec:'Without the shuffle seed, pair order cannot be recovered. Charset is identical to hex.',ic:[0,0],weakness:['Same charset as hex — hard to distinguish without positional analysis','Shuffle seed required for decryption','Byte frequency preserved'],hist:'Used in CTF challenges to create hex-like output that resists standard hex decoding.'},
+  plaintext:{name:'Plaintext',cat:'plaintext',desc:'Unencrypted English text. High Index of Coincidence (~0.067), strong n-gram patterns, and letter frequencies matching standard English.',enc:'No transformation applied.',dec:'Already readable. No decryption needed.',ic:[.062,.072],weakness:['All patterns visible','Frequency analysis trivial','No key required'],hist:'The baseline — what every cipher is trying to hide. Identified by high IC, strong bigram correlation, and normal English letter distribution.'},
 };
 
 let KB;
-function loadKB(){KB=KBStore.load();
+async function loadKB(){KB=await KBStore.load();
   for(const[k,seed]of Object.entries(SEED_KB)){if(!KB[k])KB[k]={...seed,stats:{tested:0,cracked:0,avgTime:0},icObs:[],entObs:[],insights:'',discoveries:[]};}
 }
 function saveKB(){KBStore.save(KB);}
-loadKB();
-
-// ── UNIFIED STATS: single source of truth from KB ──
+// Kick off async KB load — everything that needs KB runs after this resolves.
+// We also wait for CentroidStore, ConfusionTracker, and CalibrationTracker to
+// finish reading from OPFS so the ML page renders with real data on the first load.
+Promise.all([
+  loadKB(),
+  CentroidStore.load(),
+  ConfusionTracker.load(),
+  CalibrationTracker.load()
+]).then(()=>{syncAllStats();renderKB();renderML();});
 function syncAllStats(){
-  loadKB();
+  // KB is loaded asynchronously at startup — by the time this runs it's already in memory
   let totalTested=0,totalCorrect=0,totalDiscoveries=0;
   const entries=Object.entries(KB);
   for(const[k,e]of entries){
@@ -2960,7 +3138,7 @@ const COL_KEYS=['ZEBRA','CASTLE','STORM','PYTHON','MATRIX','FALCON','CRYPTO','HI
 
 
 // ═══════════════════════════════════════════════════════════════════════
-//  TRAINING ENGINE — Web Worker (4A) for non-blocking training
+//  TRAINING ENGINE — Web Worker for non-blocking training
 //  The worker embeds ciphers.js + encoders.js + ml.js + corpus/genSample
 //  Main thread handles: IndexedDB storage, UI updates, KB/confusion writes
 //  Worker handles: sample generation, feature extraction, forest training, eval
@@ -3021,24 +3199,39 @@ function genSample(type,short=false){
   }
 }
 
-// Build a Web Worker from inline code (4A)
-function createTrainWorker(){
-  // Collect all the source code the worker needs
-  const scripts=document.querySelectorAll('script[src]');
-  // For inline single-file builds, we grab script tag contents
-  const allScripts=document.querySelectorAll('script:not([src])');
+// Build a Web Worker from inline code
+async function createTrainWorker(){
   let ciphersCode='',encodersCode='',mlCode='';
-  const scriptTags=[...document.querySelectorAll('script')];
-  for(const s of scriptTags){
+
+  // First try to grab code from inline script tags (CipherLab.html single-file build)
+  for(const s of document.querySelectorAll('script')){
     const txt=s.textContent||'';
     if(!ciphersCode&&txt.includes('const ENGLISH_FREQ=')&&txt.includes('Caesar=')&&!txt.includes('createTrainWorker'))ciphersCode=txt;
     else if(!encodersCode&&txt.includes('const Encoders=')&&txt.includes('detectEncoding')&&!txt.includes('createTrainWorker'))encodersCode=txt;
     else if(!mlCode&&txt.includes('const FEATURE_COUNT')&&txt.includes('extractFeatures')&&!txt.includes('createTrainWorker'))mlCode=txt;
   }
 
-  // If we couldn't find inline scripts (multi-file mode), we can't make a worker
+  // If inline scripts weren't found (multi-file index.html), fetch them directly
   if(!ciphersCode||!encodersCode||!mlCode){
-    console.warn('[Worker] Could not find inline script code — falling back to main-thread training');
+    try{
+      const base=document.querySelector('script[src*="ciphers"]')?.src
+        ||new URL('js/ciphers.js',location.href).href;
+      const root=base.replace(/ciphers\.js[^/]*$/,'');
+      const v=document.querySelector('script[src*="ciphers"]')?.src.match(/\?(.*)$/)?.[1]||'';
+      const qs=v?'?'+v:'';
+      [ciphersCode,encodersCode,mlCode]=await Promise.all([
+        fetch(root+'ciphers.js'+qs).then(r=>{if(!r.ok)throw new Error(r.status);return r.text();}),
+        fetch(root+'encoders.js'+qs).then(r=>{if(!r.ok)throw new Error(r.status);return r.text();}),
+        fetch(root+'ml.js'+qs).then(r=>{if(!r.ok)throw new Error(r.status);return r.text();})
+      ]);
+    }catch(e){
+      console.warn('[Worker] Fetch failed:',e.message,'— falling back to main-thread training');
+      return null;
+    }
+  }
+
+  if(!ciphersCode||!encodersCode||!mlCode){
+    console.warn('[Worker] Could not load required scripts — falling back to main-thread training');
     return null;
   }
 
@@ -3193,8 +3386,8 @@ async function startTrain(){
   if(missData.count>0)addLog(`[store] Loaded ${missData.count} previously misclassified samples (up to 200/type)`);
   else addLog('[store] No misclassified samples stored yet');
 
-  // Try Web Worker (4A)
-  const worker=createTrainWorker();
+  // Try Web Worker — fetches js files if needed (works for both single-file and multi-file builds)
+  const worker=await createTrainWorker();
   if(worker){
     addLog('Training in Web Worker — UI stays responsive');
     trainWorker=worker;
@@ -3229,7 +3422,7 @@ async function startTrain(){
         // Save fresh samples to IndexedDB and update centroids
         const X=msg.X.map(a=>new Float64Array(a));
         await DataStore.saveWithTexts(X,msg.Y,msg.texts,{iteration:msg.iter});
-        // 3A: Update centroids
+        // Update per-type centroid profiles with the new batch of samples
         const byType={};for(let i=0;i<X.length;i++){if(!byType[msg.Y[i]])byType[msg.Y[i]]=[];byType[msg.Y[i]].push(X[i]);}
         for(const type in byType)CentroidStore.updateBatch(type,byType[type]);
         CentroidStore.save();
@@ -3302,23 +3495,24 @@ async function startTrain(){
           SampleDB.saveMisclassifiedBatch(toSave).then(()=>{
             addLog(`[store] Saved ${toSave.length} misclassified samples for future training`);
           });
-          // Add to unsolved store (persistent JSON, up to 100K)
-          UnsolvedStore.addUnsolved(toSave);
-          const uStats=UnsolvedStore.getStats();
-          addLog(`[unsolved] Added ${toSave.length} unsolved samples (${uStats.unsolved.toLocaleString()} unsolved, ${uStats.solved.toLocaleString()} solved total)`);
+          // Add to unsolved store (persistent OPFS, up to 100K)
+          UnsolvedStore.addUnsolved(toSave).then(()=>UnsolvedStore.getStats()).then(uStats=>{
+            addLog(`[unsolved] Added ${toSave.length} unsolved samples (${uStats.unsolved.toLocaleString()} unsolved, ${uStats.solved.toLocaleString()} solved total)`);
+          });
         }
         // Test unsolved samples against the current champion — mark solved if model now gets them right
         if(mlModel.trained){
-          const solveResult=UnsolvedStore.testAndSolve(mlModel);
-          if(solveResult.solved>0){
-            addLog(`[unsolved] ★ SOLVED ${solveResult.solved}/${solveResult.tested} previously unsolved samples! (${solveResult.remaining.toLocaleString()} remaining)`);
-            // Log which types got solved
-            const solvedTypes={};
-            for(const s of solveResult.solvedSamples){solvedTypes[s.actual]=(solvedTypes[s.actual]||0)+1;}
-            const solvedList=Object.entries(solvedTypes).sort((a,b)=>b[1]-a[1]).slice(0,5);
-            if(solvedList.length)addLog(`[unsolved] Solved types: ${solvedList.map(([t,n])=>t+':'+n).join(', ')}`);
-          }
-          UnsolvedStore.save();
+          UnsolvedStore.testAndSolve(mlModel).then(solveResult=>{
+            if(solveResult.solved>0){
+              addLog(`[unsolved] ★ SOLVED ${solveResult.solved}/${solveResult.tested} previously unsolved samples! (${solveResult.remaining.toLocaleString()} remaining)`);
+              // Log which types got solved
+              const solvedTypes={};
+              for(const s of solveResult.solvedSamples){solvedTypes[s.actual]=(solvedTypes[s.actual]||0)+1;}
+              const solvedList=Object.entries(solvedTypes).sort((a,b)=>b[1]-a[1]).slice(0,5);
+              if(solvedList.length)addLog(`[unsolved] Solved types: ${solvedList.map(([t,n])=>t+':'+n).join(', ')}`);
+            }
+            UnsolvedStore.save();
+          });
         }
         // Per-type display
         const typeEntries=Object.entries(msg.byType).sort((a,b)=>(b[1].c/b[1].t)-(a[1].c/a[1].t));
@@ -3381,7 +3575,10 @@ async function startTrain(){
       addLog(`[ml] Training challenger (${trainX.length} samples, ${FEATURE_COUNT} features)...`);
       await new Promise(r=>setTimeout(r,10));
       const challenger=new DecisionForest();
-      challenger.train(trainX,trainY,20,10,3);
+      // trainAsync yields between trees so the main thread doesn't freeze
+      await challenger.trainAsync(trainX,trainY,20,10,3,(done,total)=>{
+        if(!continuous)$('tBar').style.width=(((iter-1)/maxIter)+(done/total/maxIter))*100+'%';
+      });
       addLog(`[ml] Trained on ${trainX.length} samples (20 trees, depth 10), OOB: ${(challenger.oobAccuracy*100).toFixed(1)}%`);
       await DataStore.saveWithTexts(freshX,freshY,freshTexts,{iteration:iter});
       const cbt={};for(let i=0;i<freshX.length;i++){if(!cbt[freshY[i]])cbt[freshY[i]]=[];cbt[freshY[i]].push(freshX[i]);}
@@ -3411,14 +3608,16 @@ async function startTrain(){
       if(misclassified.length>0){
         const toSave=misclassified.slice(0,500);
         SampleDB.saveMisclassifiedBatch(toSave).then(()=>addLog(`[store] Saved ${toSave.length} misclassified samples`));
-        UnsolvedStore.addUnsolved(toSave);
-        addLog(`[unsolved] Added ${toSave.length} unsolved (${UnsolvedStore.getUnsolvedCount().toLocaleString()} total unsolved)`);
+        UnsolvedStore.addUnsolved(toSave).then(()=>UnsolvedStore.getUnsolvedCount()).then(n=>{
+          addLog(`[unsolved] Added ${toSave.length} unsolved (${n.toLocaleString()} total unsolved)`);
+        });
       }
       // Test unsolved against current model
       if(mlModel.trained){
-        const solveResult=UnsolvedStore.testAndSolve(mlModel);
-        if(solveResult.solved>0)addLog(`[unsolved] ★ SOLVED ${solveResult.solved}/${solveResult.tested} previously unsolved! (${solveResult.remaining.toLocaleString()} remaining)`);
-        UnsolvedStore.save();
+        UnsolvedStore.testAndSolve(mlModel).then(solveResult=>{
+          if(solveResult.solved>0)addLog(`[unsolved] ★ SOLVED ${solveResult.solved}/${solveResult.tested} previously unsolved! (${solveResult.remaining.toLocaleString()} remaining)`);
+          UnsolvedStore.save();
+        });
       }
       let fCorrect=0;for(let i=0;i<testX.length;i++)if(mlModel.predict(testX[i]).cls===testY[i])fCorrect++;
       const finalAcc=testX.length?fCorrect/testX.length:0;
@@ -3468,10 +3667,10 @@ function doDec(){
     h+=`) <span class="badge">random_forest_20t</span><br>`;
     const sorted=Object.entries(mlResult.probs).sort((a,b)=>b[1]-a[1]).slice(0,5);
     h+='Probs: '+sorted.map(([k,v])=>`${k}:${(v*100).toFixed(1)}%`).join(' ')+`<br>`;
-    // 3A: Show centroid ranking
+    // Show nearest centroid as a second opinion alongside the forest result
     const centroidRank=CentroidStore.rank(feats);
     if(centroidRank.length>=2)h+=`Centroid: <span style="color:var(--teal)">${centroidRank[0].type}</span> (d=${centroidRank[0].distance.toFixed(2)}) · ${centroidRank[1].type} (d=${centroidRank[1].distance.toFixed(2)})<br>`;
-    // 5A: Correction UI
+    // Correction UI — lets the user flag a wrong prediction and feed it back into training
     const escapedText=text.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n');
     h+=`</div></div>`;
     h+=`<div class="rb" style="border-color:rgba(255,159,67,.2)"><div class="rl" style="color:var(--orange)">WRONG PREDICTION? CORRECT IT</div>`;
@@ -3608,16 +3807,66 @@ function doEnc(){
     else if(curC==='nato_phonetic')ct=NATOPhonetic.encode(t);
     else if(curC==='uuencode')ct=UUEncode.encode(t);
     // Show result with "Send to Decrypt" button
-    // 5B: Silently capture this encrypt output for training
+    // Silently capture this encrypt output as a labeled training sample
     const captureType=curC;const captureCt=ct.split('\n')[0]; // strip multi-layer annotation
     if(captureType!=='multi_layer')captureEncrypt(captureCt,captureType);
     else{const rawCt=captureCt;captureEncrypt(rawCt,'multi_layer');}
     o.innerHTML=`<div class="rb"><div class="rl">CIPHERTEXT</div><div class="rv">${H(ct)}</div><button class="bs" style="margin-top:12px" onclick="$('dIn').value='${H(ct).replace(/'/g,"\\'")}';go('dec',document.querySelectorAll('.nb')[0])">SEND TO DECRYPT →</button></div>`;
   }catch(e){o.innerHTML=`<div class="rb err"><div class="rl">ERROR</div><div class="rv">${H(e.message)}</div></div>`}}
 
+// Known-key decrypt — uses the same key inputs as the encrypt page to reverse each cipher
+function doDecKnown(){
+  const t=$('eIn').value.trim();if(!t)return;const o=$('eOut');let pt;
+  try{const v=id=>{const e=$(id);return e?e.value:''};
+    if(curC==='caesar')pt=Caesar.decrypt(t,+(v('cS'))||3);
+    else if(curC==='vigenere')pt=Vigenere.decrypt(t,v('vK')||'KEY');
+    else if(curC==='atbash')pt=Atbash.transform(t);
+    else if(curC==='beaufort')pt=Beaufort.decrypt(t,v('bK')||'KEY');
+    else if(curC==='porta')pt=Porta.decrypt(t,v('pK')||'KEY');
+    else if(curC==='columnar')pt=Columnar.decrypt(t.toUpperCase().replace(/[^A-Z]/g,''),v('clK')||'ZEBRA');
+    else if(curC==='rot47')pt=ROT47.transform(t);
+    else if(curC==='xor'){const raw=atob(t);if(xorMode==='single')pt=XorCipher.encryptSingle(raw,+(v('xK'))||42);else pt=XorCipher.encryptRepeating(raw,v('xRK')||'SECRET');}
+    else if(curC==='rc4')pt=RC4.decrypt(atob(t),v('rcK')||'AB');
+    else if(curC==='enigma')pt=enigmaProcess(t,['III','II','I'],'B',[+(v('eP1'))||0,+(v('eP2'))||0,+(v('eP3'))||0]);
+    else if(curC==='binary')pt=Encoders.binary.decode(t);
+    else if(curC==='hex')pt=Encoders.hex.decode(t);
+    else if(curC==='base64')pt=Encoders.base64.decode(t);
+    else if(curC==='morse')pt=Encoders.morse.decode(t);
+    else if(curC==='octal')pt=Encoders.octal.decode(t);
+    else if(curC==='decimal')pt=Encoders.decimal.decode(t);
+    else if(curC==='url')pt=Encoders.url.decode(t);
+    else if(curC==='bacon')pt=Encoders.bacon.decode(t);
+    else if(curC==='rot13')pt=ROT13_cipher.decrypt(t);
+    else if(curC==='affine')pt=affineDec(t,+(v('afA'))||5,+(v('afB'))||8);
+    else if(curC==='rail_fence')pt=RailFenceCracker.decrypt(t,+(v('rfR'))||3);
+    else if(curC==='playfair')pt=Playfair.decrypt(t,v('pfK')||'CIPHER');
+    else if(curC==='vigenere_autokey')pt=VigenereAutokey.decrypt(t,v('akK')||'SECRET');
+    else if(curC==='reverse')pt=ReverseText.encrypt(t);
+    else if(curC==='scytale')pt=Scytale.decrypt(t,+(v('scD'))||5);
+    else if(curC==='route_cipher')pt=RouteCipher.decrypt(t,+(v('rtC'))||5);
+    else if(curC==='bifid')pt=Bifid.decrypt(t,v('biK')||'CIPHER');
+    else if(curC==='base32')pt=Base32.decode(t);
+    else if(curC==='base58')pt=Base58.decode(t);
+    else if(curC==='ascii85')pt=Ascii85.decode(t);
+    else if(curC==='a1z26')pt=A1Z26.decode(t);
+    else if(curC==='html_entities')pt=HTMLEntities.decode(t);
+    else if(curC==='polybius')pt=PolybiusSquare.decode(t);
+    else if(curC==='adfgvx')pt=ADFGVX.decode(t);
+    else if(curC==='tap_code')pt=TapCode.decode(t);
+    else if(curC==='phone_keypad')pt=PhoneKeypad.decode(t);
+    else if(curC==='nato_phonetic')pt=NATOPhonetic.decode(t);
+    else if(curC==='uuencode')pt=UUEncode.decode(t);
+    else if(curC==='substitution'||curC==='word_sub'||curC==='hex_shuffle'||curC==='multi_layer'){
+      // These can't be decrypted without the original key/seed — send to auto-decrypt instead
+      $('dIn').value=t;go('dec',document.querySelectorAll('.nb')[0]);return;}
+    else{o.innerHTML=`<div class="rb err"><div class="rl">NOT REVERSIBLE</div><div class="rv">This cipher/encoding doesn't support known-key decryption here. Use the Decrypt tab for auto-analysis.</div></div>`;return;}
+    o.innerHTML=`<div class="rb"><div class="rl">DECRYPTED OUTPUT <button class="bs" style="float:right;font-size:.55rem;padding:3px 10px" onclick="copyText(this.closest('.rb').querySelector('.rv').textContent)">COPY</button></div><div class="rv">${H(pt)}</div></div>`;
+  }catch(e){o.innerHTML=`<div class="rb err"><div class="rl">ERROR</div><div class="rv">${H(e.message)}</div></div>`}}
+
 // Knowledge Base
 function renderKB(){
-  loadKB();const entries=Object.entries(KB);
+  if(!KB)return; // KB loads async at startup — skip if not ready yet
+  const entries=Object.entries(KB);
   $('kbG').innerHTML=entries.map(([k,e])=>{
     const rate=e.stats?.tested?((e.stats.cracked/e.stats.tested)*100).toFixed(0)+'%':'—';
     return`<div class="kc" onclick="showKB('${k}')"><div class="kn">${H(e.name)}</div><div class="kcat">${H((e.cat||'').replace(/_/g,' '))}</div><div class="kst">Eval tests: ${e.stats?.tested||0} &nbsp; Classified: ${rate} &nbsp; IC: ${e.icMean||'—'}</div></div>`}).join('');
@@ -3674,8 +3923,8 @@ function renderML(){
       return`<div class="bar-r"><div class="bar-l">${name}</div><div class="bar-t"><div class="bar-f" style="width:${pct}%;background:${color}"></div></div><div class="bar-p">${(v*100).toFixed(1)}%</div></div>`;
     }).join('');
   }
-  // Accuracy history
-  const history=AccuracyHistory.load();
+  // Accuracy history (loaded async)
+  AccuracyHistory.load().then(history=>{
   if(history.length&&$('mlHistory')){
     $('mlHistory').innerHTML=history.slice(-15).map((h,i)=>{
       const pct=(h.accuracy*100).toFixed(1);const color=h.accuracy>.8?'var(--accent)':h.accuracy>.5?'var(--orange)':'var(--red)';
@@ -3683,6 +3932,7 @@ function renderML(){
       return`<div class="bar-r"><div class="bar-l" style="min-width:130px">${date} #${h.iteration}</div><div class="bar-t"><div class="bar-f" style="width:${pct}%;background:${color}"></div></div><div class="bar-p">${pct}%</div></div>`;
     }).join('');
   }
+  });
   // Top confusion pairs
   const confPairs=ConfusionTracker.getConfusedPairs(2);
   if(confPairs.length&&$('mlConfusion')){
@@ -3708,7 +3958,7 @@ function renderML(){
   DataStore.getUserCount().then(n=>{
     if($('mlUserSamples'))$('mlUserSamples').textContent=n.toLocaleString();
   });
-  // 3A: Centroid profiles
+  // Centroid profiles — show the per-type statistical signatures we've built up
   const profiles=CentroidStore.getAllProfiles();
   if(Object.keys(profiles).length&&$('mlCentroids')){
     const entries=Object.entries(profiles).filter(([,p])=>p&&p.count>=10).sort((a,b)=>b[1].count-a[1].count);
@@ -3761,7 +4011,7 @@ function importModel(input){
   reader.readAsText(file);
 }
 
-// 5A: User correction — called when user clicks "Correct this" on decrypt page
+// User correction — called when user clicks "Correct this" on decrypt page
 const ALL_TYPES=['plaintext','caesar','vigenere','substitution','atbash','affine','rail_fence','enigma','xor_single','xor_repeating','rc4','beaufort','porta','columnar','rot47','binary','hex','base64','morse','octal','decimal','url','bacon','multi_layer','rot13','a1z26','playfair','vigenere_autokey','reverse','scytale','route_cipher','base32','base58','ascii85','uuencode','html_entities','bifid','polybius','adfgvx','tap_code','phone_keypad','nato_phonetic','word_sub','hex_shuffle'];
 function correctPrediction(text){
   const sel=$('corrType');if(!sel)return;
@@ -3776,7 +4026,7 @@ function correctPrediction(text){
   });
 }
 
-// 5B: Silently capture encrypt-page outputs for training
+// Silently capture encrypt-page outputs as labeled training samples
 function captureEncrypt(ciphertext,type){
   if(ciphertext&&type&&ciphertext.length>=8){
     DataStore.saveEncryptCapture(ciphertext,type).then(()=>{
@@ -3785,7 +4035,5 @@ function captureEncrypt(ciphertext,type){
   }
 }
 
-// Init
-syncAllStats();renderKB();renderML();
-
+// Init — KB load is async now so startup runs inside the promise chain above
 </script></body></html>

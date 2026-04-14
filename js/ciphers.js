@@ -83,6 +83,8 @@ function applySub(text,key){return[...text].map(c=>{if(/[a-zA-Z]/.test(c)){const
 
 // Affine cipher implementation
 function affineEnc(text,a,b){return[...text].map(c=>{if(/[a-zA-Z]/.test(c)){const base=c<'a'?65:97;return String.fromCharCode((a*(c.toUpperCase().charCodeAt(0)-65)+b)%26+base)}return c}).join('')}
+// Affine decrypt: apply the modular inverse of 'a' to reverse the encryption
+function affineDec(text,a,b){const aInv=modInverse(a,26);return[...text].map(c=>{if(/[a-zA-Z]/.test(c)){const base=c<'a'?65:97;return String.fromCharCode(((aInv*((c.toUpperCase().charCodeAt(0)-65-b+26)%26))%26+26)%26+base)}return c}).join('')}
 
 // Rail Fence cipher implementation
 function railEnc(text,rails){if(rails<2)return text;const fence=Array.from({length:rails},()=>[]);let r=0,d=1;for(const c of text){fence[r].push(c);if(r===0)d=1;else if(r===rails-1)d=-1;r+=d;}return fence.flat().join('')}
@@ -195,18 +197,16 @@ const ColumnarCracker={
     results.sort((a,b)=>b.score-a.score);return results.slice(0,10);}
 };
 
-// New cipher implementations (20 additional types)
-
-// 1. ROT13 cipher implementation
+// ROT13 cipher implementation
 const ROT13_cipher={encrypt(t){return Caesar.encrypt(t,13)},decrypt(t){return Caesar.encrypt(t,13)}};
 
-// 2. A1Z26 cipher implementation
+// A1Z26 cipher implementation
 const A1Z26={
   encode(t){return[...t.toUpperCase()].map(c=>{const code=c.charCodeAt(0);if(code>=65&&code<=90)return String(code-64);return c;}).join(' ').replace(/ {2,}/g,' ').trim();},
   decode(t){return t.split(/[\s,]+/).map(n=>{const v=parseInt(n);if(v>=1&&v<=26)return String.fromCharCode(v+64);return n;}).join('');}
 };
 
-// 3. Playfair cipher implementation
+// Playfair cipher implementation
 const Playfair={
   _grid(key){const seen=new Set();const chars=[];for(const c of(key+'ABCDEFGHIKLMNOPQRSTUVWXYZ').toUpperCase()){const ch=c==='J'?'I':c;if(ch>='A'&&ch<='Z'&&!seen.has(ch)){seen.add(ch);chars.push(ch);}}return chars;},
   _pos(grid,c){const idx=grid.indexOf(c==='J'?'I':c);return[Math.floor(idx/5),idx%5];},
@@ -217,25 +217,41 @@ const Playfair={
     return pairs.map(([a,b])=>{const[ar,ac]=this._pos(grid,a);const[br,bc]=this._pos(grid,b);
       if(ar===br)return grid[ar*5+(ac+1)%5]+grid[br*5+(bc+1)%5];
       if(ac===bc)return grid[((ar+1)%5)*5+ac]+grid[((br+1)%5)*5+bc];
+      return grid[ar*5+bc]+grid[br*5+ac];}).join('');},
+  // Decrypt reverses the row/column shift directions
+  decrypt(text,key){
+    const grid=this._grid(key);const clean=text.toUpperCase().replace(/J/g,'I').replace(/[^A-Z]/g,'');
+    const pairs=[];for(let i=0;i<clean.length;i+=2)pairs.push([clean[i],clean[i+1]||'X']);
+    return pairs.map(([a,b])=>{const[ar,ac]=this._pos(grid,a);const[br,bc]=this._pos(grid,b);
+      if(ar===br)return grid[ar*5+(ac+4)%5]+grid[br*5+(bc+4)%5];
+      if(ac===bc)return grid[((ar+4)%5)*5+ac]+grid[((br+4)%5)*5+bc];
       return grid[ar*5+bc]+grid[br*5+ac];}).join('');}
 };
 
-// 4. Vigenère Autokey cipher implementation
+// Vigenère Autokey cipher implementation
 const VigenereAutokey={
   encrypt(text,key){const k=key.toUpperCase();const clean=text.toUpperCase().replace(/[^A-Z]/g,'');let out='',fullKey=k;
-    for(let i=0;i<clean.length;i++){const s=fullKey.charCodeAt(i)-65;out+=String.fromCharCode((clean.charCodeAt(i)-65+s)%26+65);fullKey+=clean[i];}return out;}
+    for(let i=0;i<clean.length;i++){const s=fullKey.charCodeAt(i)-65;out+=String.fromCharCode((clean.charCodeAt(i)-65+s)%26+65);fullKey+=clean[i];}return out;},
+  // Autokey decrypt recovers the plaintext one char at a time, extending the key as we go
+  decrypt(text,key){const k=key.toUpperCase();const clean=text.toUpperCase().replace(/[^A-Z]/g,'');let out='',fullKey=k;
+    for(let i=0;i<clean.length;i++){const s=fullKey.charCodeAt(i)-65;const p=String.fromCharCode((clean.charCodeAt(i)-65-s+26)%26+65);out+=p;fullKey+=p;}return out;}
 };
 
-// 5. Reverse cipher implementation
+// Reverse cipher implementation
 const ReverseText={encrypt(t){return[...t].reverse().join('');}};
 
-// 6. Scytale cipher implementation
+// Scytale cipher implementation
 const Scytale={
   encrypt(text,cols){const clean=text.replace(/[^a-zA-Z]/g,'');const rows=Math.ceil(clean.length/cols);const padded=clean+'X'.repeat(rows*cols-clean.length);
-    let out='';for(let c=0;c<cols;c++)for(let r=0;r<rows;r++)out+=padded[r*cols+c];return out;}
+    let out='';for(let c=0;c<cols;c++)for(let r=0;r<rows;r++)out+=padded[r*cols+c];return out;},
+  // Read back down the rows to undo the column-wise read
+  decrypt(text,cols){const n=text.length;const rows=Math.ceil(n/cols);
+    const grid=Array.from({length:rows},()=>Array(cols).fill(''));let pos=0;
+    for(let c=0;c<cols;c++)for(let r=0;r<rows;r++){if(pos<n)grid[r][c]=text[pos++];}
+    return grid.map(r=>r.join('')).join('').replace(/X+$/,'');}
 };
 
-// 7. Route cipher implementation (spiral)
+// Route cipher implementation (spiral)
 const RouteCipher={
   encrypt(text,cols){const clean=text.replace(/[^a-zA-Z]/g,'');const rows=Math.ceil(clean.length/cols);const padded=clean+'X'.repeat(rows*cols-clean.length);
     const grid=[];for(let i=0;i<rows;i++)grid.push([...padded.substring(i*cols,i*cols+cols)]);
@@ -243,10 +259,21 @@ const RouteCipher={
     while(top<=bot&&left<=right){for(let i=left;i<=right;i++)out+=grid[top][i];top++;
       for(let i=top;i<=bot;i++)out+=grid[i][right];right--;
       if(top<=bot){for(let i=right;i>=left;i--)out+=grid[bot][i];bot--;}
-      if(left<=right){for(let i=bot;i>=top;i--)out+=grid[i][left];left++;}}return out;}
+      if(left<=right){for(let i=bot;i>=top;i--)out+=grid[i][left];left++;}}return out;},
+  // Reverse-map the spiral order back to grid positions, then read row by row
+  decrypt(text,cols){const n=text.length;const rows=Math.ceil(n/cols);
+    const grid=Array.from({length:rows},()=>Array(cols).fill(''));
+    const order=[];let top=0,bot=rows-1,left=0,right=cols-1;
+    while(top<=bot&&left<=right){
+      for(let i=left;i<=right;i++)order.push([top,i]);top++;
+      for(let i=top;i<=bot;i++)order.push([i,right]);right--;
+      if(top<=bot){for(let i=right;i>=left;i--)order.push([bot,i]);bot--;}
+      if(left<=right){for(let i=bot;i>=top;i--)order.push([i,left]);left++;}}
+    for(let i=0;i<Math.min(order.length,n);i++){const[r,c]=order[i];grid[r][c]=text[i];}
+    return grid.map(r=>r.join('')).join('').replace(/X+$/,'');}
 };
 
-// 8. Base32 encoding implementation
+// Base32 encoding implementation
 const Base32={
   _c:'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567',
   encode(t){const bytes=[...t].map(c=>c.charCodeAt(0));let bits='';for(const b of bytes)bits+=b.toString(2).padStart(8,'0');
@@ -256,15 +283,20 @@ const Base32={
     let out='';for(let i=0;i+8<=bits.length;i+=8)out+=String.fromCharCode(parseInt(bits.substring(i,i+8),2));return out;}
 };
 
-// 9. Base58 encoding implementation
+// Base58 encoding implementation
 const Base58={
   _c:'123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz',
   encode(t){let bytes=[...t].map(c=>c.charCodeAt(0));let num=0n;for(const b of bytes)num=num*256n+BigInt(b);
     let out='';while(num>0n){out=this._c[Number(num%58n)]+out;num=num/58n;}
-    for(const b of bytes){if(b===0)out=this._c[0]+out;else break;}return out||this._c[0];}
+    for(const b of bytes){if(b===0)out=this._c[0]+out;else break;}return out||this._c[0];},
+  // Decode by converting the base-58 number back to bytes
+  decode(t){let num=0n;for(const c of t){const idx=this._c.indexOf(c);if(idx<0)continue;num=num*58n+BigInt(idx);}
+    const bytes=[];while(num>0n){bytes.unshift(Number(num%256n));num=num/256n;}
+    for(const c of t){if(c===this._c[0])bytes.unshift(0);else break;}
+    return bytes.map(b=>String.fromCharCode(b)).join('');}
 };
 
-// 10. Ascii85 encoding implementation
+// Ascii85 encoding implementation
 const Ascii85={
   encode(t){const bytes=[...t].map(c=>c.charCodeAt(0));while(bytes.length%4)bytes.push(0);
     let out='<~';for(let i=0;i<bytes.length;i+=4){
@@ -278,7 +310,7 @@ const Ascii85={
     return out.map(b=>String.fromCharCode(b)).join('');}
 };
 
-// 11. UUEncode implementation
+// UUEncode implementation
 const UUEncode={
   encode(t){const bytes=[...t].map(c=>c.charCodeAt(0));let out='begin 644 data\n';
     for(let i=0;i<bytes.length;i+=45){const chunk=bytes.slice(i,i+45);out+=String.fromCharCode(chunk.length+32);
@@ -292,28 +324,33 @@ const UUEncode={
     return out.map(b=>String.fromCharCode(b)).join('');}
 };
 
-// 12. HTML Entities encoding implementation
+// HTML Entities encoding implementation
 const HTMLEntities={
   encode(t){return[...t].map(c=>'&#'+c.charCodeAt(0)+';').join('');},
   decode(t){return t.replace(/&#(\d+);/g,(_,n)=>String.fromCharCode(+n));}
 };
 
-// 13. Bifid cipher implementation
+// Bifid cipher implementation
 const Bifid={
   _grid(key){const seen=new Set();const chars=[];for(const c of(key+'ABCDEFGHIKLMNOPQRSTUVWXYZ').toUpperCase()){const ch=c==='J'?'I':c;if(ch>='A'&&ch<='Z'&&!seen.has(ch)){seen.add(ch);chars.push(ch);}}return chars;},
   encrypt(text,key){const grid=this._grid(key);const clean=text.toUpperCase().replace(/J/g,'I').replace(/[^A-Z]/g,'');
     const rows=[],cols=[];for(const c of clean){const idx=grid.indexOf(c);rows.push(Math.floor(idx/5));cols.push(idx%5);}
-    const combined=[...rows,...cols];let out='';for(let i=0;i<combined.length;i+=2)out+=grid[combined[i]*5+combined[i+1]];return out;}
+    const combined=[...rows,...cols];let out='';for(let i=0;i<combined.length;i+=2)out+=grid[combined[i]*5+combined[i+1]];return out;},
+  // Split the combined sequence back into row/col halves and look up each character
+  decrypt(text,key){const grid=this._grid(key);const clean=text.toUpperCase().replace(/J/g,'I').replace(/[^A-Z]/g,'');
+    const combined=[];for(const c of clean){const idx=grid.indexOf(c);combined.push(Math.floor(idx/5),idx%5);}
+    const half=combined.length/2;const rows=combined.slice(0,half);const cols=combined.slice(half);
+    let out='';for(let i=0;i<rows.length;i++)out+=grid[rows[i]*5+cols[i]];return out;}
 };
 
-// 14. Polybius Square implementation
+// Polybius Square implementation
 const PolybiusSquare={
   encode(t){const clean=t.toUpperCase().replace(/J/g,'I').replace(/[^A-Z]/g,'');
     return[...clean].map(c=>{let idx=c.charCodeAt(0)-65;if(idx>8)idx--;return String(Math.floor(idx/5)+1)+String(idx%5+1);}).join(' ');},
   decode(t){const pairs=t.match(/\d{2}/g)||[];return pairs.map(p=>{const r=+p[0]-1,c=+p[1]-1;let idx=r*5+c;if(idx>=8)idx++;return String.fromCharCode(idx+65);}).join('');}
 };
 
-// 15. ADFGVX cipher implementation
+// ADFGVX cipher implementation
 const ADFGVX={
   _c:'ADFGVX',_g:'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
   encode(t){const clean=t.toUpperCase().replace(/[^A-Z0-9]/g,'');
@@ -322,7 +359,7 @@ const ADFGVX={
     return pairs.map(p=>{const r=this._c.indexOf(p[0]),c=this._c.indexOf(p[1]);if(r<0||c<0)return'';return this._g[r*6+c]||'';}).join('');}
 };
 
-// 16. Tap code implementation
+// Tap code implementation
 const TapCode={
   encode(t){const clean=t.toUpperCase().replace(/K/g,'C').replace(/[^A-Z]/g,'');
     return[...clean].map(c=>{let idx=c.charCodeAt(0)-65;if(idx>10)idx--;return(Math.floor(idx/5)+1)+'.'+(idx%5+1);}).join(' ');},
@@ -330,7 +367,7 @@ const TapCode={
     return pairs.map(p=>{const r=+p[0]-1,c=+p[2]-1;let idx=r*5+c;if(idx>=10)idx++;return String.fromCharCode(idx+65);}).join('');}
 };
 
-// 17. Phone keypad encoding implementation
+// Phone keypad encoding implementation
 const PhoneKeypad={
   _m:{A:'2',B:'2',C:'2',D:'3',E:'3',F:'3',G:'4',H:'4',I:'4',J:'5',K:'5',L:'5',M:'6',N:'6',O:'6',P:'7',Q:'7',R:'7',S:'7',T:'8',U:'8',V:'8',W:'9',X:'9',Y:'9',Z:'9',' ':'0'},
   _r:{'2':'ABC','3':'DEF','4':'GHI','5':'JKL','6':'MNO','7':'PQRS','8':'TUV','9':'WXYZ','0':' '},
@@ -338,7 +375,7 @@ const PhoneKeypad={
   decode(t){return[...t].map(c=>this._r[c]?this._r[c][0]:c).join('');}
 };
 
-// 18. NATO phonetic alphabet implementation
+// NATO phonetic alphabet implementation
 const NATOPhonetic={
   _w:{A:'Alpha',B:'Bravo',C:'Charlie',D:'Delta',E:'Echo',F:'Foxtrot',G:'Golf',H:'Hotel',I:'India',J:'Juliet',K:'Kilo',L:'Lima',M:'Mike',N:'November',O:'Oscar',P:'Papa',Q:'Quebec',R:'Romeo',S:'Sierra',T:'Tango',U:'Uniform',V:'Victor',W:'Whiskey',X:'Xray',Y:'Yankee',Z:'Zulu'},
   _r:null,
@@ -347,7 +384,7 @@ const NATOPhonetic={
   decode(t){const rev=this._rev();return t.split(/\s+/).map(w=>{const l=w.toLowerCase();return rev[l]||w;}).join('');}
 };
 
-// 19. Word substitution cipher implementation
+// Word substitution cipher implementation
 const WordSub={
   _pool:['alpha','bravo','charlie','delta','echo','foxtrot','golf','hotel','india','juliet','kilo','lima','mike','november','oscar','papa','quebec','romeo','sierra','tango','uniform','victor','whiskey','xray','yankee','zulu','one','two','three','four','five','six','seven','eight','nine','zero','red','blue','green','black','white','iron','steel','stone','fire','water','earth','wind','star','moon','sun'],
   encrypt(text,seed){let s=seed||Date.now();const rng=()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;};
@@ -355,7 +392,7 @@ const WordSub={
     return words.map(w=>{const clean=w.replace(/[^a-z]/g,'');if(clean.length<=2)return w;if(!map[clean])map[clean]=this._pool[Math.floor(rng()*this._pool.length)];return map[clean];}).join(' ');}
 };
 
-// 20. Hex shuffle cipher implementation
+// Hex shuffle cipher implementation
 const HexShuffle={
   encrypt(text,seed){const hex=[...text].map(c=>c.charCodeAt(0).toString(16).padStart(2,'0')).join('');
     const pairs=[];for(let i=0;i<hex.length;i+=2)pairs.push(hex.substring(i,i+2));

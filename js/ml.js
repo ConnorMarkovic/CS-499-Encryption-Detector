@@ -486,6 +486,39 @@ class DecisionForest{
     for(const k in this.importances)this.importances[k]/=maxImp;
     this.trained=true;this.total=X.length;
   }
+
+  // Async version of train — yields the event loop between each tree so the
+  // main thread stays responsive. Used by the fallback training path in ui.js.
+  // The worker uses the synchronous train() instead since it runs off-thread.
+  async trainAsync(X,Y,nTrees=20,maxDepth=14,minSize=3,onProgress=null){
+    const data=X.map((x,i)=>({x,y:Y[i]}));
+    this.classes=[...new Set(Y)];
+    const nFeatures=Math.max(4,Math.floor(Math.sqrt(X[0].length)));
+    this.trees=[];
+    let seed=Date.now()%100000;const rng=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;};
+    const oobVotes=new Array(data.length);for(let i=0;i<data.length;i++)oobVotes[i]={};
+    const oobUsed=new Uint8Array(data.length);
+    for(let t=0;t<nTrees;t++){
+      const inBag=new Uint8Array(data.length);
+      const sample=new Array(data.length);
+      for(let i=0;i<data.length;i++){const idx=Math.floor(rng()*data.length);sample[i]=data[idx];inBag[idx]=1;}
+      const tree=buildTree(sample,maxDepth,minSize,nFeatures,rng,0);
+      this.trees.push(tree);
+      for(let i=0;i<data.length;i++){if(!inBag[i]){const pred=treePredict(tree,data[i].x);oobVotes[i][pred]=(oobVotes[i][pred]||0)+1;oobUsed[i]=1;}}
+      // Yield to the event loop every 2 trees so the UI stays alive
+      if(t%2===1)await new Promise(r=>setTimeout(r,0));
+      if(onProgress)onProgress(t+1,nTrees);
+    }
+    let oobC=0,oobT=0;
+    for(let i=0;i<data.length;i++){if(!oobUsed[i])continue;const votes=oobVotes[i];
+      let best='',bestV=0;for(const k in votes)if(votes[k]>bestV){bestV=votes[k];best=k;}
+      if(best===data[i].y)oobC++;oobT++;}
+    this.oobAccuracy=oobT?oobC/oobT:0;
+    this.importances={};for(const tree of this.trees)treeFeatureImportance(tree,this.importances,0);
+    const maxImp=Math.max(...Object.values(this.importances),1);
+    for(const k in this.importances)this.importances[k]/=maxImp;
+    this.trained=true;this.total=X.length;
+  }
   predict(features){
     if(!this.trained)return{cls:'unknown',probs:{},confidence:0};
     // Average leaf probability distributions across all trees

@@ -565,7 +565,10 @@ async function startTrain(){
       addLog(`[ml] Training challenger (${trainX.length} samples, ${FEATURE_COUNT} features)...`);
       await new Promise(r=>setTimeout(r,10));
       const challenger=new DecisionForest();
-      challenger.train(trainX,trainY,20,10,3);
+      // trainAsync yields between trees so the main thread doesn't freeze
+      await challenger.trainAsync(trainX,trainY,20,10,3,(done,total)=>{
+        if(!continuous)$('tBar').style.width=(((iter-1)/maxIter)+(done/total/maxIter))*100+'%';
+      });
       addLog(`[ml] Trained on ${trainX.length} samples (20 trees, depth 10), OOB: ${(challenger.oobAccuracy*100).toFixed(1)}%`);
       await DataStore.saveWithTexts(freshX,freshY,freshTexts,{iteration:iter});
       const cbt={};for(let i=0;i<freshX.length;i++){if(!cbt[freshY[i]])cbt[freshY[i]]=[];cbt[freshY[i]].push(freshX[i]);}
