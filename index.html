@@ -43,7 +43,7 @@
   <h2>Encrypt &amp; Encode</h2>
   <p class="sub">Encrypt plaintext with ciphers or encode it in different formats.</p>
   <div class="sec"><div class="st">CIPHERS</div>
-    <div class="row" id="cBtns"><button class="bs on" onclick="selC('caesar',this)">CAESAR</button><button class="bs" onclick="selC('rot13',this)">ROT13</button><button class="bs" onclick="selC('vigenere',this)">VIGENÈRE</button><button class="bs" onclick="selC('vigenere_autokey',this)">AUTOKEY</button><button class="bs" onclick="selC('atbash',this)">ATBASH</button><button class="bs" onclick="selC('affine',this)">AFFINE</button><button class="bs" onclick="selC('substitution',this)">SUBSTITUTION</button><button class="bs" onclick="selC('beaufort',this)">BEAUFORT</button><button class="bs" onclick="selC('porta',this)">PORTA</button><button class="bs" onclick="selC('playfair',this)">PLAYFAIR</button><button class="bs" onclick="selC('bifid',this)">BIFID</button><button class="bs" onclick="selC('columnar',this)">COLUMNAR</button><button class="bs" onclick="selC('rail_fence',this)">RAIL FENCE</button><button class="bs" onclick="selC('reverse',this)">REVERSE</button><button class="bs" onclick="selC('scytale',this)">SCYTALE</button><button class="bs" onclick="selC('route_cipher',this)">ROUTE</button><button class="bs" onclick="selC('rot47',this)">ROT47</button><button class="bs" onclick="selC('xor',this)">XOR</button><button class="bs" onclick="selC('rc4',this)">RC4</button><button class="bs" onclick="selC('enigma',this)">ENIGMA</button><button class="bs" onclick="selC('word_sub',this)">WORD SUB</button><button class="bs" onclick="selC('hex_shuffle',this)">HEX SHUFFLE</button></div>
+    <div class="row" id="cBtns"><button class="bs on" onclick="selC('caesar',this)">CAESAR</button><button class="bs" onclick="selC('rot13',this)">ROT13</button><button class="bs" onclick="selC('vigenere',this)">VIGENÈRE</button><button class="bs" onclick="selC('vigenere_autokey',this)">AUTOKEY</button><button class="bs" onclick="selC('atbash',this)">ATBASH</button><button class="bs" onclick="selC('affine',this)">AFFINE</button><button class="bs" onclick="selC('substitution',this)">SUBSTITUTION</button><button class="bs" onclick="selC('beaufort',this)">BEAUFORT</button><button class="bs" onclick="selC('porta',this)">PORTA</button><button class="bs" onclick="selC('playfair',this)">PLAYFAIR</button><button class="bs" onclick="selC('bifid',this)">BIFID</button><button class="bs" onclick="selC('columnar',this)">COLUMNAR</button><button class="bs" onclick="selC('rail_fence',this)">RAIL FENCE</button><button class="bs" onclick="selC('reverse',this)">REVERSE</button><button class="bs" onclick="selC('scytale',this)">SCYTALE</button><button class="bs" onclick="selC('route_cipher',this)">ROUTE</button><button class="bs" onclick="selC('rot47',this)">ROT47</button><button class="bs" onclick="selC('xor',this)">XOR</button><button class="bs" onclick="selC('rc4',this)">RC4</button><button class="bs" onclick="selC('enigma',this)">ENIGMA</button><button class="bs" onclick="selC('hex_shuffle',this)">HEX SHUFFLE</button></div>
     <div class="st" style="margin-top:16px">ENCODINGS</div>
     <div class="row" id="eBtns"><button class="bs" onclick="selC('binary',this)">BINARY</button><button class="bs" onclick="selC('hex',this)">HEX</button><button class="bs" onclick="selC('base64',this)">BASE64</button><button class="bs" onclick="selC('base32',this)">BASE32</button><button class="bs" onclick="selC('base58',this)">BASE58</button><button class="bs" onclick="selC('ascii85',this)">ASCII85</button><button class="bs" onclick="selC('morse',this)">MORSE</button><button class="bs" onclick="selC('octal',this)">OCTAL</button><button class="bs" onclick="selC('decimal',this)">DECIMAL</button><button class="bs" onclick="selC('url',this)">URL</button><button class="bs" onclick="selC('a1z26',this)">A1Z26</button><button class="bs" onclick="selC('html_entities',this)">HTML ENT</button><button class="bs" onclick="selC('polybius',this)">POLYBIUS</button><button class="bs" onclick="selC('adfgvx',this)">ADFGVX</button><button class="bs" onclick="selC('tap_code',this)">TAP CODE</button><button class="bs" onclick="selC('phone_keypad',this)">PHONE</button><button class="bs" onclick="selC('nato_phonetic',this)">NATO</button><button class="bs" onclick="selC('bacon',this)">BACON</button><button class="bs" onclick="selC('uuencode',this)">UUENCODE</button><button class="bs" onclick="selC('multi_layer',this)">MULTI-LAYER</button></div>
   </div>
@@ -61,7 +61,10 @@
   <p class="sub">Auto-solve challenges, chain decode operations, and extract flags from encoded data.</p>
   <div class="sec"><div class="st">INPUT</div>
     <textarea id="ctfInput" rows="5" placeholder="Paste a CTF challenge string, encoded flag, or obfuscated data..."></textarea>
-    <button class="btn bp" onclick="ctfAutoSolve()">AUTO-SOLVE (try everything)</button>
+    <div class="row">
+      <button class="btn bp" onclick="runRecipe()">RUN LOADED STEPS</button>
+      <button class="btn bp" onclick="ctfAutoSolve()">RUN STEPS, THEN AUTO-SOLVE</button>
+    </div>
   </div>
   <div id="ctfAutoOut"></div>
   <div class="sec"><div class="st">RECIPE BUILDER</div>
@@ -102,7 +105,7 @@
     <div class="sc"><div class="sn" id="tsS">IDLE</div><div class="sl">STATUS</div></div>
     <div class="sc bl"><div class="sn" id="tsI">0</div><div class="sl">ITERATION</div></div>
     <div class="sc or"><div class="sn" id="tsA">—</div><div class="sl">LATEST ACCURACY</div></div>
-    <div class="sc tl"><div class="sn" id="tsT">0</div><div class="sl">EVAL TESTS (ALL TIME)</div></div>
+    <div class="sc tl"><div class="sn" id="tsT">0</div><div class="sl">TRAINING SAMPLES</div></div>
   </div>
   <div class="sec"><div class="st">CONTROLS</div>
     <div class="g2">
@@ -115,6 +118,7 @@
     <div class="row" style="margin-top:12px">
       <button class="btn bp" id="bStart" onclick="startTrain()" style="flex:1">START ML TRAINING</button>
       <button class="btn bp" id="bStop" onclick="stopTrain()" style="flex:0 0 160px;border-color:rgba(255,92,92,.35);color:var(--red);display:none">STOP</button>
+      <button class="btn bp" id="bEval" onclick="runEval()" style="flex:0 0 160px;border-color:rgba(0,200,150,.35);color:var(--teal)">RUN EVAL</button>
     </div>
     <div class="pbar"><div class="pfill" id="tBar" style="width:0"></div></div>
   </div>
@@ -129,7 +133,7 @@
   <div class="g4">
     <div class="sc"><div class="sn" id="kbT">—</div><div class="sl">CIPHER TYPES</div></div>
     <div class="sc bl"><div class="sn" id="kbD">—</div><div class="sl">DISCOVERIES</div></div>
-    <div class="sc or"><div class="sn" id="kbTe">—</div><div class="sl">EVAL TESTS (ALL TIME)</div></div>
+    <div class="sc or"><div class="sn" id="kbTe">—</div><div class="sl">TRAINING SAMPLES</div></div>
     <div class="sc tl"><div class="sn" id="kbC">—</div><div class="sl">CORRECTLY CLASSIFIED</div></div>
   </div>
   <div class="sec"><div class="st">CIPHER TYPES</div><div class="g3" id="kbG"></div></div>
@@ -151,7 +155,7 @@
     <div class="sc bl"><div class="sn" id="mlOOB">—</div><div class="sl">OOB ACCURACY</div></div>
   </div>
   <div class="sec"><div class="st">MODEL MANAGEMENT</div>
-    <div class="row"><button class="bs" onclick="exportModel()">EXPORT MODEL (JSON)</button><button class="bs" onclick="$('mlImpFile').click()">IMPORT MODEL</button><input type="file" id="mlImpFile" accept=".json" style="display:none" onchange="importModel(this)"><button class="bs" style="border-color:rgba(255,92,92,.3);color:var(--red)" onclick="if(confirm('Reset model and all learning data?')){ModelStore.wipeAll();mlModel=new DecisionForest();ConfusionTracker.reset();CalibrationTracker.reset();CentroidStore.reset();DataStore.clear().then(()=>renderML());}">RESET ALL</button></div>
+    <div class="row"><button class="bs" onclick="exportData()">EXPORT DATA & MODEL (JSON)</button><button class="bs" onclick="$('mlImpFile').click()">IMPORT DATA & MODEL</button><input type="file" id="mlImpFile" accept=".json" style="display:none" onchange="importData(this)"><button class="bs" style="border-color:rgba(255,92,92,.3);color:var(--red)" onclick="if(confirm('Reset model and all learning data?')){ModelStore.wipeAll().then(()=>{mlModel=new DecisionForest();Promise.all([ConfusionTracker.reset(),CalibrationTracker.reset(),CentroidStore.reset(),DataStore.clear()]).then(()=>renderML())});}">RESET ALL</button></div>
   </div>
   <div class="sec"><div class="st">FEATURE IMPORTANCES</div><div id="mlImp"><p style="color:var(--dim);font-size:.8rem">Train the model to see feature importances.</p></div></div>
   <div class="sec"><div class="st">ACCURACY HISTORY</div><div id="mlHistory"><p style="color:var(--dim);font-size:.8rem">Train the model to see accuracy progression over time.</p></div></div>
@@ -175,7 +179,7 @@
 <script src="js/encoders.js?v=3"></script>
 <script src="js/ml.js?v=3"></script>
 <script src="js/storage.js?v=3"></script>
-<script>ModelStore.load(mlModel);</script>
+<script>ModelStore.load(mlModel).then(loaded => { if (loaded) console.log('[CipherLab] Model loaded from OPFS'); });</script>
 <script src="js/kb.js?v=3"></script>
 <script src="js/crackers.js?v=3"></script>
 <script src="js/cyber.js?v=3"></script>

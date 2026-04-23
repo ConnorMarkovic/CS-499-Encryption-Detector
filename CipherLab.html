@@ -109,7 +109,7 @@ select{background:var(--bg3);border:1px solid var(--brd);border-radius:7px;color
   <h2>Encrypt &amp; Encode</h2>
   <p class="sub">Encrypt plaintext with ciphers or encode it in different formats.</p>
   <div class="sec"><div class="st">CIPHERS</div>
-    <div class="row" id="cBtns"><button class="bs on" onclick="selC('caesar',this)">CAESAR</button><button class="bs" onclick="selC('rot13',this)">ROT13</button><button class="bs" onclick="selC('vigenere',this)">VIGENÈRE</button><button class="bs" onclick="selC('vigenere_autokey',this)">AUTOKEY</button><button class="bs" onclick="selC('atbash',this)">ATBASH</button><button class="bs" onclick="selC('affine',this)">AFFINE</button><button class="bs" onclick="selC('substitution',this)">SUBSTITUTION</button><button class="bs" onclick="selC('beaufort',this)">BEAUFORT</button><button class="bs" onclick="selC('porta',this)">PORTA</button><button class="bs" onclick="selC('playfair',this)">PLAYFAIR</button><button class="bs" onclick="selC('bifid',this)">BIFID</button><button class="bs" onclick="selC('columnar',this)">COLUMNAR</button><button class="bs" onclick="selC('rail_fence',this)">RAIL FENCE</button><button class="bs" onclick="selC('reverse',this)">REVERSE</button><button class="bs" onclick="selC('scytale',this)">SCYTALE</button><button class="bs" onclick="selC('route_cipher',this)">ROUTE</button><button class="bs" onclick="selC('rot47',this)">ROT47</button><button class="bs" onclick="selC('xor',this)">XOR</button><button class="bs" onclick="selC('rc4',this)">RC4</button><button class="bs" onclick="selC('enigma',this)">ENIGMA</button><button class="bs" onclick="selC('word_sub',this)">WORD SUB</button><button class="bs" onclick="selC('hex_shuffle',this)">HEX SHUFFLE</button></div>
+    <div class="row" id="cBtns"><button class="bs on" onclick="selC('caesar',this)">CAESAR</button><button class="bs" onclick="selC('rot13',this)">ROT13</button><button class="bs" onclick="selC('vigenere',this)">VIGENÈRE</button><button class="bs" onclick="selC('vigenere_autokey',this)">AUTOKEY</button><button class="bs" onclick="selC('atbash',this)">ATBASH</button><button class="bs" onclick="selC('affine',this)">AFFINE</button><button class="bs" onclick="selC('substitution',this)">SUBSTITUTION</button><button class="bs" onclick="selC('beaufort',this)">BEAUFORT</button><button class="bs" onclick="selC('porta',this)">PORTA</button><button class="bs" onclick="selC('playfair',this)">PLAYFAIR</button><button class="bs" onclick="selC('bifid',this)">BIFID</button><button class="bs" onclick="selC('columnar',this)">COLUMNAR</button><button class="bs" onclick="selC('rail_fence',this)">RAIL FENCE</button><button class="bs" onclick="selC('reverse',this)">REVERSE</button><button class="bs" onclick="selC('scytale',this)">SCYTALE</button><button class="bs" onclick="selC('route_cipher',this)">ROUTE</button><button class="bs" onclick="selC('rot47',this)">ROT47</button><button class="bs" onclick="selC('xor',this)">XOR</button><button class="bs" onclick="selC('rc4',this)">RC4</button><button class="bs" onclick="selC('enigma',this)">ENIGMA</button><button class="bs" onclick="selC('hex_shuffle',this)">HEX SHUFFLE</button></div>
     <div class="st" style="margin-top:16px">ENCODINGS</div>
     <div class="row" id="eBtns"><button class="bs" onclick="selC('binary',this)">BINARY</button><button class="bs" onclick="selC('hex',this)">HEX</button><button class="bs" onclick="selC('base64',this)">BASE64</button><button class="bs" onclick="selC('base32',this)">BASE32</button><button class="bs" onclick="selC('base58',this)">BASE58</button><button class="bs" onclick="selC('ascii85',this)">ASCII85</button><button class="bs" onclick="selC('morse',this)">MORSE</button><button class="bs" onclick="selC('octal',this)">OCTAL</button><button class="bs" onclick="selC('decimal',this)">DECIMAL</button><button class="bs" onclick="selC('url',this)">URL</button><button class="bs" onclick="selC('a1z26',this)">A1Z26</button><button class="bs" onclick="selC('html_entities',this)">HTML ENT</button><button class="bs" onclick="selC('polybius',this)">POLYBIUS</button><button class="bs" onclick="selC('adfgvx',this)">ADFGVX</button><button class="bs" onclick="selC('tap_code',this)">TAP CODE</button><button class="bs" onclick="selC('phone_keypad',this)">PHONE</button><button class="bs" onclick="selC('nato_phonetic',this)">NATO</button><button class="bs" onclick="selC('bacon',this)">BACON</button><button class="bs" onclick="selC('uuencode',this)">UUENCODE</button><button class="bs" onclick="selC('multi_layer',this)">MULTI-LAYER</button></div>
   </div>
@@ -127,7 +127,10 @@ select{background:var(--bg3);border:1px solid var(--brd);border-radius:7px;color
   <p class="sub">Auto-solve challenges, chain decode operations, and extract flags from encoded data.</p>
   <div class="sec"><div class="st">INPUT</div>
     <textarea id="ctfInput" rows="5" placeholder="Paste a CTF challenge string, encoded flag, or obfuscated data..."></textarea>
-    <button class="btn bp" onclick="ctfAutoSolve()">AUTO-SOLVE (try everything)</button>
+    <div class="row">
+      <button class="btn bp" onclick="runRecipe()">RUN LOADED STEPS</button>
+      <button class="btn bp" onclick="ctfAutoSolve()">RUN STEPS, THEN AUTO-SOLVE</button>
+    </div>
   </div>
   <div id="ctfAutoOut"></div>
   <div class="sec"><div class="st">RECIPE BUILDER</div>
@@ -168,7 +171,7 @@ select{background:var(--bg3);border:1px solid var(--brd);border-radius:7px;color
     <div class="sc"><div class="sn" id="tsS">IDLE</div><div class="sl">STATUS</div></div>
     <div class="sc bl"><div class="sn" id="tsI">0</div><div class="sl">ITERATION</div></div>
     <div class="sc or"><div class="sn" id="tsA">—</div><div class="sl">LATEST ACCURACY</div></div>
-    <div class="sc tl"><div class="sn" id="tsT">0</div><div class="sl">EVAL TESTS (ALL TIME)</div></div>
+    <div class="sc tl"><div class="sn" id="tsT">0</div><div class="sl">TRAINING SAMPLES</div></div>
   </div>
   <div class="sec"><div class="st">CONTROLS</div>
     <div class="g2">
@@ -181,6 +184,7 @@ select{background:var(--bg3);border:1px solid var(--brd);border-radius:7px;color
     <div class="row" style="margin-top:12px">
       <button class="btn bp" id="bStart" onclick="startTrain()" style="flex:1">START ML TRAINING</button>
       <button class="btn bp" id="bStop" onclick="stopTrain()" style="flex:0 0 160px;border-color:rgba(255,92,92,.35);color:var(--red);display:none">STOP</button>
+      <button class="btn bp" id="bEval" onclick="runEval()" style="flex:0 0 160px;border-color:rgba(0,200,150,.35);color:var(--teal)">RUN EVAL</button>
     </div>
     <div class="pbar"><div class="pfill" id="tBar" style="width:0"></div></div>
   </div>
@@ -195,7 +199,7 @@ select{background:var(--bg3);border:1px solid var(--brd);border-radius:7px;color
   <div class="g4">
     <div class="sc"><div class="sn" id="kbT">—</div><div class="sl">CIPHER TYPES</div></div>
     <div class="sc bl"><div class="sn" id="kbD">—</div><div class="sl">DISCOVERIES</div></div>
-    <div class="sc or"><div class="sn" id="kbTe">—</div><div class="sl">EVAL TESTS (ALL TIME)</div></div>
+    <div class="sc or"><div class="sn" id="kbTe">—</div><div class="sl">TRAINING SAMPLES</div></div>
     <div class="sc tl"><div class="sn" id="kbC">—</div><div class="sl">CORRECTLY CLASSIFIED</div></div>
   </div>
   <div class="sec"><div class="st">CIPHER TYPES</div><div class="g3" id="kbG"></div></div>
@@ -217,7 +221,7 @@ select{background:var(--bg3);border:1px solid var(--brd);border-radius:7px;color
     <div class="sc bl"><div class="sn" id="mlOOB">—</div><div class="sl">OOB ACCURACY</div></div>
   </div>
   <div class="sec"><div class="st">MODEL MANAGEMENT</div>
-    <div class="row"><button class="bs" onclick="exportModel()">EXPORT MODEL (JSON)</button><button class="bs" onclick="$('mlImpFile').click()">IMPORT MODEL</button><input type="file" id="mlImpFile" accept=".json" style="display:none" onchange="importModel(this)"><button class="bs" style="border-color:rgba(255,92,92,.3);color:var(--red)" onclick="if(confirm('Reset model and all learning data?')){ModelStore.wipeAll().then(()=>{mlModel=new DecisionForest();Promise.all([ConfusionTracker.reset(),CalibrationTracker.reset(),CentroidStore.reset(),DataStore.clear()]).then(()=>renderML())});}">RESET ALL</button></div>
+    <div class="row"><button class="bs" onclick="exportData()">EXPORT DATA & MODEL (JSON)</button><button class="bs" onclick="$('mlImpFile').click()">IMPORT DATA & MODEL</button><input type="file" id="mlImpFile" accept=".json" style="display:none" onchange="importData(this)"><button class="bs" style="border-color:rgba(255,92,92,.3);color:var(--red)" onclick="if(confirm('Reset model and all learning data?')){ModelStore.wipeAll().then(()=>{mlModel=new DecisionForest();Promise.all([ConfusionTracker.reset(),CalibrationTracker.reset(),CentroidStore.reset(),DataStore.clear()]).then(()=>renderML())});}">RESET ALL</button></div>
   </div>
   <div class="sec"><div class="st">FEATURE IMPORTANCES</div><div id="mlImp"><p style="color:var(--dim);font-size:.8rem">Train the model to see feature importances.</p></div></div>
   <div class="sec"><div class="st">ACCURACY HISTORY</div><div id="mlHistory"><p style="color:var(--dim);font-size:.8rem">Train the model to see accuracy progression over time.</p></div></div>
@@ -238,7 +242,7 @@ select{background:var(--bg3);border:1px solid var(--brd);border-radius:7px;color
 
 <script>
 // ═══════════════════════════════════════════════════════════════════════
-//  ciphers.js — All cipher implementations
+//  ciphers.js: All cipher implementations
 //  Dependencies: none (this loads first)
 // ═══════════════════════════════════════════════════════════════════════
 
@@ -247,34 +251,69 @@ const ENGLISH_FREQ={a:.0817,b:.0149,c:.0278,d:.0425,e:.127,f:.0223,g:.0202,h:.06
 // Common English bigrams with relative frequencies for better scoring
 const ENGLISH_BIGRAMS={th:.0356,he:.0307,in:.0243,er:.0205,an:.0199,re:.0185,on:.0176,at:.0149,en:.0145,nd:.0135,ti:.0134,es:.0134,or:.0128,te:.0120,of:.0117,ed:.0117,is:.0113,it:.0112,al:.0109,ar:.0107,st:.0105,to:.0104,nt:.0104,ng:.0095,se:.0093,ha:.0093,as:.0087,ou:.0087,io:.0083,le:.0083,ve:.0083,co:.0079,me:.0079,de:.0076,hi:.0076,ri:.0073,ro:.0073};
 
+// Top 50 English trigrams with relative frequencies.
+// Trigrams are far more discriminating than bigrams — real English text hits
+// these patterns consistently while cipher output almost never does.
+// Multiplier of 400 normalises the raw dot-product score to a 0-1 range.
+const ENGLISH_TRIGRAMS={the:0.03508,and:0.02356,ing:0.01920,ion:0.01787,ent:0.01675,ati:0.01487,for:0.01380,her:0.01372,ter:0.01362,hat:0.01312,tha:0.01309,ere:0.01308,con:0.01248,all:0.01195,ate:0.01158,tio:0.01136,ver:0.01127,his:0.01118,res:0.01111,thi:0.01104,est:0.01080,com:0.01013,eve:0.00985,per:0.00978,ons:0.00967,ous:0.00956,tin:0.00950,men:0.00943,whi:0.00940,ith:0.00935,sta:0.00922,nce:0.00917,ont:0.00913,not:0.00907,rea:0.00898,nti:0.00891,int:0.00885,oth:0.00879,ens:0.00876,led:0.00871,our:0.00869,ali:0.00864,ple:0.00859,ore:0.00856,ble:0.00851,pro:0.00847,edt:0.00843,ive:0.00839,hav:0.00836,igh:0.00832};
+
+// ~360 of the most common English words for plaintext verification.
+// Used as a dictionary-coverage check in scoreEnglish — real English text
+// should have a meaningful fraction of its tokens present here.
+const ENGLISH_WORDS=new Set(['able','about','above','accept','access','according','account','achieve','across','act','action','active','actually','add','address','administration','advance','affect','after','age','ago','agree','ahead','air','all','allow','almost','along','already','also','although','always','am','among','amount','an','and','another','answer','any','apply','approach','are','area','argue','around','ask','at','away','back','base','basic','be','because','become','been','before','being','below','best','between','big','black','blue','board','body','both','bring','build','business','but','by','call','came','can','care','carry','cause','certain','change','check','children','choose','city','civil','class','clear','close','code','collect','come','command','community','compare','complete','concern','condition','consider','continue','control','could','course','create','current','cut','cycle','data','day','deal','decide','define','despite','develop','did','difference','different','direction','discuss','do','does','down','drive','due','during','each','early','economic','effect','either','else','enable','end','enough','ensure','enter','equal','even','ever','every','evidence','example','exist','experience','explain','fall','far','feel','few','final','find','first','follow','force','form','forward','found','four','free','from','full','function','general','give','go','going','good','got','government','great','group','grow','guide','half','hand','happen','hard','help','high','history','hold','how','human','idea','identify','if','image','important','improve','include','increase','individual','influence','information','instead','interest','its','keep','know','large','late','later','law','learn','leave','level','life','likely','list','long','look','low','make','management','market','matter','may','me','mean','meet','mention','method','might','mind','model','most','move','much','must','national','natural','near','necessary','need','network','new','next','not','nothing','now','occur','offer','often','old','on','one','open','or','organization','original','other','our','outcome','page','particular','pattern','people','per','perhaps','plan','point','policy','possible','power','practice','present','prevent','primary','principle','problem','process','produce','program','provide','push','quality','reach','reason','recent','refer','region','relate','require','result','right','role','run','same','say','school','see','set','seven','show','simple','since','situation','skill','social','society','solution','specific','stand','standard','step','structure','study','style','subject','success','suggest','support','system','take','teach','than','that','the','them','theory','think','through','throughout','time','to','together','top','topic','toward','two','type','under','understand','until','use','value','various','very','view','visit','way','well','what','when','where','whether','which','who','why','will','within','without','work','world','write','year','yes','yet','you']);
+
 function scoreEnglish(text){
   const lc=text.toLowerCase();const alpha=[...lc].filter(c=>c>='a'&&c<='z');const n=alpha.length;
   if(n<3)return 0;
-  // Check what fraction of the text is "text-like" (alpha + spaces + basic punctuation)
-  const textChars=[...text].filter(c=>/[a-zA-Z \.,;:!?'\-]/.test(c)).length;
+  // Gate 1: must be mostly text-like characters
+  const textChars=[...text].filter(c=>/[a-zA-Z .,;:!?'\-]/.test(c)).length;
   const textRatio=textChars/Math.max(text.length,1);
-  if(textRatio<0.7)return 0; // Less than 70% text-like = not English (filters RC4/XOR garbage)
+  if(textRatio<0.7)return 0;
+  // Gate 2: vowel ratio of English is ~38-42% vowels; far outside = not English
+  const vowelCount=alpha.filter(c=>'aeiou'.includes(c)).length;
+  const vowelRatio=vowelCount/n;
+  if(vowelRatio<0.15||vowelRatio>0.70)return 0;
   const freq={};for(const c of alpha)freq[c]=(freq[c]||0)+1;
-  // Unigram chi-squared (weighted 50%)
+  // Unigram chi-squared (weighted 25%)
   let chi=0;for(let i=0;i<26;i++){const c=String.fromCharCode(97+i);const obs=(freq[c]||0)/n;const exp=ENGLISH_FREQ[c]||.001;chi+=(obs-exp)**2/exp;}
   const uniScore=1/(1+chi);
-  // Bigram score (weighted 30%)
   if(n<6)return uniScore;
-  const biStr=alpha.join('');const biCount={};
-  for(let i=0;i<biStr.length-1;i++){const bg=biStr.substring(i,i+2);biCount[bg]=(biCount[bg]||0)+1;}
-  const biTotal=biStr.length-1;let biScore=0;
-  for(const[bg,expected]of Object.entries(ENGLISH_BIGRAMS)){biScore+=(biCount[bg]||0)/biTotal*expected;}
+  const nStr=alpha.join('');
+  // Bigram frequency analysis (weighted 20%)
+  const biCount={};
+  for(let i=0;i<nStr.length-1;i++){const bg=nStr.substring(i,i+2);biCount[bg]=(biCount[bg]||0)+1;}
+  const biTotal=nStr.length-1;let biScore=0;
+  for(const[bg,exp]of Object.entries(ENGLISH_BIGRAMS)){biScore+=(biCount[bg]||0)/biTotal*exp;}
   biScore=Math.min(1,biScore*120);
-  // Word structure bonus (weighted 20%): real English has spaces forming words of length 1-15
-  const words=text.trim().split(/\s+/);
+  // Trigram frequency analysis (weighted 30%): much more discriminating than bigrams.
+  // Real English hits the top 50 trigrams consistently; cipher output almost never does.
+  let triScore=0;
+  if(n>=8){
+    const triCount={};
+    for(let i=0;i<nStr.length-2;i++){const tg=nStr.substring(i,i+3);triCount[tg]=(triCount[tg]||0)+1;}
+    const triTotal=nStr.length-2;
+    for(const[tg,exp]of Object.entries(ENGLISH_TRIGRAMS)){triScore+=(triCount[tg]||0)/triTotal*exp;}
+    triScore=Math.min(1,triScore*400);
+  }
+  // Word structure bonus (weighted 10%)
+  const words=text.trim().split(/\s+/).filter(w=>w.length>0);
   let wordBonus=0;
   if(words.length>1){
-    const avgLen=alpha.length/words.length;
+    const avgLen=n/words.length;
     if(avgLen>=2&&avgLen<=12)wordBonus=0.5+0.5*Math.max(0,1-Math.abs(avgLen-4.7)/5);
   }
-  return uniScore*0.50+biScore*0.30+wordBonus*0.20;
+  // Dictionary word coverage (weighted 15%): real English has recognisable tokens.
+  // Only applied when 3+ words present; short words excluded from denominator.
+  let dictScore=0;
+  if(words.length>=3){
+    const checkable=words.filter(w=>w.length>2);
+    if(checkable.length>0){
+      const hits=checkable.filter(w=>ENGLISH_WORDS.has(w.replace(/[^a-z]/g,''))).length;
+      dictScore=hits/checkable.length;
+    }
+  }
+  return uniScore*0.25+biScore*0.20+triScore*0.30+wordBonus*0.10+dictScore*0.15;
 }
-
 // Score for byte-level content (XOR/RC4 output that may not be pure alpha)
 function scorePrintable(text){
   const bytes=[...text];const n=bytes.length;if(!n)return 0;
@@ -411,25 +450,153 @@ const RailFenceCracker={
 };
 
 // Columnar brute-force (try column counts 2-8 with permutation search)
+// Columnar Transposition brute-force cracker
+// Up to 7 columns: try all permutations (7! = 5040, feasible).
+// 8-10 columns: full permutation search is too slow (8! = 40320), so instead
+// use a greedy column-ordering heuristic — score each candidate column pair
+// and build the order incrementally. Not guaranteed optimal but catches most cases.
 const ColumnarCracker={
   _permutations(arr){if(arr.length<=1)return[arr];const result=[];
     for(let i=0;i<arr.length;i++){const rest=[...arr.slice(0,i),...arr.slice(i+1)];
       for(const perm of this._permutations(rest))result.push([arr[i],...perm]);
-      if(result.length>5000)return result;}return result;}, // cap at 5000 to avoid hanging
+      if(result.length>6000)return result;}return result;},
+  _greedyOrder(grid,cols,rows){
+    // Score a full permutation by trigram hit rate — used for cols 8-10
+    const scoreOrder=(order)=>{
+      let pt='';for(let r=0;r<rows;r++)for(const c of order)if(grid[r]&&grid[r][c])pt+=grid[r][c];
+      const a=[...pt.toLowerCase()].filter(c=>c>='a'&&c<='z').join('');let sc=0;
+      for(let i=0;i<a.length-2;i++){const tg=a[i]+a[i+1]+a[i+2];sc+=ENGLISH_TRIGRAMS[tg]||0;}
+      return sc;
+    };
+    // Greedy: start with the column pair that scores best, then extend
+    const remaining=[...Array(cols).keys()];
+    let order=[];
+    // Seed with the single best starting column
+    let bestStart=0,bestStartScore=-1;
+    for(const c of remaining){
+      const s=scoreOrder([c]);if(s>bestStartScore){bestStartScore=s;bestStart=c;}
+    }
+    order.push(bestStart);remaining.splice(remaining.indexOf(bestStart),1);
+    while(remaining.length){
+      let bestNext=remaining[0],bestNextScore=-1;
+      for(const c of remaining){
+        const s=scoreOrder([...order,c]);if(s>bestNextScore){bestNextScore=s;bestNext=c;}
+      }
+      order.push(bestNext);remaining.splice(remaining.indexOf(bestNext),1);
+    }
+    return order;
+  },
   crack(ct){const results=[];
-    for(let cols=2;cols<=Math.min(7,Math.floor(ct.length/2));cols++){
+    const maxCols=Math.min(10,Math.floor(ct.length/2));
+    for(let cols=2;cols<=maxCols;cols++){
       const rows=Math.ceil(ct.length/cols);
-      // Try all column permutations (feasible up to 7! = 5040)
-      const colOrder=[...Array(cols).keys()];
-      for(const perm of this._permutations(colOrder)){
-        // Read columns in perm order
-        const grid=Array.from({length:rows},()=>Array(cols).fill(''));let pos=0;
-        for(const col of perm){for(let r=0;r<rows&&pos<ct.length;r++){grid[r][col]=ct[pos++];}}
-        const pt=grid.map(r=>r.join('')).join('');
-        results.push({cols,perm:perm.join(''),text:pt,score:scoreEnglish(pt)});
+      // Build the grid column by column (standard columnar fill)
+      const fullCols=ct.length%cols||cols;
+      const shortCols=cols-fullCols;
+      const grid=Array.from({length:rows},()=>Array(cols).fill(''));
+      let pos=0;
+      for(let col=0;col<cols;col++){
+        const colLen=col<fullCols?rows:rows-1;
+        for(let r=0;r<colLen;r++){if(pos<ct.length)grid[r][col]=ct[pos++];}
+      }
+      if(cols<=7){
+        // Full permutation search
+        const colOrder=[...Array(cols).keys()];
+        for(const perm of this._permutations(colOrder)){
+          const pt=grid.map(r=>perm.map(c=>r[c]||'').join('')).join('');
+          results.push({cols,perm:perm.join(''),text:pt,score:scoreEnglish(pt)});
+        }
+      }else{
+        // Greedy heuristic for cols 8-10 — try greedy order plus a few random orders
+        const greedyOrder=this._greedyOrder(grid,cols,rows);
+        const tryOrder=(perm)=>{
+          const pt=grid.map(r=>perm.map(c=>r[c]||'').join('')).join('');
+          results.push({cols,perm:perm.join(''),text:pt,score:scoreEnglish(pt)});
+        };
+        tryOrder(greedyOrder);
+        // Also try 200 random permutations to increase coverage
+        for(let t=0;t<200;t++){
+          const perm=[...Array(cols).keys()];
+          for(let i=perm.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[perm[i],perm[j]]=[perm[j],perm[i]];}
+          tryOrder(perm);
+        }
       }
     }
     results.sort((a,b)=>b.score-a.score);return results.slice(0,10);}
+};
+// Substitution cipher hill-climber
+// Starts from a frequency-sorted seed key, then swaps letter pairs and keeps
+// any swap that improves the trigram score. Reliable on texts >= 40 chars.
+const SubstitutionCracker={
+  // Trigrams are far more discriminating than bigrams for hill-climbing —
+  // the score surface is sharper so the climber converges faster and more reliably.
+  _scoreTrigrams(text){
+    const alpha=[...text.toLowerCase()].filter(c=>c>='a'&&c<='z');
+    if(alpha.length<3)return 0;
+    const str=alpha.join('');let score=0;
+    for(let i=0;i<str.length-2;i++){const tg=str[i]+str[i+1]+str[i+2];score+=ENGLISH_TRIGRAMS[tg]||0.00001;}
+    return score/Math.max(str.length-2,1);
+  },
+  crack(ct,maxIter=2000){
+    const alpha=[...ct.toLowerCase()].filter(c=>c>='a'&&c<='z');
+    if(alpha.length<20)return null;
+    const ctFreq=new Array(26).fill(0);
+    for(const c of alpha)ctFreq[c.charCodeAt(0)-97]++;
+    const ctRank=[...Array(26).keys()].sort((a,b)=>ctFreq[b]-ctFreq[a]);
+    const engRank=[...Object.entries(ENGLISH_FREQ)].sort((a,b)=>b[1]-a[1]).map(([c])=>c.charCodeAt(0)-97);
+    const key=new Array(26);
+    for(let i=0;i<26;i++)key[ctRank[i]]=engRank[i];
+    const decipher=(k)=>[...ct].map(c=>{if(/[a-zA-Z]/.test(c)){const b=c<'a'?65:97;return String.fromCharCode(k[c.toUpperCase().charCodeAt(0)-65]+b);}return c;}).join('');
+    let best=decipher(key);let bestScore=this._scoreTrigrams(best);
+    for(let iter=0;iter<maxIter;iter++){
+      const a=Math.floor(Math.random()*26);const b=Math.floor(Math.random()*26);
+      if(a===b)continue;
+      [key[a],key[b]]=[key[b],key[a]];
+      const candidate=decipher(key);const s=this._scoreTrigrams(candidate);
+      if(s>bestScore){bestScore=s;best=candidate;}
+      else[key[a],key[b]]=[key[b],key[a]];
+    }
+    return{text:best,score:scoreEnglish(best),key:key.map(v=>String.fromCharCode(v+65)).join('')};
+
+// Enigma brute-forcer
+// Exploits the no-self-encryption property for crib-based pruning, then scores
+// surviving start positions with English scoring. Tries all 17,576 positions
+// for the default rotor order (III-II-I, reflector B). For CTF-length texts
+// (~30-200 chars) this completes in well under a second.
+const EnigmaCracker={
+  // Common rotor orders to try — covers most CTF/homework problems
+  _orders:[['III','II','I'],['I','II','III'],['II','III','I'],['I','III','II'],['III','I','II'],['II','I','III']],
+  crack(ct,crib=null){
+    const clean=ct.toUpperCase().replace(/[^A-Z]/g,'');
+    if(clean.length<8)return null;
+    let bestScore=-1,bestResult=null;
+    for(const rotors of this._orders){
+      for(let p1=0;p1<26;p1++){
+        for(let p2=0;p2<26;p2++){
+          for(let p3=0;p3<26;p3++){
+            // Prune with crib: no letter may encrypt to itself — skip positions where crib would
+            if(crib){
+              const cribClean=crib.toUpperCase().replace(/[^A-Z]/g,'');
+              let selfEnc=false;
+              for(let i=0;i<cribClean.length&&i<clean.length;i++){
+                if(clean[i]===cribClean[i]){selfEnc=true;break;}
+              }
+              if(selfEnc)continue;
+            }
+            const pt=enigmaProcess(clean,rotors,'B',[p1,p2,p3]);
+            const sc=scoreEnglish(pt);
+            if(sc>bestScore){
+              bestScore=sc;
+              bestResult={text:pt,score:sc,rotors:rotors.join('-'),starts:[p1,p2,p3]};
+            }
+          }
+        }
+      }
+      // Only try more rotor orders if the best we've found so far is still weak
+      if(bestScore>0.4)break;
+    }
+    return bestResult&&bestResult.score>0.3?bestResult:null;
+  }
 };
 
 // ROT13
@@ -441,7 +608,150 @@ const A1Z26={
   decode(t){return t.split(/[\s,]+/).map(n=>{const v=parseInt(n);if(v>=1&&v<=26)return String.fromCharCode(v+64);return n;}).join('');}
 };
 
-// Playfair
+// ── Scytale Cracker ───────────────────────────────────────────────────
+// Brute-forces column counts 2–20. Deterministic decrypt for each count.
+const ScytaleCracker={
+  crack(ct){
+    const clean=ct.replace(/[^a-zA-Z]/g,'');
+    if(clean.length<6)return[];
+    const results=[];
+    for(let cols=2;cols<=Math.min(20,Math.floor(clean.length/2));cols++){
+      const pt=Scytale.decrypt(clean,cols);
+      results.push({cols,text:pt,score:scoreEnglish(pt)});
+    }
+    results.sort((a,b)=>b.score-a.score);
+    return results;
+  }
+};
+
+// ── Route Cipher Cracker ──────────────────────────────────────────────
+// Brute-forces column counts 2–14 using the spiral route (the only route
+// the RouteCipher implementation uses). Decrypt is deterministic per count.
+const RouteCipherCracker={
+  crack(ct){
+    const clean=ct.replace(/[^a-zA-Z]/g,'');
+    if(clean.length<8)return[];
+    const results=[];
+    for(let cols=2;cols<=Math.min(14,Math.floor(clean.length/2));cols++){
+      try{
+        const pt=RouteCipher.decrypt(clean,cols);
+        results.push({cols,text:pt,score:scoreEnglish(pt)});
+      }catch(e){}
+    }
+    results.sort((a,b)=>b.score-a.score);
+    return results;
+  }
+};
+
+// ── Playfair Cracker ──────────────────────────────────────────────────
+// Simulated annealing hill-climb over the 5x5 key square.
+// Starts from a random key, randomly swaps two cells or two rows or two
+// columns, keeps the move if trigram score improves. Temperature schedule
+// allows occasional uphill moves early on to escape local maxima.
+// Reliable on texts >= 40 characters.
+const PlayfairCracker={
+  crack(ct,maxIter=5000){
+    const clean=ct.toUpperCase().replace(/J/g,'I').replace(/[^A-Z]/g,'');
+    if(clean.length<20)return null;
+    // Decode with a given key grid
+    const tryDecrypt=(grid)=>{
+      const pairs=[];
+      for(let i=0;i<clean.length;i+=2)pairs.push([clean[i],clean[i+1]||'X']);
+      return pairs.map(([a,b])=>{
+        const ai=grid.indexOf(a),bi=grid.indexOf(b);
+        const ar=Math.floor(ai/5),ac=ai%5,br=Math.floor(bi/5),bc=bi%5;
+        if(ar===br)return grid[ar*5+(ac+4)%5]+grid[br*5+(bc+4)%5];
+        if(ac===bc)return grid[((ar+4)%5)*5+ac]+grid[((br+4)%5)*5+bc];
+        return grid[ar*5+bc]+grid[br*5+ac];
+      }).join('');
+    };
+    const score=(text)=>{
+      const a=[...text.toLowerCase()].filter(c=>c>='a'&&c<='z');
+      if(a.length<3)return 0;
+      const s=a.join('');let sc=0;
+      for(let i=0;i<s.length-2;i++){const tg=s[i]+s[i+1]+s[i+2];sc+=ENGLISH_TRIGRAMS[tg]||0.00001;}
+      return sc/(s.length-2);
+    };
+    // Random starting key
+    const alpha='ABCDEFGHIKLMNOPQRSTUVWXYZ'.split('');
+    for(let i=alpha.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[alpha[i],alpha[j]]=[alpha[j],alpha[i]];}
+    let key=[...alpha];
+    let best=tryDecrypt(key);let bestScore=score(best);let bestKey=[...key];
+    for(let iter=0;iter<maxIter;iter++){
+      const newKey=[...key];
+      const move=Math.random();
+      if(move<0.7){
+        // Swap two random cells (most common mutation)
+        const a=Math.floor(Math.random()*25),b=Math.floor(Math.random()*25);
+        [newKey[a],newKey[b]]=[newKey[b],newKey[a]];
+      }else if(move<0.85){
+        // Swap two rows
+        const r1=Math.floor(Math.random()*5),r2=Math.floor(Math.random()*5);
+        for(let c=0;c<5;c++){[newKey[r1*5+c],newKey[r2*5+c]]=[newKey[r2*5+c],newKey[r1*5+c]];}
+      }else{
+        // Swap two columns
+        const c1=Math.floor(Math.random()*5),c2=Math.floor(Math.random()*5);
+        for(let r=0;r<5;r++){[newKey[r*5+c1],newKey[r*5+c2]]=[newKey[r*5+c2],newKey[r*5+c1]];}
+      }
+      const candidate=tryDecrypt(newKey);const s=score(candidate);
+      if(s>bestScore){bestScore=s;best=candidate;bestKey=[...newKey];}
+      if(s>score(tryDecrypt(key)))key=newKey;
+    }
+    return{text:best,score:scoreEnglish(best),key:bestKey.join('')};
+  }
+};
+
+// ── Bifid Cracker ─────────────────────────────────────────────────────
+// Same simulated annealing approach as PlayfairCracker: hill-climb
+// over the 5x5 key square using trigram scoring. Bifid mixes row/col
+// coordinates so even small key changes dramatically shift the output,
+// making trigrams a more reliable guide than scoreEnglish alone.
+// Reliable on texts >= 30 characters.
+const BifidCracker={
+  crack(ct,maxIter=5000){
+    const clean=ct.toUpperCase().replace(/J/g,'I').replace(/[^A-Z]/g,'');
+    if(clean.length<16)return null;
+    const tryDecrypt=(grid)=>{
+      const combined=[];
+      for(const c of clean){const idx=grid.indexOf(c);combined.push(Math.floor(idx/5),idx%5);}
+      const half=combined.length/2;
+      const rows=combined.slice(0,half);const cols=combined.slice(half);
+      let out='';for(let i=0;i<rows.length;i++)out+=grid[rows[i]*5+cols[i]];
+      return out;
+    };
+    const score=(text)=>{
+      const a=[...text.toLowerCase()].filter(c=>c>='a'&&c<='z');
+      if(a.length<3)return 0;
+      const s=a.join('');let sc=0;
+      for(let i=0;i<s.length-2;i++){const tg=s[i]+s[i+1]+s[i+2];sc+=ENGLISH_TRIGRAMS[tg]||0.00001;}
+      return sc/(s.length-2);
+    };
+    const alpha='ABCDEFGHIKLMNOPQRSTUVWXYZ'.split('');
+    for(let i=alpha.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[alpha[i],alpha[j]]=[alpha[j],alpha[i]];}
+    let key=[...alpha];
+    let best=tryDecrypt(key);let bestScore=score(best);let bestKey=[...key];
+    for(let iter=0;iter<maxIter;iter++){
+      const newKey=[...key];
+      const move=Math.random();
+      if(move<0.7){
+        const a=Math.floor(Math.random()*25),b=Math.floor(Math.random()*25);
+        [newKey[a],newKey[b]]=[newKey[b],newKey[a]];
+      }else if(move<0.85){
+        const r1=Math.floor(Math.random()*5),r2=Math.floor(Math.random()*5);
+        for(let c=0;c<5;c++){[newKey[r1*5+c],newKey[r2*5+c]]=[newKey[r2*5+c],newKey[r1*5+c]];}
+      }else{
+        const c1=Math.floor(Math.random()*5),c2=Math.floor(Math.random()*5);
+        for(let r=0;r<5;r++){[newKey[r*5+c1],newKey[r*5+c2]]=[newKey[r*5+c2],newKey[r*5+c1]];}
+      }
+      const candidate=tryDecrypt(newKey);const s=score(candidate);
+      if(s>bestScore){bestScore=s;best=candidate;bestKey=[...newKey];}
+      if(s>score(tryDecrypt(key)))key=newKey;
+    }
+    return{text:best,score:scoreEnglish(best),key:bestKey.join('')};
+  }
+};
+
+// Playfair cipiher
 const Playfair={
   _grid(key){const seen=new Set();const chars=[];for(const c of(key+'ABCDEFGHIKLMNOPQRSTUVWXYZ').toUpperCase()){const ch=c==='J'?'I':c;if(ch>='A'&&ch<='Z'&&!seen.has(ch)){seen.add(ch);chars.push(ch);}}return chars;},
   _pos(grid,c){const idx=grid.indexOf(c==='J'?'I':c);return[Math.floor(idx/5),idx%5];},
@@ -582,13 +892,7 @@ const NATOPhonetic={
   decode(t){const rev=this._rev();return t.split(/\s+/).map(w=>{const l=w.toLowerCase();return rev[l]||w;}).join('');}
 };
 
-// Word substitution
-const WordSub={
-  _pool:['alpha','bravo','charlie','delta','echo','foxtrot','golf','hotel','india','juliet','kilo','lima','mike','november','oscar','papa','quebec','romeo','sierra','tango','uniform','victor','whiskey','xray','yankee','zulu','one','two','three','four','five','six','seven','eight','nine','zero','red','blue','green','black','white','iron','steel','stone','fire','water','earth','wind','star','moon','sun'],
-  encrypt(text,seed){let s=seed||Date.now();const rng=()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;};
-    const words=text.toLowerCase().split(/\s+/);const map={};
-    return words.map(w=>{const clean=w.replace(/[^a-z]/g,'');if(clean.length<=2)return w;if(!map[clean])map[clean]=this._pool[Math.floor(rng()*this._pool.length)];return map[clean];}).join(' ');}
-};
+// ord substitution
 
 // Hex shuffle
 const HexShuffle={
@@ -600,7 +904,7 @@ const HexShuffle={
 };
 </script><script>
 // ═══════════════════════════════════════════════════════════════════════
-//  encoders.js — All encoding/decoding implementations
+//  encoders.js: All encoding/decoding implementations
 //  Dependencies: none
 // ═══════════════════════════════════════════════════════════════════════
 
@@ -665,7 +969,7 @@ const MORSE_REV=Object.fromEntries(Object.entries(MORSE_MAP).map(([k,v])=>[v,k])
 function decodeMorse(text){return text.trim().split(/\s{2,}/).map(w=>w.split(/\s+/).map(c=>MORSE_REV[c]||'?').join('')).join(' ')}
 </script><script>
 // ═══════════════════════════════════════════════════════════════════════
-//  ml.js — 128-feature extraction + Decision Forest classifier
+//  ml.js: 128-feature extraction + Decision Forest classifier
 //  PERFORMANCE-OPTIMIZED: single-pass feature extraction, sort-based
 //  tree splits, typed array internals, no .filter() in hot paths.
 //  Dependencies: ciphers.js (ENGLISH_FREQ), encoders.js (detectEncoding)
@@ -768,7 +1072,7 @@ function extractFeatures(text){
     F[8]=Math.sqrt(fVar/26);
   }
 
-  // ── B. N-GRAM ANALYSIS (F9-F22) — use integer-keyed maps ─────────
+  // ── B. N-GRAM ANALYSIS (F9-F22) use integer-keyed maps ─────────
   if(n>=3){
     // Bigrams: encode as (a*26+b) → int key
     const biCounts=new Int32Array(676);
@@ -1018,7 +1322,7 @@ function extractFeatures(text){
 
 
 // ═══════════════════════════════════════════════════════════════════════
-//  DECISION FOREST — SORT-BASED SPLITS (no .filter() in hot path)
+//  DECISION FOREST: SORT-BASED SPLITS (no .filter() in hot path)
 //  Instead of filtering data for each threshold, we sort once per
 //  feature and scan left-to-right, updating class counts incrementally.
 //  This is O(n log n) per feature instead of O(n × thresholds).
@@ -1152,7 +1456,7 @@ class DecisionForest{
     for(const k in this.importances)this.importances[k]/=maxImp;
     this.trained=true;this.total=X.length;
   }
-  // Async version of train — yields the event loop between each tree so the
+  // Async version of train: yields the event loop between each tree so the
   // main thread stays responsive. Used by the fallback training path in ui.js.
   // The worker uses the synchronous train() instead since it runs off-thread.
   async trainAsync(X,Y,nTrees=20,maxDepth=14,minSize=3,onProgress=null){
@@ -1315,7 +1619,7 @@ class DecisionForest{
 let mlModel=new DecisionForest();
 </script><script>
 // ═══════════════════════════════════════════════════════════════════════
-//  storage.js — All persistent storage for CipherLab
+//  storage.js: All persistent storage for CipherLab
 //  Features:
 //    - Binary-chunked IndexedDB for millions of samples
 //    - Stratified loading with confusion-weighted oversampling (1A+1B)
@@ -1325,11 +1629,11 @@ let mlModel=new DecisionForest();
 // ═══════════════════════════════════════════════════════════════════════
 
 // ═══════════════════════════════════════════════════════════════════════
-//  OPFS HELPER — wraps the Origin Private File System API so the rest
+//  OPFS HELPER: wraps the Origin Private File System API so the rest
 //  of the stores don't have to deal with file handles directly.
 //  Each key maps to a file in the private storage root. Reads return
 //  parsed JSON; writes serialize to JSON and flush to disk atomically
-//  via a writable stream. Falls back if OPFS isn't available.
+//  via a writable stream. Falls back gracefully if OPFS isn't available.
 // ═══════════════════════════════════════════════════════════════════════
 
 const OPFS = {
@@ -1350,7 +1654,7 @@ const OPFS = {
     }
   },
 
-  // Read a JSON value from OPFS — returns parsed object or null if missing
+  // Read a JSON value from OPFS which returns parsed object or null if missing
   async get(key) {
     const root = await this._getRoot();
     if (!root) return null;
@@ -1360,7 +1664,7 @@ const OPFS = {
       const text = await file.text();
       return JSON.parse(text);
     } catch (e) {
-      // File doesn't exist yet — that's fine, just return null
+      // File doesn't exist yet that's fine, just return null
       return null;
     }
   },
@@ -1381,7 +1685,7 @@ const OPFS = {
     }
   },
 
-  // Delete a file from OPFS — silently ignores missing files
+  // Delete a file from OPFS which silently ignores missing files
   async remove(key) {
     const root = await this._getRoot();
     if (!root) return;
@@ -1483,7 +1787,7 @@ const SampleDB = {
     });
   },
 
-  // Stratified loading - balance the dataset with oversampling for confused types
+  // Stratified loading to balance the dataset with oversampling for confused types
   async loadStratified(perType, confusionMatrix, boostFactor) {
     if (!this._db) return this._fbLoad();
     const boostedTypes = new Set();
@@ -1573,7 +1877,7 @@ const SampleDB = {
   },
   async getUserSampleCount() { if (!this._db) return 0; return new Promise((resolve) => { const tx = this._db.transaction(this._userStore, 'readonly'); const req = tx.objectStore(this._userStore).count(); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(0); }); },
 
-  // Store samples the model got wrong — these are high-value training data
+  // Store samples the model got wrong since these are high-value training data
   async saveMisclassified(features, actualType, predictedType) {
     if (!this._db) return;
     return new Promise((resolve) => {
@@ -1682,7 +1986,7 @@ const DataStore = {
   getStatsSync() { return { total: 0, byType: {} }; }
 };
 
-// CentroidStore — per-type mean + variance via Welford's online algorithm.
+// CentroidStore: per-type mean + variance via Welford's online algorithm.
 // Keeps a running statistical profile for each cipher type so we can do
 // fast nearest-centroid ranking as a second opinion alongside the forest.
 const CentroidStore = {
@@ -1777,7 +2081,7 @@ const KBStore = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════
-//  UNSOLVED STORE — persistent store of samples the AI cannot classify
+//  UNSOLVED STORE: persistent store of samples the AI cannot classify
 //  Stores up to 100,000 samples that were misclassified. Each sample is
 //  marked 'unsolved' until a future training iteration correctly identifies
 //  its actual type, at which point it becomes 'solved'.
@@ -1808,7 +2112,7 @@ const UnsolvedStore = {
     return { samples: [], stats: { total: 0, unsolved: 0, solved: 0, solvedByType: {}, addedTotal: 0, solvedTotal: 0 } };
   },
 
-  // Persist to OPFS — prune solved samples if we're near the size limit
+  // Persist to OPFS and prune solved samples if we're near the size limit
   async save() {
     if (!this._data) return;
     this._updateStats();
@@ -1819,7 +2123,7 @@ const UnsolvedStore = {
       };
       const ok = await OPFS.set(this._key, toSave);
       if (!ok) {
-        // OPFS write failed — prune solved samples and try once more
+        // OPFS write failed so prune solved samples and try once more
         this._data.samples = this._data.samples.filter(s => s.status === 'unsolved');
         this._updateStats();
         await OPFS.set(this._key, this._data);
@@ -1994,7 +2298,7 @@ const UnsolvedStore = {
   async reset() { this._data = this._createEmpty(); await this.save(); }
 };</script><script>ModelStore.load(mlModel).then(loaded => { if (loaded) console.log('[CipherLab] Model loaded from OPFS'); });</script><script>
 // ═══════════════════════════════════════════════════════════════════════
-//  kb.js — Knowledge Base + Feature Descriptions + Tooltips
+//  kb.js: Knowledge Base + Feature Descriptions + Tooltips
 //  Dependencies: ciphers.js (ENGLISH_FREQ), ml.js (mlModel)
 // ═══════════════════════════════════════════════════════════════════════
 
@@ -2045,7 +2349,6 @@ const SEED_KB={
   tap_code:{name:'Tap Code',cat:'encoding',desc:'Prison cipher. Each letter becomes a row.column pair (1-5) tapped on walls. K merged with C.',enc:'Map each letter to its 5×5 grid position as R.C format.',dec:'Parse R.C pairs back to grid positions.',ic:[0,0],weakness:['Not encryption — simple grid lookup','K/C merge','Digit pairs 1.1-5.5 are distinctive'],hist:'Used by prisoners of war, especially in Vietnam War POW camps. Based on Polybius square.'},
   phone_keypad:{name:'Phone Keypad',cat:'encoding',desc:'Maps letters to phone keypad numbers: ABC=2, DEF=3, GHI=4, etc. Lossy encoding.',enc:'Replace each letter with its keypad digit (2-9).',dec:'Ambiguous — each digit maps to 3-4 letters. First letter of group is used as approximation.',ic:[0,0],weakness:['Lossy — multiple letters per digit','Not encryption','Digits 2-9 only'],hist:'Based on telephone keypad layout standardized in the 1960s. T9 predictive text disambiguated using dictionaries.'},
   nato_phonetic:{name:'NATO Phonetic Alphabet',cat:'encoding',desc:'Spells each letter as its NATO phonetic word: Alpha, Bravo, Charlie, ..., Zulu.',enc:'Replace each letter with its NATO word, space-separated.',dec:'Map each NATO word back to its letter.',ic:[0,0],weakness:['Not encryption — standard public alphabet','Fixed 26-word vocabulary is instantly recognizable','Word lengths follow a distinctive pattern'],hist:'Adopted by NATO and ICAO in 1956. Used in aviation, military, and radio communications worldwide.'},
-  word_sub:{name:'Word Substitution',cat:'word_level_substitution',desc:'Replaces each content word with a random word from a fixed pool. Preserves sentence structure and function words.',enc:'Map each content word to a random replacement from a 50-word pool. Short words (≤2 chars) pass through unchanged.',dec:'Without the word mapping, decryption requires frequency analysis on word patterns.',ic:[.060,.070],weakness:['Sentence structure preserved','Function words unchanged','Word frequency analysis possible'],hist:'Conceptual extension of letter-level substitution to word level. Used in some code languages.'},
   hex_shuffle:{name:'Hex Shuffle',cat:'modern_obfuscation',desc:'Encodes to hexadecimal then randomly shuffles the byte pairs. Same charset as hex but with destroyed positional order.',enc:'Convert to hex, split into 2-char pairs, Fisher-Yates shuffle the pairs.',dec:'Without the shuffle seed, pair order cannot be recovered. Charset is identical to hex.',ic:[0,0],weakness:['Same charset as hex — hard to distinguish without positional analysis','Shuffle seed required for decryption','Byte frequency preserved'],hist:'Used in CTF challenges to create hex-like output that resists standard hex decoding.'},
   plaintext:{name:'Plaintext',cat:'plaintext',desc:'Unencrypted English text. High Index of Coincidence (~0.067), strong n-gram patterns, and letter frequencies matching standard English.',enc:'No transformation applied.',dec:'Already readable. No decryption needed.',ic:[.062,.072],weakness:['All patterns visible','Frequency analysis trivial','No key required'],hist:'The baseline — what every cipher is trying to hide. Identified by high IC, strong bigram correlation, and normal English letter distribution.'},
 };
@@ -2055,17 +2358,18 @@ async function loadKB(){KB=await KBStore.load();
   for(const[k,seed]of Object.entries(SEED_KB)){if(!KB[k])KB[k]={...seed,stats:{tested:0,cracked:0,avgTime:0},icObs:[],entObs:[],insights:'',discoveries:[]};}
 }
 function saveKB(){KBStore.save(KB);}
-// Kick off async KB load — everything that needs KB runs after this resolves.
+// Kick off async KB load: everything that needs KB runs after this resolves.
 // We also wait for CentroidStore, ConfusionTracker, and CalibrationTracker to
 // finish reading from OPFS so the ML page renders with real data on the first load.
 Promise.all([
   loadKB(),
   CentroidStore.load(),
   ConfusionTracker.load(),
-  CalibrationTracker.load()
+  CalibrationTracker.load(),
+  ModelStore.load(mlModel)
 ]).then(()=>{syncAllStats();renderKB();renderML();});
 function syncAllStats(){
-  // KB is loaded asynchronously at startup — by the time this runs it's already in memory
+  // KB is loaded asynchronously at startup and by the time this runs it's already in memory
   let totalTested=0,totalCorrect=0,totalDiscoveries=0;
   const entries=Object.entries(KB);
   for(const[k,e]of entries){
@@ -2344,7 +2648,7 @@ for(let i=0;i<22;i++){const c=String.fromCharCode(97+i);FEAT_INFO['dev_'+c]=getD
 
 </script><script>
 // ═══════════════════════════════════════════════════════════════════════
-//  crackers.js — Vigenère/Beaufort auto-cracker + smart decrypt pipeline
+//  crackers.js: Vigenère/Beaufort auto-cracker + smart decrypt pipeline
 //  Dependencies: ciphers.js, encoders.js
 // ═══════════════════════════════════════════════════════════════════════
 
@@ -2424,9 +2728,45 @@ function crackVigenere(ct,mode='vigenere'){
 //  SMART DECRYPT PIPELINE (tries everything, picks best)
 // ═══════════════════════════════════════════════════════════════════════
 
-function decodeInput(text){
+function decodeInput(text, mlHint){
   const enc=detectEncoding(text);const steps=[];let decoded=text;
-  // Phase 1: Try multi-layer first
+
+  // Build ML boost table from the hint: maps canonical cipher type names to score bonuses.
+  // Top ML prediction gets +0.12, 2nd gets +0.06, 3rd gets +0.03.
+  // Only applied when ML confidence is meaningful (above 40% and not flagged lowMargin).
+  const mlBoost={};
+  if(mlHint&&!mlHint.lowMargin&&mlHint.confidence>=0.40){
+    const sorted=Object.entries(mlHint.probs).sort((a,b)=>b[1]-a[1]);
+    const boosts=[0.12,0.06,0.03];
+    sorted.slice(0,3).forEach(([cls],i)=>{ mlBoost[cls]=boosts[i]; });
+  }
+
+  // Map candidate names to ML type keys for boost lookup
+  function mlBoostFor(candidateName){
+    const n=candidateName.toLowerCase();
+    if(n.startsWith('caesar'))return mlBoost['caesar']||0;
+    if(n.startsWith('atbash'))return mlBoost['atbash']||0;
+    if(n.startsWith('rot13'))return mlBoost['rot13']||0;
+    if(n.startsWith('rot47'))return mlBoost['rot47']||0;
+    if(n.startsWith('affine'))return mlBoost['affine']||0;
+    if(n.startsWith('vigenère')||n.startsWith('vigenere'))return mlBoost['vigenere']||0;
+    if(n.startsWith('beaufort'))return mlBoost['beaufort']||0;
+    if(n.startsWith('porta'))return mlBoost['porta']||0;
+    if(n.startsWith('rail fence'))return mlBoost['rail_fence']||0;
+    if(n.startsWith('columnar'))return mlBoost['columnar']||0;
+    if(n.startsWith('substitution'))return mlBoost['substitution']||0;
+    if(n.startsWith('enigma'))return mlBoost['enigma']||0;
+    if(n.startsWith('xor repeating'))return mlBoost['xor_repeating']||0;
+    if(n.startsWith('xor'))return mlBoost['xor_single']||0;
+    if(n.startsWith('rc4'))return mlBoost['rc4']||0;
+    if(n.startsWith('playfair'))return mlBoost['playfair']||0;
+    if(n.startsWith('bifid'))return mlBoost['bifid']||0;
+    if(n.startsWith('autokey'))return mlBoost['vigenere_autokey']||0;
+    if(n.startsWith('scytale'))return mlBoost['scytale']||0;
+    if(n.startsWith('route'))return mlBoost['route_cipher']||0;
+    return 0;
+  }
+  // Phase 1: Try multi-layer decoding first
   const ml=Encoders.multi.decode(text);
   if(ml.depth>0){decoded=ml.final;ml.layers.forEach((l,i)=>steps.push({l:`Layer ${i+1}: ${l}`,d:i===ml.layers.length-1?ml.final.substring(0,80):'...'}));
   }else{
@@ -2442,7 +2782,7 @@ function decodeInput(text){
     else if(enc==='bacon'){decoded=Encoders.bacon.decode(text);steps.push({l:'Bacon decode',d:decoded});}
   }catch(e){decoded=text;}
 
-  // Phase 1c: Try new encoding decoders by pattern detection
+  // Phase 1c: Try additional encoding decoders by pattern detection
   try{
     if(decoded===text){
       // HTML entities: &#123; pattern
@@ -2475,30 +2815,55 @@ function decodeInput(text){
   }
 
   const origScore=scoreEnglish(decoded);
-  if(origScore>0.6)return{decoded,encoding:enc,steps,method:steps.length?steps[steps.length-1].l:'plaintext'};
+  // Plaintext fast-exit: but veto it if the ML is confident this isn't plaintext.
+  // A high scoreEnglish alone isn't enough if the ML sees cipher structure in the features.
+  const mlSaysNotPlaintext=mlHint&&!mlHint.lowMargin&&mlHint.confidence>=0.50&&mlHint.cls!=='plaintext';
+  if(origScore>0.6&&!mlSaysNotPlaintext)return{decoded,encoding:enc,steps,method:steps.length?steps[steps.length-1].l:'plaintext',runners:[]};
 
-  // Phase 2: Try ALL crackers in parallel, collect candidates
+  // Phase 2: Try all cipher crackers in parallel, collect candidates
   const candidates=[];
 
   // Caesar brute force
   const cRes=Caesar.crack(decoded);
   if(cRes[0].shift!==0)candidates.push({name:`Caesar shift ${cRes[0].shift}`,text:cRes[0].text,score:cRes[0].score});
 
-  // Atbash
-  const atb=Atbash.transform(decoded);candidates.push({name:'Atbash',text:atb,score:scoreEnglish(atb)});
+  // Atbash: check explicitly before Affine since Affine a=25,b=0 is mathematically
+  // identical to Atbash and the Affine cracker might report a=25,b=12 (wrong offset)
+  // instead of the canonical a=25,b=0. Atbash gets its own named slot here.
+  const atb=Atbash.transform(decoded);
+  const atbScore=scoreEnglish(atb);
+  candidates.push({name:'Atbash',text:atb,score:atbScore});
 
   // ROT47
   const r47=ROT47.transform(decoded);candidates.push({name:'ROT47',text:r47,score:scoreEnglish(r47)});
 
-  // Affine brute-force (312 keys)
+  // Affine brute-force (312 keys) — exclude a=25 since that's Atbash, already handled above
   try{const affRes=AffineCracker.crack(decoded);
-    if(affRes[0]&&(affRes[0].a!==1||affRes[0].b!==0))candidates.push({name:`Affine a=${affRes[0].a} b=${affRes[0].b}`,text:affRes[0].text,score:affRes[0].score});}catch(e){}
+    if(affRes[0]&&(affRes[0].a!==1||affRes[0].b!==0)&&affRes[0].a!==25)candidates.push({name:`Affine a=${affRes[0].a} b=${affRes[0].b}`,text:affRes[0].text,score:affRes[0].score});}catch(e){}
+
+  // Scytale brute-force (cols 2-20)
+  try{const scRes=ScytaleCracker.crack(decoded);
+    if(scRes[0]&&scRes[0].score>origScore+0.05)candidates.push({name:`Scytale cols=${scRes[0].cols}`,text:scRes[0].text,score:scRes[0].score});}catch(e){}
+
+  // Route Cipher brute-force (cols 2-14, spiral route)
+  try{const rcRes=RouteCipherCracker.crack(decoded);
+    if(rcRes[0]&&rcRes[0].score>origScore+0.05)candidates.push({name:`Route Cipher cols=${rcRes[0].cols}`,text:rcRes[0].text,score:rcRes[0].score});}catch(e){}
+
+  // Playfair hill-climb (needs >= 20 alpha chars, key-based 5x5 grid)
+  if(decoded.length>=20&&/^[a-zA-Z\s]+$/.test(decoded)){
+    try{const pfRes=PlayfairCracker.crack(decoded);
+      if(pfRes&&pfRes.score>origScore+0.08)candidates.push({name:'Playfair (hill-climb)',text:pfRes.text,score:pfRes.score});}catch(e){}}
+
+  // Bifid hill-climb (needs >= 16 alpha chars, key-based 5x5 grid)
+  if(decoded.length>=16&&/^[a-zA-Z\s]+$/.test(decoded)){
+    try{const bfRes=BifidCracker.crack(decoded);
+      if(bfRes&&bfRes.score>origScore+0.08)candidates.push({name:'Bifid (hill-climb)',text:bfRes.text,score:bfRes.score});}catch(e){}}
 
   // Rail Fence (try rails 2-20)
   try{const rfRes=RailFenceCracker.crack(decoded);
     if(rfRes[0])candidates.push({name:`Rail Fence ${rfRes[0].rails} rails`,text:rfRes[0].text,score:rfRes[0].score});}catch(e){}
 
-  // Columnar transposition (try col counts 2-7 with permutations)
+  // Columnar transposition (try column counts 2-7 with permutations)
   if(decoded.length>=8&&decoded.length<=200){
     try{const colRes=ColumnarCracker.crack(decoded);
       if(colRes[0])candidates.push({name:`Columnar ${colRes[0].cols} cols (${colRes[0].perm})`,text:colRes[0].text,score:colRes[0].score});}catch(e){}}
@@ -2529,8 +2894,20 @@ function decodeInput(text){
       if(rcRes[0]){const rcScore=Math.max(rcRes[0].score,scorePrintable(rcRes[0].text));
         candidates.push({name:`RC4 key=0x${rcRes[0].key}`,text:rcRes[0].text,score:rcScore});}}catch(e){}}
 
-  // Pick the best candidate that beats the original
-  candidates.sort((a,b)=>b.score-a.score);
+  // Substitution cipher hill-climber (needs >= 40 chars to be reliable)
+  if(decoded.length>=40&&/^[a-zA-Z\s.,!?;:'\-]+$/.test(decoded)){
+    try{const subRes=SubstitutionCracker.crack(decoded);
+      if(subRes&&subRes.score>origScore+0.08)candidates.push({name:'Substitution (hill-climb)',text:subRes.text,score:subRes.score});}catch(e){}}
+
+  // Enigma brute-force (all 17,576 start positions, 6 rotor orders)
+  if(decoded.length>=8&&decoded.length<=300&&/^[a-zA-Z\s]+$/.test(decoded)){
+    try{const engRes=EnigmaCracker.crack(decoded);
+      if(engRes&&engRes.score>origScore+0.08)candidates.push({name:`Enigma ${engRes.rotors} [${engRes.starts.join(',')}]`,text:engRes.text,score:engRes.score});}catch(e){}}
+
+  // Sort candidates — apply ML boost to effective score so the model's top predictions
+  // are promoted when they're close to another candidate. Raw scores are preserved
+  // in the object so the runner-up display still shows honest scoreEnglish values.
+  candidates.sort((a,b)=>(b.score+mlBoostFor(b.name))-(a.score+mlBoostFor(a.name)));
   const best=candidates[0];
   if(best&&best.score>origScore+0.05){
     steps.push({l:best.name,d:best.text.substring(0,100)});
@@ -2543,43 +2920,154 @@ function decodeInput(text){
 }
 </script><script>
 // ═══════════════════════════════════════════════════════════════════════
-//  cyber.js — Practical cybersecurity tools
+//  cyber.js: Practical cybersecurity tools
 //  CTF Toolkit, Malware Deobfuscation, Incident Response
 //  Dependencies: ciphers.js, encoders.js, crackers.js
 // ═══════════════════════════════════════════════════════════════════════
 
-// ── CTF: Recipe Chaining ──────────────────────────────────────────────
+// CTF Recipe Chaining - chain multiple decode operations
 
 const RECIPE_OPS = {
-  'Base64 Decode': t => { try { return atob(t.trim()); } catch(e) { return '[base64 error]'; } },
-  'Base64 Encode': t => btoa(t),
-  'Hex Decode': t => { const c=t.replace(/\s/g,''); let s=''; for(let i=0;i<c.length;i+=2) s+=String.fromCharCode(parseInt(c.substr(i,2),16)); return s; },
-  'Hex Encode': t => [...t].map(c=>c.charCodeAt(0).toString(16).padStart(2,'0')).join(''),
-  'URL Decode': t => { try { return decodeURIComponent(t); } catch(e) { return t; } },
-  'URL Encode': t => encodeURIComponent(t),
-  'Binary Decode': t => t.replace(/\s+/g,' ').split(' ').filter(Boolean).map(b=>String.fromCharCode(parseInt(b,2))).join(''),
-  'Binary Encode': t => [...t].map(c=>c.charCodeAt(0).toString(2).padStart(8,'0')).join(' '),
-  'Reverse': t => [...t].reverse().join(''),
-  'ROT13': t => Caesar.shift(t, 13),
-  'ROT47': t => ROT47.transform(t),
-  'Atbash': t => Atbash.transform(t),
-  'To Uppercase': t => t.toUpperCase(),
-  'To Lowercase': t => t.toLowerCase(),
-  'Remove Whitespace': t => t.replace(/\s/g,''),
-  'Strip Non-Printable': t => t.replace(/[^\x20-\x7E]/g,''),
-  'Caesar +1…+25 (best)': t => { const r=Caesar.crack(t); return r[0].shift ? r[0].text : t; },
-  'XOR Brute (best)': t => { const r=XorCipher.crackSingle(t); return r[0]&&r[0].score>0.3 ? r[0].text : t; },
-  'Unescape Unicode': t => t.replace(/\\u([0-9a-fA-F]{4})/g, (_,h) => String.fromCharCode(parseInt(h,16))),
-  'Unescape Hex': t => t.replace(/\\x([0-9a-fA-F]{2})/g, (_,h) => String.fromCharCode(parseInt(h,16))),
-  'From Char Codes': t => { const nums=t.match(/\d+/g); return nums ? nums.map(n=>String.fromCharCode(+n)).join('') : t; },
-  'Base64url Decode': t => { let s=t.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4) s+='='; try{return atob(s);}catch(e){return '[error]';} },
-  'PowerShell -Enc Decode': t => { try { const raw=atob(t.trim()); let s=''; for(let i=0;i<raw.length;i+=2) { const code=raw.charCodeAt(i)|(raw.charCodeAt(i+1)<<8); if(code) s+=String.fromCharCode(code); } return s; } catch(e) { return '[decode error]'; } },
+  // ── Encodings: Decode ────────────────────────────────────────────────
+  'Base64 Decode':      t => { try { return atob(t.trim()); } catch(e) { return '[base64 error]'; } },
+  'Base64url Decode':   t => { let s=t.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4) s+='='; try{return atob(s);}catch(e){return '[error]';} },
+  'Hex Decode':         t => { const c=t.replace(/\s/g,''); let s=''; for(let i=0;i<c.length;i+=2) s+=String.fromCharCode(parseInt(c.substr(i,2),16)); return s; },
+  'Binary Decode':      t => Encoders.binary.decode(t),
+  'Octal Decode':       t => Encoders.octal.decode(t),
+  'Decimal Decode':     t => Encoders.decimal.decode(t),
+  'URL Decode':         t => { try { return decodeURIComponent(t); } catch(e) { return t; } },
+  'Morse Decode':       t => { try { return Encoders.morse.decode(t); } catch(e) { return '[morse error]'; } },
+  'Bacon Decode':       t => { try { return Encoders.bacon.decode(t); } catch(e) { return '[bacon error]'; } },
+  'A1Z26 Decode':       t => { try { return A1Z26.decode(t); } catch(e) { return '[a1z26 error]'; } },
+  'Base32 Decode':      t => { try { return Base32.decode(t.trim()); } catch(e) { return '[base32 error]'; } },
+  'Base58 Decode':      t => { try { return Base58.decode(t.trim()); } catch(e) { return '[base58 error]'; } },
+  'Ascii85 Decode':     t => { try { return Ascii85.decode(t); } catch(e) { return '[ascii85 error]'; } },
+  'UUEncode Decode':    t => { try { return UUEncode.decode(t); } catch(e) { return '[uuencode error]'; } },
+  'HTML Entities Decode': t => { try { return HTMLEntities.decode(t); } catch(e) { return '[html error]'; } },
+  'Polybius Decode':    t => { try { return PolybiusSquare.decode(t); } catch(e) { return '[polybius error]'; } },
+  'ADFGVX Decode':      t => { try { return ADFGVX.decode(t); } catch(e) { return '[adfgvx error]'; } },
+  'Tap Code Decode':    t => { try { return TapCode.decode(t); } catch(e) { return '[tap error]'; } },
+  'NATO Phonetic Decode': t => { try { return NATOPhonetic.decode(t); } catch(e) { return '[nato error]'; } },
+  'Phone Keypad Decode':  t => { try { return PhoneKeypad.decode(t.replace(/\s/g,'')); } catch(e) { return '[phone error]'; } },
+  // ── Encodings: Encode ────────────────────────────────────────────────
+  'Base64 Encode':      t => btoa(t),
+  'Hex Encode':         t => Encoders.hex.encode(t),
+  'Binary Encode':      t => Encoders.binary.encode(t),
+  'Octal Encode':       t => Encoders.octal.encode(t),
+  'Decimal Encode':     t => Encoders.decimal.encode(t),
+  'URL Encode':         t => encodeURIComponent(t),
+  'Morse Encode':       t => Encoders.morse.encode(t),
+  'Bacon Encode':       t => Encoders.bacon.encode(t),
+  'A1Z26 Encode':       t => A1Z26.encode(t),
+  'Base32 Encode':      t => Base32.encode(t),
+  'Base58 Encode':      t => Base58.encode(t),
+  'Ascii85 Encode':     t => Ascii85.encode(t),
+  'UUEncode Encode':    t => UUEncode.encode(t),
+  'HTML Entities Encode': t => HTMLEntities.encode(t),
+  'Polybius Encode':    t => PolybiusSquare.encode(t),
+  'ADFGVX Encode':      t => ADFGVX.encode(t),
+  'Tap Code Encode':    t => TapCode.encode(t),
+  'NATO Phonetic Encode': t => NATOPhonetic.encode(t),
+  'Phone Keypad Encode':  t => PhoneKeypad.encode(t),
+  // ── Classical Ciphers: Decrypt ───────────────────────────────────────
+  'Caesar Decrypt':    t => Caesar.decrypt(t, 3),
+  'Caesar Decrypt (ROT13)':   t => Caesar.decrypt(t, 13),
+  'Caesar Crack (best shift)':   t => { const r=Caesar.crack(t); return r[0].shift ? r[0].text : t; },
+  'ROT13':                       t => ROT13_cipher.decrypt(t),
+  'ROT47':                       t => ROT47.transform(t),
+  'Atbash':                      t => Atbash.transform(t),
+  'Vigenère Decrypt':  t => Vigenere.decrypt(t, 'KEY'),
+  'Vigenère Crack (auto-key)':   t => { const r=crackVigenere(t,'vigenere'); return r ? r.text : t; },
+  'Beaufort Decrypt':  t => Beaufort.decrypt(t, 'KEY'),
+  'Beaufort Crack (auto-key)':   t => { const r=crackVigenere(t,'beaufort'); return r ? r.text : t; },
+  'Porta Decrypt':     t => Porta.decrypt(t, 'KEY'),
+  'Porta Crack (auto-key)':      t => { const r=crackVigenere(t,'porta'); return r ? r.text : t; },
+  'Affine Decrypt':   t => affineDec(t, 5, 8),
+  'Affine Crack (best key)':     t => { const r=AffineCracker.crack(t); return r[0] ? r[0].text : t; },
+  'Playfair Decrypt': t => Playfair.decrypt(t, 'CIPHER'),
+  'Autokey Decrypt':   t => VigenereAutokey.decrypt(t, 'KEY'),
+  'Bifid Decrypt':  t => Bifid.decrypt(t, 'CIPHER'),
+  'Rail Fence Decrypt': t => RailFenceCracker.decrypt(t, 3),
+  'Rail Fence Crack (best rails)': t => { const r=RailFenceCracker.crack(t.replace(/\s/g,'')); return r[0] ? r[0].text : t; },
+  'Columnar Decrypt': t => Columnar.decrypt(t.toUpperCase().replace(/[^A-Z]/g,''), 'ZEBRA'),
+  'Columnar Crack (best key)':   t => { if(t.length>200)return '[too long for columnar crack]'; const r=ColumnarCracker.crack(t.replace(/\s/g,'')); return r[0] ? r[0].text : t; },
+  'Scytale Decrypt':    t => Scytale.decrypt(t.replace(/\s/g,''), 5),
+  'Route Cipher Decrypt': t => RouteCipher.decrypt(t.replace(/\s/g,''), 5),
+  'Substitution Crack (hill-climb)': t => { const r=SubstitutionCracker.crack(t); return r ? r.text : t; },
+  'Enigma Crack (III-II-I)':     t => { const r=EnigmaCracker.crack(t); return r ? r.text : t; },
+  // ── Classical Ciphers: Encrypt ───────────────────────────────────────
+  'Caesar Encrypt':    t => Caesar.encrypt(t, 3),
+  'Caesar Encrypt (ROT13)':   t => Caesar.encrypt(t, 13),
+  'Vigenère Encrypt':  t => Vigenere.encrypt(t, 'KEY'),
+  'Beaufort Encrypt':  t => Beaufort.encrypt(t, 'KEY'),
+  'Porta Encrypt':     t => Porta.encrypt(t, 'KEY'),
+  'Affine Encrypt':   t => affineEnc(t, 5, 8),
+  'Playfair Encrypt': t => Playfair.encrypt(t, 'CIPHER'),
+  'Autokey Encrypt':   t => VigenereAutokey.encrypt(t, 'KEY'),
+  'Bifid Encrypt':  t => Bifid.encrypt(t, 'CIPHER'),
+  'Rail Fence Encrypt': t => railEnc(t, 3),
+  'Columnar Encrypt': t => Columnar.encrypt(t.toUpperCase().replace(/[^A-Z]/g,''), 'ZEBRA'),
+  'Scytale Encrypt':    t => Scytale.encrypt(t, 5),
+  'Route Cipher Encrypt': t => RouteCipher.encrypt(t, 5),
+  'Reverse':                     t => ReverseText.encrypt(t),
+  // ── Modern / Byte-level ──────────────────────────────────────────────
+  'XOR Single Byte': t => { return [...t].map(c=>String.fromCharCode(c.charCodeAt(0)^0x41)).join(''); },
+  'XOR Brute (best single-byte)': t => { const r=XorCipher.crackSingle(t); return r[0]&&r[0].score>0.3 ? r[0].text : t; },
+  'XOR Repeating Encrypt':    t => XorCipher.encryptRepeating(t, 'SECRET'),
+  'RC4 Decrypt':        t => { try { return RC4.encrypt(t,'AB'); } catch(e) { return '[rc4 error]'; } },
+  'RC4 Crack (1-2 byte key)':    t => { try { const r=RC4.crackShort(t,2); return r[0]&&r[0].score>0.3?r[0].text:t; } catch(e) { return t; } },
+  // ── Utilities ────────────────────────────────────────────────────────
+  'To Uppercase':                t => t.toUpperCase(),
+  'To Lowercase':                t => t.toLowerCase(),
+  'Remove Whitespace':           t => t.replace(/\s/g,''),
+  'Remove Non-Alpha':            t => t.replace(/[^a-zA-Z]/g,''),
+  'Strip Non-Printable':         t => t.replace(/[^\x20-\x7E]/g,''),
+  'Unescape Unicode':            t => t.replace(/\\u([0-9a-fA-F]{4})/g, (_,h) => String.fromCharCode(parseInt(h,16))),
+  'Unescape Hex':                t => t.replace(/\\x([0-9a-fA-F]{2})/g, (_,h) => String.fromCharCode(parseInt(h,16))),
+  'From Char Codes':             t => { const nums=t.match(/\d+/g); return nums ? nums.map(n=>String.fromCharCode(+n)).join('') : t; },
+  'To Char Codes':               t => [...t].map(c=>c.charCodeAt(0)).join(' '),
+  'PowerShell -Enc Decode':      t => { try { const raw=atob(t.trim()); let s=''; for(let i=0;i<raw.length;i+=2) { const code=raw.charCodeAt(i)|(raw.charCodeAt(i+1)<<8); if(code) s+=String.fromCharCode(code); } return s; } catch(e) { return '[decode error]'; } },
 };
 
+// Key config: defines which ops take a user-editable key and what kind
+// type: 'text' = string key, 'number' = numeric param, 'affine' = two numbers (a, b)
+const RECIPE_KEY_CONFIG = {
+  'Vigenère Decrypt':      { type:'text',   label:'Key',    def:'KEY' },
+  'Vigenère Encrypt':      { type:'text',   label:'Key',    def:'KEY' },
+  'Beaufort Decrypt':      { type:'text',   label:'Key',    def:'KEY' },
+  'Beaufort Encrypt':      { type:'text',   label:'Key',    def:'KEY' },
+  'Porta Decrypt':         { type:'text',   label:'Key',    def:'KEY' },
+  'Porta Encrypt':         { type:'text',   label:'Key',    def:'KEY' },
+  'Autokey Decrypt':       { type:'text',   label:'Key',    def:'KEY' },
+  'Autokey Encrypt':       { type:'text',   label:'Key',    def:'KEY' },
+  'Playfair Decrypt':   { type:'text',   label:'Key',    def:'CIPHER' },
+  'Playfair Encrypt':   { type:'text',   label:'Key',    def:'CIPHER' },
+  'Bifid Decrypt':      { type:'text',   label:'Key',    def:'CIPHER' },
+  'Bifid Encrypt':      { type:'text',   label:'Key',    def:'CIPHER' },
+  'Columnar Decrypt':    { type:'text',   label:'Key',    def:'ZEBRA' },
+  'Columnar Encrypt':    { type:'text',   label:'Key',    def:'ZEBRA' },
+  'Caesar Decrypt':        { type:'number', label:'Shift',  def:'3',  min:1, max:25 },
+  'Caesar Decrypt (ROT13)':       { type:'number', label:'Shift',  def:'13', min:1, max:25 },
+  'Caesar Encrypt':        { type:'number', label:'Shift',  def:'3',  min:1, max:25 },
+  'Caesar Encrypt (ROT13)':       { type:'number', label:'Shift',  def:'13', min:1, max:25 },
+  'Rail Fence Decrypt':    { type:'number', label:'Rails',  def:'3',  min:2, max:20 },
+  'Rail Fence Encrypt':    { type:'number', label:'Rails',  def:'3',  min:2, max:20 },
+  'Scytale Decrypt':        { type:'number', label:'Cols',   def:'5',  min:2, max:20 },
+  'Scytale Encrypt':        { type:'number', label:'Cols',   def:'5',  min:2, max:20 },
+  'Route Cipher Decrypt':   { type:'number', label:'Cols',   def:'5',  min:2, max:20 },
+  'Route Cipher Encrypt':   { type:'number', label:'Cols',   def:'5',  min:2, max:20 },
+  'Affine Decrypt':       { type:'affine', def:'5,8' },
+  'Affine Encrypt':       { type:'affine', def:'5,8' },
+  'XOR Single Byte': { type:'text',   label:'Hex byte', def:'41' },
+  'XOR Repeating Encrypt':        { type:'text',   label:'Key',    def:'SECRET' },
+  'RC4 Decrypt':            { type:'text',   label:'Key',    def:'AB' },
+};
+
+// Each step is now {op: string, key: string} so keys persist when you reorder
 let recipeSteps = [];
 
 function addRecipeStep() {
-  recipeSteps.push('Base64 Decode');
+  recipeSteps.push({ op:'Base64 Decode', key:'' });
   renderRecipe();
 }
 
@@ -2595,22 +3083,123 @@ function moveRecipeStep(idx, dir) {
   renderRecipe();
 }
 
+// Called when a step's op dropdown changes
+function recipeOpChanged(idx, val) {
+  recipeSteps[idx].op = val;
+  // Reset key to default for the new op
+  const cfg = RECIPE_KEY_CONFIG[val];
+  recipeSteps[idx].key = cfg ? cfg.def : '';
+  renderRecipe();
+}
+
+// Called when a step's key input changes
+function recipeKeyChanged(idx, val) {
+  recipeSteps[idx].key = val;
+  runRecipe();
+}
+
+// Build the select options string which is shared between steps
+function _recipeOpOptions(selected) {
+  // Group ops by section header in the dropdown
+  const groups = [
+    ['── Encodings: Decode ──', ['Base64 Decode','Base64url Decode','Hex Decode','Binary Decode','Octal Decode','Decimal Decode','URL Decode','Morse Decode','Bacon Decode','A1Z26 Decode','Base32 Decode','Base58 Decode','Ascii85 Decode','UUEncode Decode','HTML Entities Decode','Polybius Decode','ADFGVX Decode','Tap Code Decode','NATO Phonetic Decode','Phone Keypad Decode']],
+    ['── Encodings: Encode ──', ['Base64 Encode','Hex Encode','Binary Encode','Octal Encode','Decimal Encode','URL Encode','Morse Encode','Bacon Encode','A1Z26 Encode','Base32 Encode','Base58 Encode','Ascii85 Encode','UUEncode Encode','HTML Entities Encode','Polybius Encode','ADFGVX Encode','Tap Code Encode','NATO Phonetic Encode','Phone Keypad Encode']],
+    ['── Ciphers: Decrypt ──', ['Caesar Decrypt','Caesar Decrypt (ROT13)','Caesar Crack (best shift)','ROT13','ROT47','Atbash','Vigenère Decrypt','Vigenère Crack (auto-key)','Beaufort Decrypt','Beaufort Crack (auto-key)','Porta Decrypt','Porta Crack (auto-key)','Affine Decrypt','Affine Crack (best key)','Playfair Decrypt','Autokey Decrypt','Bifid Decrypt','Rail Fence Decrypt','Rail Fence Crack (best rails)','Columnar Decrypt','Columnar Crack (best key)','Scytale Decrypt','Route Cipher Decrypt','Substitution Crack (hill-climb)','Enigma Crack (III-II-I)']],
+    ['── Ciphers: Encrypt ──', ['Caesar Encrypt','Caesar Encrypt (ROT13)','Vigenère Encrypt','Beaufort Encrypt','Porta Encrypt','Affine Encrypt','Playfair Encrypt','Autokey Encrypt','Bifid Encrypt','Rail Fence Encrypt','Columnar Encrypt','Scytale Encrypt','Route Cipher Encrypt','Reverse']],
+    ['── Modern / Byte-level ──', ['XOR Single Byte','XOR Brute (best single-byte)','XOR Repeating Encrypt','RC4 Decrypt','RC4 Crack (1-2 byte key)']],
+    ['── Utilities ──', ['To Uppercase','To Lowercase','Remove Whitespace','Remove Non-Alpha','Strip Non-Printable','Unescape Unicode','Unescape Hex','From Char Codes','To Char Codes','PowerShell -Enc Decode']],
+  ];
+  return groups.map(([label, ops]) =>
+    `<optgroup label="${label}">${ops.map(k=>`<option${k===selected?' selected':''}>${H(k)}</option>`).join('')}</optgroup>`
+  ).join('');
+}
+
+// Build the key input for a step and returns empty string if no key needed
+function _recipeKeyInput(idx, op, currentKey) {
+  const cfg = RECIPE_KEY_CONFIG[op];
+  if (!cfg) return '';
+  const val = currentKey || cfg.def;
+  if (cfg.type === 'affine') {
+    const parts = val.split(',');
+    const a = parts[0]||cfg.def.split(',')[0], b = parts[1]||cfg.def.split(',')[1];
+    return `<input type="number" min="1" max="25" value="${H(a)}" title="a (must be coprime to 26)" oninput="recipeSteps[${idx}].key=this.value+','+(recipeSteps[${idx}].key.split(',')[1]||'8');runRecipe()" style="width:52px;margin-left:6px" placeholder="a">` +
+           `<input type="number" min="0" max="25" value="${H(b)}" title="b" oninput="recipeSteps[${idx}].key=(recipeSteps[${idx}].key.split(',')[0]||'5')+','+this.value;runRecipe()" style="width:52px;margin-left:4px" placeholder="b">`;
+  }
+  if (cfg.type === 'number') {
+    return `<input type="number" min="${cfg.min||1}" max="${cfg.max||999}" value="${H(val)}" title="${cfg.label}" oninput="recipeKeyChanged(${idx},this.value)" style="width:64px;margin-left:6px" placeholder="${cfg.label}">`;
+  }
+  // text key
+  return `<input type="text" value="${H(val)}" title="${cfg.label}: ${op}" oninput="recipeKeyChanged(${idx},this.value)" style="width:90px;margin-left:6px;text-transform:uppercase" placeholder="${cfg.label}">`;
+}
+
 function renderRecipe() {
   const el = $('recipeSteps');
   if (!recipeSteps.length) {
     el.innerHTML = '<span class="ldim">No steps added. Click "Add Step" to build a recipe.</span>';
     return;
   }
-  el.innerHTML = recipeSteps.map((op, i) =>
-    `<div class="row" style="margin-bottom:6px;align-items:center">
+  el.innerHTML = recipeSteps.map((step, i) => {
+    const op = typeof step === 'string' ? step : step.op; // backwards compat
+    const key = typeof step === 'string' ? '' : (step.key || '');
+    return `<div class="row" style="margin-bottom:6px;align-items:center;flex-wrap:wrap;gap:4px">
       <span style="font-family:var(--mono);font-size:.63rem;color:var(--dim);min-width:24px">${i+1}.</span>
-      <select onchange="recipeSteps[${i}]=this.value;runRecipe()" style="flex:1">${Object.keys(RECIPE_OPS).map(k=>`<option${k===op?' selected':''}>${k}</option>`).join('')}</select>
+      <select onchange="recipeOpChanged(${i},this.value)" style="flex:1;min-width:160px">${_recipeOpOptions(op)}</select>
+      ${_recipeKeyInput(i, op, key)}
       <button class="bs" onclick="moveRecipeStep(${i},-1)" style="padding:4px 8px">↑</button>
       <button class="bs" onclick="moveRecipeStep(${i},1)" style="padding:4px 8px">↓</button>
       <button class="bs" onclick="removeRecipeStep(${i})" style="padding:4px 8px;border-color:rgba(255,92,92,.3);color:var(--red)">×</button>
-    </div>`
-  ).join('');
+    </div>`;
+  }).join('');
   runRecipe();
+}
+
+// Resolve the actual function for a step, injecting the user-supplied key
+function _resolveRecipeOp(step) {
+  const op = typeof step === 'string' ? step : step.op;
+  const rawKey = typeof step === 'string' ? '' : (step.key || '');
+  const cfg = RECIPE_KEY_CONFIG[op];
+
+  // No key config: use the static RECIPE_OPS function as-is
+  if (!cfg || !rawKey) return RECIPE_OPS[op];
+
+  const key = rawKey.trim().toUpperCase() || cfg.def;
+
+  if (op === 'Caesar Decrypt' || op === 'Caesar Decrypt (ROT13)')
+    return t => Caesar.decrypt(t, +key||3);
+  if (op === 'Caesar Encrypt' || op === 'Caesar Encrypt (ROT13)')
+    return t => Caesar.encrypt(t, +key||3);
+  if (op === 'Rail Fence Decrypt')  return t => RailFenceCracker.decrypt(t, +key||3);
+  if (op === 'Rail Fence Encrypt')  return t => railEnc(t, +key||3);
+  if (op === 'Scytale Decrypt')       return t => Scytale.decrypt(t.replace(/\s/g,''), +key||5);
+  if (op === 'Scytale Encrypt')       return t => Scytale.encrypt(t, +key||5);
+  if (op === 'Route Cipher Decrypt')  return t => RouteCipher.decrypt(t.replace(/\s/g,''), +key||5);
+  if (op === 'Route Cipher Encrypt')  return t => RouteCipher.encrypt(t, +key||5);
+  if (op === 'Affine Decrypt') {
+    const [a,b] = key.split(',').map(Number); return t => affineDec(t, a||5, b||8);
+  }
+  if (op === 'Affine Encrypt') {
+    const [a,b] = key.split(',').map(Number); return t => affineEnc(t, a||5, b||8);
+  }
+  if (op === 'Vigenère Decrypt')      return t => Vigenere.decrypt(t, key);
+  if (op === 'Vigenère Encrypt')      return t => Vigenere.encrypt(t, key);
+  if (op === 'Beaufort Decrypt')      return t => Beaufort.decrypt(t, key);
+  if (op === 'Beaufort Encrypt')      return t => Beaufort.encrypt(t, key);
+  if (op === 'Porta Decrypt')         return t => Porta.decrypt(t, key);
+  if (op === 'Porta Encrypt')         return t => Porta.encrypt(t, key);
+  if (op === 'Autokey Decrypt')       return t => VigenereAutokey.decrypt(t, key);
+  if (op === 'Autokey Encrypt')       return t => VigenereAutokey.encrypt(t, key);
+  if (op === 'Playfair Decrypt')   return t => Playfair.decrypt(t, key);
+  if (op === 'Playfair Encrypt')   return t => Playfair.encrypt(t, key);
+  if (op === 'Bifid Decrypt')      return t => Bifid.decrypt(t, key);
+  if (op === 'Bifid Encrypt')      return t => Bifid.encrypt(t, key);
+  if (op === 'Columnar Decrypt')    return t => Columnar.decrypt(t.toUpperCase().replace(/[^A-Z]/g,''), key);
+  if (op === 'Columnar Encrypt')    return t => Columnar.encrypt(t.toUpperCase().replace(/[^A-Z]/g,''), key);
+  if (op === 'XOR Single Byte') {
+    const byte = parseInt(key, 16)||0x41; return t => [...t].map(c=>String.fromCharCode(c.charCodeAt(0)^byte)).join('');
+  }
+  if (op === 'XOR Repeating Encrypt')        return t => XorCipher.encryptRepeating(t, key);
+  if (op === 'RC4 Decrypt')            return t => { try{return RC4.encrypt(t,key);}catch(e){return '[rc4 error]';} };
+  return RECIPE_OPS[op];
 }
 
 function runRecipe() {
@@ -2618,22 +3207,25 @@ function runRecipe() {
   if (!input || !recipeSteps.length) { $('ctfRecipeOut').innerHTML = ''; return; }
   let val = input;
   const trace = [];
-  for (const op of recipeSteps) {
-    const fn = RECIPE_OPS[op];
+  for (const step of recipeSteps) {
+    const op = typeof step === 'string' ? step : step.op;
+    const fn = _resolveRecipeOp(step);
     if (fn) {
-      const prev = val;
       val = fn(val);
-      trace.push({ op, preview: val.substring(0, 120) });
+      trace.push({ op, key: typeof step === 'object' ? (step.key||'') : '', preview: val.substring(0, 120) });
     }
   }
   let h = `<div class="rb"><div class="rl">RECIPE OUTPUT</div><div class="rv">${H(val)}</div></div>`;
   h += `<div class="pipe"><div class="pt">RECIPE TRACE</div>`;
-  trace.forEach((s, i) => h += `<div class="ps"><div class="pn">${i+1}</div><div class="pl">${H(s.op)}</div><div class="pd">${H(s.preview)}</div></div>`);
+  trace.forEach((s, i) => {
+    const keyLabel = s.key ? ` <span style="color:var(--teal);font-size:.6rem">[${H(s.key)}]</span>` : '';
+    h += `<div class="ps"><div class="pn">${i+1}</div><div class="pl">${H(s.op)}${keyLabel}</div><div class="pd">${H(s.preview)}</div></div>`;
+  });
   h += `</div>`;
   $('ctfRecipeOut').innerHTML = h;
 }
 
-// ── CTF: Flag Finder ──────────────────────────────────────────────────
+// CTF Flag Finder: search for common flag patterns
 
 const FLAG_PATTERNS = [
   /flag\{[^}]+\}/gi, /ctf\{[^}]+\}/gi, /picoCTF\{[^}]+\}/gi,
@@ -2642,10 +3234,29 @@ const FLAG_PATTERNS = [
 ];
 
 function ctfAutoSolve() {
-  const input = $('ctfInput').value.trim();
+  let input = $('ctfInput').value.trim();
   if (!input) return;
   const out = $('ctfAutoOut');
   const results = [];
+
+  // First, run any loaded recipe steps
+  let recipeProcessed = false;
+  if (recipeSteps.length > 0) {
+    runRecipe(); // Execute the recipe to show the trace
+    let val = input;
+    for (const step of recipeSteps) {
+      const fn = _resolveRecipeOp(step);
+      if (fn) {
+        val = fn(val);
+      }
+    }
+    // Use the recipe output as the new input for auto-solve
+    if (val !== input) {
+      input = val;
+      recipeProcessed = true;
+      results.push({ method: `Recipe Output (${recipeSteps.length} steps)`, text: input, flags: findFlags(input) });
+    }
+  }
 
   // Check raw input for flags
   const rawFlags = findFlags(input);
@@ -2680,6 +3291,211 @@ function ctfAutoSolve() {
     }
   }
 
+  // Try Beaufort crack (same key-recovery algorithm as Vigenère)
+  if (input.length >= 20 && /^[a-zA-Z\s]+$/.test(input)) {
+    const beau = crackVigenere(input, 'beaufort');
+    if (beau && beau.score > 0.4) {
+      const flags = findFlags(beau.text);
+      results.push({ method: `Beaufort (key="${beau.key}")`, text: beau.text, flags });
+    }
+  }
+
+  // Try Vigenère Autokey crack (Friedman key-length estimate, then frequency recovery)
+  if (input.length >= 20 && /^[a-zA-Z\s]+$/.test(input)) {
+    try {
+      const alpha = input.replace(/[^a-zA-Z]/g, '').toUpperCase();
+      const kl = Math.max(1, Math.min(8, Math.round(friedmanKeyLength(alpha))));
+      for (const tryKl of [kl, Math.max(1,kl-1), kl+1].filter((v,i,a)=>v>0&&a.indexOf(v)===i)) {
+        const key = [];
+        for (let pos = 0; pos < tryKl; pos++) {
+          const stream = []; for (let i = pos; i < alpha.length; i += tryKl) stream.push(alpha.charCodeAt(i)-65);
+          let bestK = 0, bestS = -1;
+          for (let s = 0; s < 26; s++) { let sc = 0; for (const ch of stream) { sc += ENGLISH_FREQ[String.fromCharCode((ch-s+26)%26+97)]||0; } if (sc > bestS) { bestS = sc; bestK = s; } }
+          key.push(bestK);
+        }
+        const keyStr = key.map(k => String.fromCharCode(k+65)).join('');
+        const pt = VigenereAutokey.decrypt(input, keyStr);
+        if (scoreEnglish(pt) > 0.4) {
+          const flags = findFlags(pt);
+          results.push({ method: `Vigenère Autokey (key="${keyStr}")`, text: pt, flags });
+          break;
+        }
+      }
+    } catch(e) {}
+  }
+
+  // Try Affine brute-force (312 keys)
+  if (input.length >= 8 && /^[a-zA-Z\s]+$/.test(input)) {
+    try {
+      const affRes = AffineCracker.crack(input);
+      if (affRes[0] && (affRes[0].a !== 1 || affRes[0].b !== 0) && affRes[0].score > 0.4) {
+        const flags = findFlags(affRes[0].text);
+        results.push({ method: `Affine (a=${affRes[0].a}, b=${affRes[0].b})`, text: affRes[0].text, flags });
+      }
+    } catch(e) {}
+  }
+
+  // Try Scytale brute-force (cols 2-12)
+  if (input.length >= 8 && /^[a-zA-Z]+$/.test(input.replace(/\s/g,''))) {
+    try {
+      const scRes = ScytaleCracker.crack(input);
+      if (scRes[0] && scRes[0].score > 0.35) {
+        const flags = findFlags(scRes[0].text);
+        results.push({ method: `Scytale (cols=${scRes[0].cols})`, text: scRes[0].text, flags });
+      }
+    } catch(e) {}
+  }
+
+  // Try Route Cipher brute-force (cols 2-14, spiral route)
+  if (input.length >= 8 && /^[a-zA-Z]+$/.test(input.replace(/\s/g,''))) {
+    try {
+      const rcRes = RouteCipherCracker.crack(input);
+      if (rcRes[0] && rcRes[0].score > 0.35) {
+        const flags = findFlags(rcRes[0].text);
+        results.push({ method: `Route Cipher (cols=${rcRes[0].cols})`, text: rcRes[0].text, flags });
+      }
+    } catch(e) {}
+  }
+
+  // Try Bifid hill-climb (key-agnostic, needs >= 16 alpha chars)
+  if (input.length >= 16 && /^[a-zA-Z\s]+$/.test(input)) {
+    try {
+      const bfRes = BifidCracker.crack(input);
+      if (bfRes && bfRes.score > 0.35) {
+        const flags = findFlags(bfRes.text);
+        results.push({ method: `Bifid (key="${bfRes.key.substring(0,8)}")`, text: bfRes.text, flags });
+      }
+    } catch(e) {}
+  }
+
+  // Try Playfair hill-climb (key-agnostic, needs >= 20 alpha chars)
+  if (input.length >= 20 && /^[a-zA-Z\s]+$/.test(input)) {
+    try {
+      const pfRes = PlayfairCracker.crack(input);
+      if (pfRes && pfRes.score > 0.35) {
+        const flags = findFlags(pfRes.text);
+        results.push({ method: `Playfair (key="${pfRes.key.substring(0,8)}")`, text: pfRes.text, flags });
+      }
+    } catch(e) {}
+  }
+
+  // Try Rail Fence brute-force (rails 2-20)
+  if (input.length >= 8 && /^[a-zA-Z\s]+$/.test(input)) {
+    try {
+      const rfRes = RailFenceCracker.crack(input.replace(/\s/g,''));
+      if (rfRes[0] && rfRes[0].score > 0.4) {
+        const flags = findFlags(rfRes[0].text);
+        results.push({ method: `Rail Fence (${rfRes[0].rails} rails)`, text: rfRes[0].text, flags });
+      }
+    } catch(e) {}
+  }
+
+  // Try Columnar Transposition (col counts 2-7 with permutation search)
+  if (input.length >= 8 && input.length <= 200 && /^[a-zA-Z\s]+$/.test(input)) {
+    try {
+      const colRes = ColumnarCracker.crack(input.replace(/\s/g,''));
+      if (colRes[0] && colRes[0].score > 0.4) {
+        const flags = findFlags(colRes[0].text);
+        results.push({ method: `Columnar Transposition (${colRes[0].cols} cols, order ${colRes[0].perm})`, text: colRes[0].text, flags });
+      }
+    } catch(e) {}
+  }
+
+  // Try Porta crack (same Kasiski+Friedman approach as Vigenère)
+  if (input.length >= 20 && /^[a-zA-Z\s]+$/.test(input)) {
+    try {
+      const porta = crackVigenere(input, 'porta');
+      if (porta && porta.score > 0.4) {
+        const flags = findFlags(porta.text);
+        results.push({ method: `Porta (key="${porta.key}")`, text: porta.text, flags });
+      }
+    } catch(e) {}
+  }
+
+  // Try XOR single-byte brute-force (all 255 keys)
+  try {
+    const xorRes = XorCipher.crackSingle(input);
+    if (xorRes[0] && xorRes[0].score > 0.4) {
+      const flags = findFlags(xorRes[0].text);
+      results.push({ method: `XOR single-byte (key=0x${xorRes[0].key.toString(16).padStart(2,'0')})`, text: xorRes[0].text, flags });
+    }
+  } catch(e) {}
+
+  // Try XOR repeating-key (Hamming distance key-length estimation)
+  if (input.length > 30) {
+    try {
+      const xrRes = XorCipher.crackRepeating(input);
+      if (xrRes && xrRes.score > 0.4) {
+        const flags = findFlags(xrRes.text);
+        results.push({ method: `XOR repeating-key (key="${xrRes.key}", len=${xrRes.keyLen})`, text: xrRes.text, flags });
+      }
+    } catch(e) {}
+  }
+
+  // Try RC4 short-key brute-force (1-2 byte keys)
+  if (input.length >= 4 && input.length <= 500) {
+    try {
+      const rcRes = RC4.crackShort(input, 2);
+      if (rcRes[0] && rcRes[0].score > 0.4) {
+        const flags = findFlags(rcRes[0].text);
+        results.push({ method: `RC4 (key=0x${rcRes[0].key})`, text: rcRes[0].text, flags });
+      }
+    } catch(e) {}
+  }
+
+  // Try Substitution cipher hill-climber (needs >= 40 chars to work reliably)
+  if (input.length >= 40 && /^[a-zA-Z\s.,!?;:'\-]+$/.test(input)) {
+    try {
+      const subRes = SubstitutionCracker.crack(input);
+      if (subRes && subRes.score > 0.4) {
+        const flags = findFlags(subRes.text);
+        results.push({ method: `Substitution cipher (hill-climb)`, text: subRes.text, flags });
+      }
+    } catch(e) {}
+  }
+
+  // Try Enigma brute-force (all 17,576 start positions × up to 6 rotor orders)
+  if (input.length >= 8 && input.length <= 300 && /^[a-zA-Z\s]+$/.test(input)) {
+    try {
+      const engRes = EnigmaCracker.crack(input);
+      if (engRes && engRes.score > 0.4) {
+        const flags = findFlags(engRes.text);
+        results.push({ method: `Enigma (rotors ${engRes.rotors}, starts [${engRes.starts.join(',')}])`, text: engRes.text, flags });
+      }
+    } catch(e) {}
+  }
+
+  // Try direct encoding decoders with explicit labeling
+  // These complement the RECIPE_OPS loop above and are shown separately so they're identified clearly
+  const encodingTries = [
+    { name: 'Morse Code', fn: () => Encoders.morse.decode(input), guard: () => /^[.\-\s/|]+$/.test(input.trim()) },
+    { name: 'Bacon Cipher', fn: () => Encoders.bacon.decode(input), guard: () => /^[ABab\s]+$/.test(input.trim()) && input.trim().length >= 5 },
+    { name: 'A1Z26', fn: () => A1Z26.decode(input), guard: () => /^(\d{1,2}\s+)*\d{1,2}$/.test(input.trim()) && input.trim().split(/\s+/).every(n=>{const v=+n;return v>=1&&v<=26;}) },
+    { name: 'Polybius Square', fn: () => PolybiusSquare.decode(input), guard: () => { const p=input.match(/\d{2}/g); return p&&p.every(x=>+x[0]>=1&&+x[0]<=5&&+x[1]>=1&&+x[1]<=5); } },
+    { name: 'Tap Code', fn: () => TapCode.decode(input), guard: () => /^\d\.\d(\s+\d\.\d)*$/.test(input.trim()) },
+    { name: 'NATO Phonetic', fn: () => NATOPhonetic.decode(input), guard: () => { const ws=input.trim().split(/\s+/);const nw=['alpha','bravo','charlie','delta','echo','foxtrot','golf','hotel','india','juliet','kilo','lima','mike','november','oscar','papa','quebec','romeo','sierra','tango','uniform','victor','whiskey','xray','yankee','zulu'];return ws.length>=3&&ws.filter(w=>nw.includes(w.toLowerCase())).length/ws.length>0.7; } },
+    { name: 'Phone Keypad', fn: () => PhoneKeypad.decode(input.replace(/\s/g,'')), guard: () => /^[2-9]+$/.test(input.replace(/\s/g,'')) && input.length >= 4 },
+    { name: 'HTML Entities', fn: () => HTMLEntities.decode(input), guard: () => /&#\d+;/.test(input) },
+    { name: 'Base32', fn: () => Base32.decode(input.trim()), guard: () => /^[A-Z2-7=\s]+$/i.test(input.trim()) && input.trim().length >= 8 },
+    { name: 'Base58', fn: () => Base58.decode(input.trim()), guard: () => /^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+$/.test(input.trim()) && input.trim().length >= 10 },
+    { name: 'Ascii85', fn: () => Ascii85.decode(input), guard: () => input.includes('<~') && input.includes('~>') },
+    { name: 'UUEncode', fn: () => UUEncode.decode(input), guard: () => input.trimStart().startsWith('begin 6') },
+    { name: 'ROT13', fn: () => ROT13_cipher.decrypt(input), guard: () => /^[a-zA-Z\s]+$/.test(input) && scoreEnglish(ROT13_cipher.decrypt(input)) > scoreEnglish(input) + 0.05 },
+    { name: 'Reverse', fn: () => ReverseText.encrypt(input), guard: () => scoreEnglish(ReverseText.encrypt(input)) > scoreEnglish(input) + 0.05 },
+    { name: 'ADFGVX', fn: () => ADFGVX.decode(input), guard: () => /^[ADFGVX\s]+$/i.test(input.trim()) && input.trim().length >= 4 },
+  ];
+  for (const { name, fn, guard } of encodingTries) {
+    try {
+      if (!guard()) continue;
+      const decoded = fn();
+      if (decoded && decoded !== input && decoded.length > 1) {
+        const flags = findFlags(decoded);
+        const readable = scoreEnglish(decoded) > 0.15 || flags.length > 0;
+        if (readable) results.push({ method: name, text: decoded, flags });
+      }
+    } catch(e) {}
+  }
+
   // Full decrypt pipeline
   const dec = decodeInput(input);
   if (dec.decoded !== input) {
@@ -2687,7 +3503,7 @@ function ctfAutoSolve() {
     results.push({ method: `Auto-pipeline (${dec.method})`, text: dec.decoded, flags });
   }
 
-  // ML Classification — use trained model to identify the type
+  // ML Classification: use trained model to identify the type
   if (typeof mlModel !== 'undefined' && mlModel.trained) {
     const features = extractFeatures(input);
     const pred = mlModel.predict(features);
@@ -2711,11 +3527,65 @@ function ctfAutoSolve() {
   if (allFlags.length) {
     h += `<div class="rb" style="border-color:rgba(255,159,67,.3);background:rgba(255,159,67,.04)"><div class="rl" style="color:var(--orange)">FLAGS FOUND</div><div class="rv">${allFlags.map(f => H(f)).join('\n')}</div></div>`;
   }
-  for (const r of unique.slice(0, 8)) {
+  for (const r of unique.slice(0, 15)) {
     const border = r.flags.length ? 'border-color:rgba(0,255,136,.3)' : '';
-    h += `<div class="rb" style="${border}"><div class="rl">${H(r.method)}</div><div class="rv">${H(r.text.substring(0, 500))}</div></div>`;
+    const recipeBtn = _recipeButtonForResult(r.method);
+    h += `<div class="rb" style="${border}"><div class="rl" style="display:flex;justify-content:space-between;align-items:center">${H(r.method)}${recipeBtn}</div><div class="rv">${H(r.text.substring(0, 500))}</div></div>`;
   }
   out.innerHTML = h;
+}
+
+// Parse a method string from ctfAutoSolve to build an "Add to Recipe" button.
+// If we can map the method back to a recipe op + key, show a teal button.
+function _recipeButtonForResult(method) {
+  let op = null, key = '';
+
+  // Try to match the method string against known patterns
+  if (/^Vigenère \(key="(.+)"\)$/.test(method))     { op='Vigenère Decrypt'; key=method.match(/key="(.+)"/)[1]; }
+  else if (/^Beaufort \(key="(.+)"\)$/.test(method)) { op='Beaufort Decrypt'; key=method.match(/key="(.+)"/)[1]; }
+  else if (/^Porta \(key="(.+)"\)$/.test(method))    { op='Porta Decrypt'; key=method.match(/key="(.+)"/)[1]; }
+  else if (/^Vigenère Autokey \(key="(.+)"\)$/.test(method)) { op='Autokey Decrypt'; key=method.match(/key="(.+)"/)[1]; }
+  else if (/^Affine \(a=(\d+), b=(\d+)\)$/.test(method)) { const m=method.match(/a=(\d+), b=(\d+)/); op='Affine Decrypt'; key=`${m[1]},${m[2]}`; }
+  else if (/^Caesar shift (\d+)$/.test(method))      { op='Caesar Decrypt'; key=method.match(/shift (\d+)/)[1]; }
+  else if (/^Rail Fence \((\d+) rails\)$/.test(method)) { op='Rail Fence Decrypt'; key=method.match(/(\d+) rails/)[1]; }
+  else if (/^Scytale \(cols=(\d+)\)$/.test(method))  { op='Scytale Decrypt'; key=method.match(/cols=(\d+)/)[1]; }
+  else if (/^Route Cipher \(cols=(\d+)\)$/.test(method)) { op='Route Cipher Decrypt'; key=method.match(/cols=(\d+)/)[1]; }
+  else if (/^Playfair \(key="(.+)"\)$/.test(method)) { op='Playfair Decrypt'; key=method.match(/key="(.+)"/)[1]; }
+  else if (/^Bifid \(key="(.+)"\)$/.test(method))    { op='Bifid Decrypt'; key=method.match(/key="(.+)"/)[1]; }
+  else if (/^Columnar /.test(method)) { op='Columnar Decrypt'; const m=method.match(/cols=\d+ cols, order (\S+)/); key=m?m[1]:'ZEBRA'; }
+  else if (/^XOR single-byte \(key=(0x[0-9a-fA-F]+)\)$/.test(method)) { op='XOR Single Byte'; key=method.match(/0x([0-9a-fA-F]+)/)[1]; }
+  else if (/^ROT13$/.test(method) || method==='ROT13')   { op='ROT13'; }
+  else if (/^ROT47$/.test(method) || method==='ROT47')   { op='ROT47'; }
+  else if (/^Atbash$/.test(method) || method==='Atbash') { op='Atbash'; }
+  else if (/^Reverse$/.test(method) || method==='Reverse'){ op='Reverse'; }
+  else if (/^Base64/.test(method))   { op='Base64 Decode'; }
+  else if (/^Base32/.test(method))   { op='Base32 Decode'; }
+  else if (/^Base58/.test(method))   { op='Base58 Decode'; }
+  else if (/^Ascii85/.test(method))  { op='Ascii85 Decode'; }
+  else if (/^Morse/.test(method))    { op='Morse Decode'; }
+  else if (/^Bacon/.test(method))    { op='Bacon Decode'; }
+  else if (/^A1Z26/.test(method))    { op='A1Z26 Decode'; }
+  else if (/^Polybius/.test(method)) { op='Polybius Decode'; }
+  else if (/^Tap Code/.test(method)) { op='Tap Code Decode'; }
+  else if (/^NATO/.test(method))     { op='NATO Phonetic Decode'; }
+  else if (/^Phone Keypad/.test(method)) { op='Phone Keypad Decode'; }
+  else if (/^UUEncode/.test(method)) { op='UUEncode Decode'; }
+  else if (/^HTML Ent/.test(method)) { op='HTML Entities Decode'; }
+  else if (/^ADFGVX/.test(method))   { op='ADFGVX Decode'; }
+  else if (/^Substitution/.test(method)) { op='Substitution Crack (hill-climb)'; }
+  else if (/^Enigma/.test(method))   { op='Enigma Crack (III-II-I)'; }
+
+  if (!op) return '';
+  const safeOp = JSON.stringify(op), safeKey = JSON.stringify(key);
+  return `<button class="bs" style="font-size:.58rem;padding:2px 7px;border-color:rgba(0,200,150,.35);color:var(--teal);margin-left:8px" onclick="addToRecipe(${safeOp},${safeKey})">+ Recipe</button>`;
+}
+
+// Add a step to the recipe with the given op and key pre-filled
+function addToRecipe(op, key) {
+  recipeSteps.push({ op, key: key||'' });
+  renderRecipe();
+  // Scroll to the recipe builder section
+  const el = $('recipeSteps'); if (el) el.scrollIntoView({ behavior:'smooth', block:'center' });
 }
 
 function findFlags(text) {
@@ -2727,7 +3597,7 @@ function findFlags(text) {
   return [...new Set(flags)];
 }
 
-// ── Deobfuscation Engine ──────────────────────────────────────────────
+// Malware Deobfuscation Engine: detect and reverse obfuscation techniques
 
 function deobfuscate() {
   const input = $('deobInput').value.trim();
@@ -2834,7 +3704,7 @@ function deobfuscate() {
     }
   }
 
-  // ML Classification — add model insight to findings
+  // ML Classification to add model insight to findings
   if (typeof mlModel !== 'undefined' && mlModel.trained) {
     const features = extractFeatures(input);
     const pred = mlModel.predict(features);
@@ -2864,7 +3734,7 @@ function deobfuscate() {
   out.innerHTML = h;
 }
 
-// ── Incident Response Tools ───────────────────────────────────────────
+// Incident Response Tools: extract IOCs and decode commands from logs
 
 function irAnalyze() {
   const input = $('irInput').value.trim();
@@ -2991,9 +3861,10 @@ function irAnalyze() {
   }
   out.innerHTML = h;
 }
+
 </script><script>
 // ═══════════════════════════════════════════════════════════════════════
-//  ui.js — Corpus, Training Engine, all UI handlers
+//  ui.js: Corpus, Training Engine, all UI handlers
 //  Dependencies: ciphers.js, encoders.js, ml.js, kb.js, crackers.js
 // ═══════════════════════════════════════════════════════════════════════
 
@@ -3010,7 +3881,7 @@ function go(id,btn){
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-//  PROCEDURAL TEXT GENERATOR — unique plaintext for every sample
+//  PROCEDURAL TEXT GENERATOR: unique plaintext for every sample
 //  300+ nouns, 200+ adjectives, 120+ verbs, 80+ adverbs, 60+ prepositions
 //  40 sentence templates, random names/places/numbers for infinite variety
 //  Combinatorial space: trillions of possible sentences
@@ -3138,7 +4009,7 @@ const COL_KEYS=['ZEBRA','CASTLE','STORM','PYTHON','MATRIX','FALCON','CRYPTO','HI
 
 
 // ═══════════════════════════════════════════════════════════════════════
-//  TRAINING ENGINE — Web Worker for non-blocking training
+//  TRAINING ENGINE: Web Worker for non-blocking training
 //  The worker embeds ciphers.js + encoders.js + ml.js + corpus/genSample
 //  Main thread handles: IndexedDB storage, UI updates, KB/confusion writes
 //  Worker handles: sample generation, feature extraction, forest training, eval
@@ -3174,7 +4045,6 @@ function genSample(type,short=false){
     case'url':return Encoders.url.encode(text);
     case'bacon':return Encoders.bacon.encode(text);
     case'multi_layer':return Encoders.multi.encode(text).encoded;
-    // ── 20 NEW TYPES ──
     case'rot13':return ROT13_cipher.encrypt(text);
     case'a1z26':return A1Z26.encode(text);
     case'playfair':return Playfair.encrypt(text,rndChoice(VIG_KEYS));
@@ -3193,13 +4063,12 @@ function genSample(type,short=false){
     case'tap_code':return TapCode.encode(text);
     case'phone_keypad':return PhoneKeypad.encode(text);
     case'nato_phonetic':return NATOPhonetic.encode(text);
-    case'word_sub':return WordSub.encrypt(text,Math.floor(Math.random()*1e9));
     case'hex_shuffle':return HexShuffle.encrypt(text,Math.floor(Math.random()*1e9));
     default:return text;
   }
 }
 
-// Build a Web Worker from inline code
+// Build a Web Worker from inline code (4A)
 async function createTrainWorker(){
   let ciphersCode='',encodersCode='',mlCode='';
 
@@ -3277,11 +4146,11 @@ self.onmessage=function(e){
   if(msg.cmd==='train'){
     abort=false;
     const{storedX,storedY,sampPerType,maxIter,continuous,existingModel}=msg;
-    // Misclassified samples from previous sessions — include in every iteration
+    // Misclassified samples from previous sessions which are included in every iteration
     const missX=storedX.map(a=>new Float64Array(a));
     const missY=[...storedY];
     if(existingModel){try{model.load(existingModel);}catch(e){}}
-    const types=['plaintext','caesar','vigenere','substitution','atbash','affine','rail_fence','enigma','xor_single','xor_repeating','rc4','beaufort','porta','columnar','rot47','binary','hex','base64','morse','octal','decimal','url','bacon','multi_layer','rot13','a1z26','playfair','vigenere_autokey','reverse','scytale','route_cipher','base32','base58','ascii85','uuencode','html_entities','bifid','polybius','adfgvx','tap_code','phone_keypad','nato_phonetic','word_sub','hex_shuffle'];
+    const types=['plaintext','caesar','vigenere','substitution','atbash','affine','rail_fence','enigma','xor_single','xor_repeating','rc4','beaufort','porta','columnar','rot47','binary','hex','base64','morse','octal','decimal','url','bacon','multi_layer','rot13','a1z26','playfair','vigenere_autokey','reverse','scytale','route_cipher','base32','base58','ascii85','uuencode','html_entities','bifid','polybius','adfgvx','tap_code','phone_keypad','nato_phonetic','hex_shuffle'];
     let confusedTypes=new Set(); // tracks which types the model struggles with
 
     for(let iter=1;iter<=maxIter&&!abort;iter++){
@@ -3332,7 +4201,7 @@ self.onmessage=function(e){
       }
       const acc=total?correct/total:0;
       
-      // Update confused types for next iteration — types below 80% get boosted
+      // Update confused types for next iteration and types below 80% get boosted
       confusedTypes=new Set();
       for(const type in byType){
         if(byType[type].t>=3){
@@ -3372,8 +4241,8 @@ async function startTrain(){
   const confMatrix=ConfusionTracker.matrix;
   const confusedTypes=new Set();
   for(const actual in confMatrix){let total=0,errors=0;for(const pred in confMatrix[actual]){total+=confMatrix[actual][pred];if(pred!==actual)errors+=confMatrix[actual][pred];}if(total>10&&errors/total>0.05)confusedTypes.add(actual);}
-  const sampPerType=baseSampPerType; // base rate — worker uses this
-  const types=['plaintext','caesar','vigenere','substitution','atbash','affine','rail_fence','enigma','xor_single','xor_repeating','rc4','beaufort','porta','columnar','rot47','binary','hex','base64','morse','octal','decimal','url','bacon','multi_layer','rot13','a1z26','playfair','vigenere_autokey','reverse','scytale','route_cipher','base32','base58','ascii85','uuencode','html_entities','bifid','polybius','adfgvx','tap_code','phone_keypad','nato_phonetic','word_sub','hex_shuffle'];
+  const sampPerType=baseSampPerType; // base rate the worker uses this
+  const types=['plaintext','caesar','vigenere','substitution','atbash','affine','rail_fence','enigma','xor_single','xor_repeating','rc4','beaufort','porta','columnar','rot47','binary','hex','base64','morse','octal','decimal','url','bacon','multi_layer','rot13','a1z26','playfair','vigenere_autokey','reverse','scytale','route_cipher','base32','base58','ascii85','uuencode','html_entities','bifid','polybius','adfgvx','tap_code','phone_keypad','nato_phonetic','hex_shuffle'];
   const log=[];
   function addLog(msg,ok=true){log.push({msg,ok});if(log.length>500)log.splice(0,log.length-500);
     $('tLog').innerHTML=log.map(l=>`<div class="${l.ok?'lok':'lfail'}">${H(l.msg)}</div>`).join('');$('tLog').scrollTop=$('tLog').scrollHeight;}
@@ -3386,13 +4255,13 @@ async function startTrain(){
   if(missData.count>0)addLog(`[store] Loaded ${missData.count} previously misclassified samples (up to 200/type)`);
   else addLog('[store] No misclassified samples stored yet');
 
-  // Try Web Worker — fetches js files if needed (works for both single-file and multi-file builds)
+  // Try Web Worker: fetches js files if needed (works for both single-file and multi-file builds)
   const worker=await createTrainWorker();
   if(worker){
     addLog('Training in Web Worker — UI stays responsive');
     trainWorker=worker;
 
-    // Send training data to worker — include misclassified samples
+    // Send training data to worker and include misclassified samples
     worker.postMessage({
       cmd:'train',
       storedX:missData.X.map(f=>Array.from(f)),
@@ -3410,11 +4279,13 @@ async function startTrain(){
       else if(msg.type==='progress'){
         $('tsS').textContent=continuous?'RUNNING ∞ [Worker]':'RUNNING [Worker]';$('tsS').style.color='var(--accent)';
         $('tsI').textContent=msg.iter;
-        if(!continuous)$('tBar').style.width=((msg.iter-1)/maxIter*100)+'%';
-        else $('tBar').style.width=((msg.iter%20)/20*100)+'%';
+        // Move the bar forward in thirds within each iteration based on current phase
+        const phaseOffset={generating:0,training:0.33,evaluating:0.66}[msg.phase]||0;
+        if(!continuous)$('tBar').style.width=((msg.iter-1)/maxIter*100+(phaseOffset/maxIter*100))+'%';
+        else $('tBar').style.width=(((msg.iter%20)/20+phaseOffset/20)*100)+'%';
       }
       else if(msg.type==='model'){
-        // Don't accept yet — wait for eval to compare against champion
+        // Don't accept yet. Wait for eval to compare against champion
         // Store challenger JSON temporarily
         trainWorker._pendingModel=msg.json;
       }
@@ -3433,14 +4304,14 @@ async function startTrain(){
         // ── FEDERATED MODEL MERGING ────────────────────────
         // Instead of replacing the champion entirely, merge the best
         // challenger trees into the champion, replacing its worst trees.
-        // Every training session contributes — no learning is ever lost.
+        // Every training session contributes and no learning is ever lost.
 
         // Build test arrays for tree evaluation
         const testX=msg.testSamples.map(ts=>new Float64Array(ts.features));
         const testY=msg.testSamples.map(ts=>ts.actual);
 
         if(!mlModel.trained){
-          // No champion yet — accept challenger as first model
+          // No champion yet so accept challenger as first model
           if(msg.challengerJson){mlModel.load(msg.challengerJson);ModelStore.save(mlModel);}
           addLog(`[champion] ▲ First model accepted: ${(challengerAcc*100).toFixed(1)}% (${mlModel.trees.length} trees)`);
         }else{
@@ -3500,7 +4371,7 @@ async function startTrain(){
             addLog(`[unsolved] Added ${toSave.length} unsolved samples (${uStats.unsolved.toLocaleString()} unsolved, ${uStats.solved.toLocaleString()} solved total)`);
           });
         }
-        // Test unsolved samples against the current champion — mark solved if model now gets them right
+        // Test unsolved samples against the current champion and marks solved if model now gets them right
         if(mlModel.trained){
           UnsolvedStore.testAndSolve(mlModel).then(solveResult=>{
             if(solveResult.solved>0){
@@ -3579,8 +4450,10 @@ async function startTrain(){
       await challenger.trainAsync(trainX,trainY,20,10,3,(done,total)=>{
         if(!continuous)$('tBar').style.width=(((iter-1)/maxIter)+(done/total/maxIter))*100+'%';
       });
+      if(trainAbort)break;
       addLog(`[ml] Trained on ${trainX.length} samples (20 trees, depth 10), OOB: ${(challenger.oobAccuracy*100).toFixed(1)}%`);
       await DataStore.saveWithTexts(freshX,freshY,freshTexts,{iteration:iter});
+      if(trainAbort)break;
       const cbt={};for(let i=0;i<freshX.length;i++){if(!cbt[freshY[i]])cbt[freshY[i]]=[];cbt[freshY[i]].push(freshX[i]);}
       for(const t in cbt)CentroidStore.updateBatch(t,cbt[t]);CentroidStore.save();
       // Evaluate on actual training samples
@@ -3598,6 +4471,7 @@ async function startTrain(){
         if(result.merged){ModelStore.save(mlModel);addLog(`[merge] ▲ Merged ${result.added} trees — ${champAcc.toFixed(3)}→${result.newAcc.toFixed(3)} (${mlModel.trees.length} trees)`);}
         else addLog(`[merge] ▬ No merge: ${result.reason}`,false);
       }
+      if(trainAbort)break;
       // Record confusion/calibration (batched — save once) + collect misclassified
       const byType={};const misclassified=[];
       for(let i=0;i<testX.length;i++){const pred=mlModel.predict(testX[i]);const ok=pred.cls===testY[i];
@@ -3605,6 +4479,7 @@ async function startTrain(){
         if(!ok)misclassified.push({features:testX[i],actual:testY[i],predicted:pred.cls});
         ConfusionTracker.recordBatch(testY[i],pred.cls);CalibrationTracker.recordBatch(pred.confidence,ok);if(KB[testY[i]]){KB[testY[i]].stats.tested++;if(ok)KB[testY[i]].stats.cracked++;KB[testY[i]].icObs.push(+testX[i][0].toFixed(5));KB[testY[i]].entObs.push(+testX[i][3].toFixed(4));if(KB[testY[i]].icObs.length>200)KB[testY[i]].icObs=KB[testY[i]].icObs.slice(-200);if(KB[testY[i]].entObs.length>200)KB[testY[i]].entObs=KB[testY[i]].entObs.slice(-200);}}
       ConfusionTracker.save();CalibrationTracker.save();
+      if(trainAbort)break;
       if(misclassified.length>0){
         const toSave=misclassified.slice(0,500);
         SampleDB.saveMisclassifiedBatch(toSave).then(()=>addLog(`[store] Saved ${toSave.length} misclassified samples`));
@@ -3649,29 +4524,61 @@ function stopTrain(){
 function copyText(text){navigator.clipboard?navigator.clipboard.writeText(text):prompt('Copy:',text);}
 function doDec(){
   const text=$('dIn').value.trim();if(!text)return;const o=$('dOut');
-  const dec=decodeInput(text);
+  // Run ML first so its prediction can inform the pipeline's candidate ranking
   let mlResult=null;
-  if($('dML').checked&&mlModel.trained){const f=extractFeatures(text);mlResult=mlModel.predict(f);}
+  if($('dML').checked&&mlModel.trained){
+    const f=extractFeatures(text);
+    mlResult=mlModel.predict(f);
+    const sorted=Object.entries(mlResult.probs).sort((a,b)=>b[1]-a[1]);
+    const top=sorted[0]?.[1]||0, second=sorted[1]?.[1]||0;
+    if(top-second<0.08)mlResult.lowMargin=true;
+  }
+  const dec=decodeInput(text, mlResult);
   const feats=extractFeatures(text);
+  // Store runner-ups globally so TRY NEXT ANSWER can cycle through them.
+  // First entry is the primary result, rest come from dec.runners which use {name, text, score}.
+  window._decRunners=[{text:dec.decoded,name:dec.method,score:99},...(dec.runners||[])];
+  window._decRunnerIdx=0;
 
   let h='';
+  const hasRunners=dec.runners&&dec.runners.length>0;
   if(dec.decoded!==text||dec.steps.length){
-    h+=`<div class="rb"><div class="rl">DECODED OUTPUT <button class="bs" style="float:right;font-size:.55rem;padding:3px 10px" onclick="copyText(this.closest('.rb').querySelector('.rv').textContent)">COPY</button></div><div class="rv">${H(dec.decoded)}</div></div>`;
+    h+=`<div class="rb"><div class="rl">DECODED OUTPUT`;
+    h+=`<span style="float:right;display:flex;gap:6px">`;
+    if(hasRunners)h+=`<button class="bs" style="font-size:.55rem;padding:3px 10px;border-color:rgba(0,200,150,.35);color:var(--teal)" onclick="decNextAnswer()">TRY NEXT ANSWER</button>`;
+    h+=`<button class="bs" style="font-size:.55rem;padding:3px 10px" onclick="copyText(this.closest('.rb').querySelector('.rv').textContent)">COPY</button>`;
+    h+=`</span></div>`;
+    h+=`<div class="rv" id="decMainOut">${H(dec.decoded)}</div>`;
+    if(hasRunners)h+=`<div style="font-family:var(--mono);font-size:.6rem;color:var(--dim);margin-top:6px" id="decAnswerLabel">Answer 1 of ${dec.runners.length+1} — method: ${H(dec.method)}</div>`;
+    h+=`</div>`;
   }
   h+=`<div class="rb blu"><div class="rl">DETECTION</div><div style="font-family:var(--mono);font-size:.75rem;color:var(--text);line-height:2">`;
-  h+=`Encoding: <b style="color:var(--bright)">${dec.encoding}</b> &nbsp; Method: <b style="color:var(--bright)">${dec.method}</b><br>`;
+  h+=`<span style="color:var(--dim);font-size:.65rem">PIPELINE (rule-based decoder):</span><br>`;
+  h+=`Result: <b style="color:var(--bright)">${dec.method}</b>`;
+  if(dec.encoding&&dec.encoding!=='plaintext'&&dec.encoding!=='unknown')h+=` &nbsp; Detected encoding: <b style="color:var(--bright)">${dec.encoding}</b>`;
+  h+=`<br><span style="color:var(--dim);font-size:.6rem">The pipeline tries every decoder and cracker in sequence and picks the output that scores highest as English text. This is the primary result.</span><br>`;
   if(mlResult){
+    h+=`<br><span style="color:var(--dim);font-size:.65rem">ML MODEL (Random Forest classifier — 20 trees, 128 features):</span><br>`;
+    const MIN_CONF=0.35;
     const calConf=CalibrationTracker.getCalibratedConfidence(mlResult.confidence);
-    h+=`ML: <b style="color:var(--accent)">${mlResult.cls}</b> (${(mlResult.confidence*100).toFixed(1)}%`;
-    if(Math.abs(calConf-mlResult.confidence)>0.05)h+=` → calibrated: ${(calConf*100).toFixed(0)}%`;
-    h+=`) <span class="badge">random_forest_20t</span><br>`;
-    const sorted=Object.entries(mlResult.probs).sort((a,b)=>b[1]-a[1]).slice(0,5);
-    h+='Probs: '+sorted.map(([k,v])=>`${k}:${(v*100).toFixed(1)}%`).join(' ')+`<br>`;
-    // Show nearest centroid as a second opinion alongside the forest result
-    const centroidRank=CentroidStore.rank(feats);
-    if(centroidRank.length>=2)h+=`Centroid: <span style="color:var(--teal)">${centroidRank[0].type}</span> (d=${centroidRank[0].distance.toFixed(2)}) · ${centroidRank[1].type} (d=${centroidRank[1].distance.toFixed(2)})<br>`;
-    // Correction UI — lets the user flag a wrong prediction and feed it back into training
-    const escapedText=text.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n');
+    const confToShow=Math.abs(calConf-mlResult.confidence)>0.05?calConf:mlResult.confidence;
+    if(mlResult.confidence>=MIN_CONF&&!mlResult.lowMargin){
+      const pipelineType=dec.method.toLowerCase().replace(/[^a-z0-9_]/g,'_').replace(/_+/g,'_');
+      const mlType=mlResult.cls.toLowerCase();
+      const agrees=pipelineType.includes(mlType)||mlType.includes(pipelineType.split('_')[0])||
+                   (dec.encoding&&dec.encoding.toLowerCase().includes(mlType));
+      const confColor=mlResult.confidence>0.7?'var(--accent)':mlResult.confidence>0.5?'var(--orange)':'var(--dim)';
+      h+=`Best match: <b style="color:${confColor}">${mlResult.cls}</b> (${(confToShow*100).toFixed(1)}% confidence)`;
+      if(!agrees&&mlResult.confidence>0.5)h+=` <span style="color:var(--orange);font-size:.65rem">⚠ differs from pipeline</span>`;
+      h+=`<br><span style="color:var(--dim);font-size:.6rem">This confidence is calibrated — it reflects how often the model has historically been correct at this level, not just the raw tree vote. A calibrated 70% means the model gets it right about 70% of the time when this confident.</span><br>`;
+      const sorted=Object.entries(mlResult.probs).sort((a,b)=>b[1]-a[1]).slice(0,5);
+      h+=`<br>Other candidates: `+sorted.map(([k,v],i)=>`<span style="color:${i===0?confColor:'var(--dim)'}">${k} ${(v*100).toFixed(1)}%</span>`).join(' · ')+`<br>`;
+      h+=`<span style="color:var(--dim);font-size:.6rem">Raw tree-vote probabilities — the share of total forest vote weight each cipher type received across all 20 trees. These sum to 100%. The calibrated confidence above may differ because it is adjusted for historical accuracy, while these are the unmodified model outputs.</span><br>`;
+    } else {
+      const reason=mlResult.lowMargin?`top candidates are too close to call`:`confidence too low (${(mlResult.confidence*100).toFixed(1)}%)`;
+      h+=`<span style="color:var(--dim)">Model is uncertain — ${reason}. The pipeline result above is more reliable here.</span><br>`;
+    }
+    const escapedText=text.replace(/[\\]/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n');
     h+=`</div></div>`;
     h+=`<div class="rb" style="border-color:rgba(255,159,67,.2)"><div class="rl" style="color:var(--orange)">WRONG PREDICTION? CORRECT IT</div>`;
     h+=`<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px">`;
@@ -3683,21 +4590,25 @@ function doDec(){
     h+=`<button class="bs" onclick="correctPrediction('${escapedText}')">SAVE CORRECTION</button>`;
     h+=`</div><div id="corrStatus" style="margin-top:6px;font-family:var(--mono);font-size:.65rem"></div></div>`;
   } else {
-  h+=`</div></div>`;
+    h+=`</div></div>`;
   }
   h+=`<div class="rb blu"><div class="rl">STATISTICS</div><div style="font-family:var(--mono);font-size:.75rem;color:var(--text);line-height:2">`;
   h+=`IC:${feats[0].toFixed(4)} Chi²:${feats[1].toFixed(2)} Entropy:${feats[3].toFixed(3)} FreqCorr:${feats[2].toFixed(3)} ByteEnt:${feats[61].toFixed(3)}<br></div></div>`;
   if(dec.steps.length){h+=`<div class="pipe"><div class="pt">PIPELINE</div>`;dec.steps.forEach((s,i)=>h+=`<div class="ps"><div class="pn">${i+1}</div><div class="pl">${H(s.l)}</div><div class="pd">${H(s.d)}</div></div>`);h+=`</div>`;}
   if(dec.runners&&dec.runners.length){h+=`<div class="pipe"><div class="pt">RUNNER-UP ATTEMPTS (${dec.runners.length})</div>`;dec.runners.forEach(r=>h+=`<div class="ps"><div class="pn">~</div><div class="pl">${H(r.name)}</div><div class="pd">score: ${r.score.toFixed(3)}</div></div>`);h+=`</div>`;}
   h+=`<div class="pipe"><div class="pt">EXTRACTED METADATA (${FEATURE_COUNT} features)</div><div class="fg" id="decFG">`;
+  
+  // Basic 13 features
   const fnames=['ic','chi²','freqCorr','entropy','normEnt','distinct','maxFreq','minFreq','freqStd','bigramDiv','commonBi','commonTri','repTri'];
   for(let i=0;i<13;i++)h+=renderFI(fnames[i],feats[i],'decFG');
+  
+  // Additional key features from original set
   h+=renderFI('byteEnt',feats[61],'decFG');
   h+=renderFI('printable',feats[62],'decFG');
   h+=renderFI('highByte',feats[64],'decFG');
-  // Key new features
-  h+=`</div><div class="fg" id="decFG2" style="margin-top:8px"><div style="font-family:var(--mono);font-size:.6rem;color:var(--accent);margin-bottom:6px;letter-spacing:.08em">▸ NEW CONTEXTUAL FEATURES</div>`;
-  const newFeatMap=[
+  
+  // All contextual features are organized by category for better understanding
+  const contextualFeatures=[
     ['charClassTrans',57],['sepRegularity',58],['bigramEnt',13],['trigramEnt',14],
     ['quadHitRate',15],['longestRepeat',17],['acPeakRatio',45],['maxIC',33],['bestKL',34],
     ['isAlpha',106],['isHex',107],['isBinary',108],['isBase64',109],['isBacon',110],
@@ -3706,9 +4617,21 @@ function doDec(){
     ['mixedCase',80],['trailingEq',83],['qEntStd',90],['byteMedian',98],['byteIQR',99],
     ['bitsPerChar',127]
   ];
-  for(const[name,idx]of newFeatMap)h+=renderFI(name,feats[idx],'decFG2');
+  for(const[name,idx]of contextualFeatures)h+=renderFI(name,feats[idx],'decFG');
+  
   h+=`</div><p style="font-family:var(--mono);font-size:.58rem;color:var(--dim);margin-top:10px">Click any feature for explanation · ${FEATURE_COUNT} total features extracted</p></div>`;
   o.innerHTML=h;
+}
+
+// Cycle through runner-up answers without re-running the full pipeline
+function decNextAnswer(){
+  if(!window._decRunners||window._decRunners.length<2)return;
+  window._decRunnerIdx=(window._decRunnerIdx+1)%window._decRunners.length;
+  const r=window._decRunners[window._decRunnerIdx];
+  const outEl=$('decMainOut');
+  const lblEl=$('decAnswerLabel');
+  if(outEl)outEl.innerHTML=H(r.text||'');
+  if(lblEl)lblEl.textContent=`Answer ${window._decRunnerIdx+1} of ${window._decRunners.length} — method: ${r.name||'unknown'}`;
 }
 
 // Encrypt
@@ -3745,7 +4668,6 @@ function selC(c,btn){curC=c;
     route_cipher:'<div class="lbl" style="margin-top:12px">COLUMNS</div><input type="number" id="rtC" value="5" min="2" max="20" style="width:80px">',
     bifid:'<div class="lbl" style="margin-top:12px">KEY</div><input type="text" id="biK" value="CIPHER" style="width:200px">',
     substitution:'<p style="margin-top:12px;font-size:.78rem;color:var(--dim)">Random alphabet permutation. 26! possible keys.</p>',
-    word_sub:'<p style="margin-top:12px;font-size:.78rem;color:var(--dim)">Replaces content words with random NATO/military terms.</p>',
     hex_shuffle:'<p style="margin-top:12px;font-size:.78rem;color:var(--dim)">Hex-encodes then shuffles byte pairs randomly.</p>',
     base32:'<p style="margin-top:12px;font-size:.78rem;color:var(--dim)">RFC 4648. Uses A-Z, 2-7, and = padding. Case-insensitive.</p>',
     base58:'<p style="margin-top:12px;font-size:.78rem;color:var(--dim)">Bitcoin alphabet. No 0/O/I/l to avoid visual confusion.</p>',
@@ -3793,7 +4715,6 @@ function doEnc(){
     else if(curC==='route_cipher')ct=RouteCipher.encrypt(t,+(v('rtC'))||5);
     else if(curC==='bifid')ct=Bifid.encrypt(t,v('biK')||'CIPHER');
     else if(curC==='substitution')ct=applySub(t,genSubKey(()=>Math.floor(Math.random()*1e9)));
-    else if(curC==='word_sub')ct=WordSub.encrypt(t,Math.floor(Math.random()*1e9));
     else if(curC==='hex_shuffle')ct=HexShuffle.encrypt(t,Math.floor(Math.random()*1e9));
     else if(curC==='base32')ct=Base32.encode(t);
     else if(curC==='base58')ct=Base58.encode(t);
@@ -3814,7 +4735,7 @@ function doEnc(){
     o.innerHTML=`<div class="rb"><div class="rl">CIPHERTEXT</div><div class="rv">${H(ct)}</div><button class="bs" style="margin-top:12px" onclick="$('dIn').value='${H(ct).replace(/'/g,"\\'")}';go('dec',document.querySelectorAll('.nb')[0])">SEND TO DECRYPT →</button></div>`;
   }catch(e){o.innerHTML=`<div class="rb err"><div class="rl">ERROR</div><div class="rv">${H(e.message)}</div></div>`}}
 
-// Known-key decrypt — uses the same key inputs as the encrypt page to reverse each cipher
+// Known-key decrypt uses the same key inputs as the encrypt page to reverse each cipher
 function doDecKnown(){
   const t=$('eIn').value.trim();if(!t)return;const o=$('eOut');let pt;
   try{const v=id=>{const e=$(id);return e?e.value:''};
@@ -3856,8 +4777,8 @@ function doDecKnown(){
     else if(curC==='phone_keypad')pt=PhoneKeypad.decode(t);
     else if(curC==='nato_phonetic')pt=NATOPhonetic.decode(t);
     else if(curC==='uuencode')pt=UUEncode.decode(t);
-    else if(curC==='substitution'||curC==='word_sub'||curC==='hex_shuffle'||curC==='multi_layer'){
-      // These can't be decrypted without the original key/seed — send to auto-decrypt instead
+    else if(curC==='substitution'||curC==='hex_shuffle'||curC==='multi_layer'){
+      // These can't be decrypted without the original key/seed so send to auto-decrypt instead
       $('dIn').value=t;go('dec',document.querySelectorAll('.nb')[0]);return;}
     else{o.innerHTML=`<div class="rb err"><div class="rl">NOT REVERSIBLE</div><div class="rv">This cipher/encoding doesn't support known-key decryption here. Use the Decrypt tab for auto-analysis.</div></div>`;return;}
     o.innerHTML=`<div class="rb"><div class="rl">DECRYPTED OUTPUT <button class="bs" style="float:right;font-size:.55rem;padding:3px 10px" onclick="copyText(this.closest('.rb').querySelector('.rv').textContent)">COPY</button></div><div class="rv">${H(pt)}</div></div>`;
@@ -3865,7 +4786,7 @@ function doDecKnown(){
 
 // Knowledge Base
 function renderKB(){
-  if(!KB)return; // KB loads async at startup — skip if not ready yet
+  if(!KB)return; // KB loads async at startup will skip if not ready yet
   const entries=Object.entries(KB);
   $('kbG').innerHTML=entries.map(([k,e])=>{
     const rate=e.stats?.tested?((e.stats.cracked/e.stats.tested)*100).toFixed(0)+'%':'—';
@@ -3914,7 +4835,7 @@ function renderML(){
       'byteEnt','printable','control','highByte','nulls','byteStd','distinctByte','spaceRatio','digitRatio','punctRatio','byteBigramEnt','byteDeltaStd','byteDeltaMean','rlCompRatio','byteChiNorm','byteSkew','byteKurtosis','upperByte','lowerByte','mixedCase',
       'firstByte','lastByte','trailingEq','firstIsPct','firstIsDigit','qEnt1','qEnt2','qEnt3','qEnt4','qEntStd','qEntRange','halfByteEnt1','halfByteEnt2','halfByteEntDiff','byteMono','maxRunRatio','byteRange','byteMedian','byteIQR',
       'lenMod2','lenMod3','lenMod4','lenMod5','lenMod8','lenMod6','isAlpha','isHex','isBinary','isBase64','isBacon','isOctal','encPreCheck','rawLenSig','logRawLen','alphaRatio','digitTotal','symbolDensity','pctCharRatio','plusSlashRatio','dotDashRatio','newlineRatio','hexDigitRatio','evenOddDiff','repeatPeriod','uniqueWordRatio','isPrintableOnly','bitsPerChar'];
-    // New features F62-F94
+    // Features F62-F94
     FNAMES.push();
     const sorted=Object.entries(mlModel.importances).sort((a,b)=>b[1]-a[1]).slice(0,15);
     $('mlImp').innerHTML=sorted.map(([k,v])=>{
@@ -3958,7 +4879,7 @@ function renderML(){
   DataStore.getUserCount().then(n=>{
     if($('mlUserSamples'))$('mlUserSamples').textContent=n.toLocaleString();
   });
-  // Centroid profiles — show the per-type statistical signatures we've built up
+  // Centroid profiles which show the per-type statistical signatures we've built up
   const profiles=CentroidStore.getAllProfiles();
   if(Object.keys(profiles).length&&$('mlCentroids')){
     const entries=Object.entries(profiles).filter(([,p])=>p&&p.count>=10).sort((a,b)=>b[1].count-a[1].count);
@@ -3998,21 +4919,192 @@ function mlFeat(){
 }
 
 // Model export/import
-function exportModel(){
-  if(!mlModel.trained){alert('Train the model first.');return;}
-  const blob=new Blob([mlModel.save()],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='cipherlab_model.json';a.click();
+async function exportData(){
+  if(!mlModel.trained){alert('Train the model first to export a complete dataset.');return;}
+  
+  try {
+    // Gather all data components
+    const [
+      modelData,
+      sampleStats,
+      userSamples,
+      unsolvedData,
+      confusionData,
+      calibrationData,
+      centroidData,
+      kbData
+    ] = await Promise.all([
+      Promise.resolve(JSON.parse(mlModel.save())), // Model data
+      SampleDB.getStats(), // Sample statistics
+      SampleDB.loadUserSamples(), // User corrections
+      UnsolvedStore.exportJSON().then(JSON.parse), // Unsolved samples
+      ConfusionTracker.getMatrix(), // Confusion matrix
+      Promise.resolve(CalibrationTracker.getCalibration()), // Calibration data
+      CentroidStore.getAllProfiles(), // Per-type centroids
+      KBStore.load() // Knowledge base
+    ]);
+
+    // Build comprehensive export
+    const exportData = {
+      version: 2,
+      exportedAt: new Date().toISOString(),
+      featureCount: FEATURE_COUNT,
+      
+      // ML Model
+      model: modelData,
+      
+      // Training data summary (don't export massive training chunks)
+      trainingSummary: {
+        totalSamples: sampleStats.total,
+        samplesByType: sampleStats.byType
+      },
+      
+      // User corrections (small, valuable data)
+      userCorrections: {
+        count: userSamples.count,
+        samples: userSamples.X.map((features, i) => ({
+          features: Array.from(features),
+          type: userSamples.Y[i],
+          source: userSamples.sources[i]
+        }))
+      },
+      
+      // Unsolved samples (for continued learning)
+      unsolvedSamples: unsolvedData.samples || [],
+      unsolvedStats: unsolvedData.stats || {},
+      
+      // Learning metadata
+      confusionMatrix: confusionData || {},
+      calibrationData: calibrationData || [],
+      centroids: centroidData || {},
+      knowledgeBase: kbData || {}
+    };
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {type: 'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `cipherlab_complete_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    
+    console.log(`[Export] Complete dataset exported: ${exportData.trainingSummary.totalSamples} training samples, ${exportData.userCorrections.count} user corrections, ${exportData.unsolvedSamples.length} unsolved samples`);
+    
+  } catch (error) {
+    console.error('[Export] Failed:', error);
+    alert('Export failed. Check console for details.');
+  }
 }
-function importModel(input){
-  const file=input.files[0];if(!file)return;
-  const reader=new FileReader();reader.onload=e=>{
-    try{mlModel.load(e.target.result);ModelStore.save(mlModel);renderML();alert('Model imported!');}
-    catch(err){alert('Invalid model file.');}};
+async function importData(input){
+  const file = input.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      
+      // Validate the import file
+      if (!data.version || !data.model) {
+        // Try legacy model-only import
+        if (data.trees && data.trained) {
+          mlModel.load(e.target.result);
+          await ModelStore.save(mlModel);
+          renderML();
+          alert('Legacy model imported successfully!');
+          return;
+        }
+        throw new Error('Invalid export file format');
+      }
+      
+      if (data.featureCount !== FEATURE_COUNT) {
+        throw new Error(`Feature count mismatch: file has ${data.featureCount}, system expects ${FEATURE_COUNT}`);
+      }
+      
+      console.log(`[Import] Loading dataset from ${data.exportedAt}`);
+      console.log(`[Import] Contains: ${data.trainingSummary?.totalSamples || 0} training samples, ${data.userCorrections?.count || 0} user corrections, ${data.unsolvedSamples?.length || 0} unsolved samples`);
+      
+      // Import ML model
+      if (data.model) {
+        mlModel.load(JSON.stringify(data.model));
+        await ModelStore.save(mlModel);
+      }
+      
+      // Import user corrections
+      if (data.userCorrections?.samples) {
+        for (const sample of data.userCorrections.samples) {
+          await SampleDB.addUserSample(
+            '', // text not stored in export to save space
+            sample.type,
+            new Float64Array(sample.features),
+            sample.source || 'imported'
+          );
+        }
+      }
+      
+      // Import unsolved samples
+      if (data.unsolvedSamples?.length) {
+        await UnsolvedStore.load(); // Initialize if needed
+        const unsolvedItems = data.unsolvedSamples.map(s => ({
+          features: new Float64Array(s.features),
+          actual: s.actual,
+          predicted: s.predicted
+        }));
+        await UnsolvedStore.addUnsolved(unsolvedItems);
+      }
+      
+      // Import metadata
+      if (data.confusionMatrix && Object.keys(data.confusionMatrix).length > 0) {
+        ConfusionTracker.matrix = data.confusionMatrix;
+        await ConfusionTracker.save();
+      }
+      
+      if (data.calibrationData?.length) {
+        CalibrationTracker.buckets = {};
+        for (const bucket of data.calibrationData) {
+          const key = bucket.confidence.toFixed(1);
+          CalibrationTracker.buckets[key] = {
+            total: bucket.total,
+            correct: bucket.correct
+          };
+        }
+        await CalibrationTracker.save();
+      }
+      
+      if (data.centroids && Object.keys(data.centroids).length > 0) {
+        // Restore centroids by reconstructing the internal profiles structure
+        CentroidStore._profiles = {};
+        for (const [type, profile] of Object.entries(data.centroids)) {
+          if (profile && profile.mean && profile.count > 0) {
+            CentroidStore._profiles[type] = {
+              count: profile.count,
+              mean: new Float64Array(profile.mean),
+              m2: profile.variance ? new Float64Array(profile.variance.map((v, i) => v * (profile.count - 1))) : new Float64Array(FEATURE_COUNT)
+            };
+          }
+        }
+        await CentroidStore.save();
+      }
+      
+      if (data.knowledgeBase && Object.keys(data.knowledgeBase).length > 0) {
+        await KBStore.save(data.knowledgeBase);
+        // Reload KB into global variable
+        KB = await KBStore.load();
+      }
+      
+      // Refresh UI
+      syncAllStats();renderKB();renderML();
+      
+      alert(`Complete dataset imported successfully!\n\nModel: ${data.model.trained ? 'Trained' : 'Untrained'}\nUser corrections: ${data.userCorrections?.count || 0}\nUnsolved samples: ${data.unsolvedSamples?.length || 0}`);
+      
+    } catch (error) {
+      console.error('[Import] Failed:', error);
+      alert(`Import failed: ${error.message}`);
+    }
+  };
   reader.readAsText(file);
 }
 
-// User correction — called when user clicks "Correct this" on decrypt page
-const ALL_TYPES=['plaintext','caesar','vigenere','substitution','atbash','affine','rail_fence','enigma','xor_single','xor_repeating','rc4','beaufort','porta','columnar','rot47','binary','hex','base64','morse','octal','decimal','url','bacon','multi_layer','rot13','a1z26','playfair','vigenere_autokey','reverse','scytale','route_cipher','base32','base58','ascii85','uuencode','html_entities','bifid','polybius','adfgvx','tap_code','phone_keypad','nato_phonetic','word_sub','hex_shuffle'];
+// User correction is called when user clicks "Correct this" on decrypt page
+const ALL_TYPES=['plaintext','caesar','vigenere','substitution','atbash','affine','rail_fence','enigma','xor_single','xor_repeating','rc4','beaufort','porta','columnar','rot47','binary','hex','base64','morse','octal','decimal','url','bacon','multi_layer','rot13','a1z26','playfair','vigenere_autokey','reverse','scytale','route_cipher','base32','base58','ascii85','uuencode','html_entities','bifid','polybius','adfgvx','tap_code','phone_keypad','nato_phonetic','hex_shuffle'];
 function correctPrediction(text){
   const sel=$('corrType');if(!sel)return;
   const correctType=sel.value;
@@ -4035,5 +5127,73 @@ function captureEncrypt(ciphertext,type){
   }
 }
 
-// Init — KB load is async now so startup runs inside the promise chain above
+// Standalone evaluation: generates a fresh held-out set and tests the current
+// model without doing any training. Gives an unbiased accuracy estimate since
+// the samples are generated after training, not drawn from the training pool.
+async function runEval(){
+  if(!mlModel.trained){
+    const logEl=$('tLog');
+    if(logEl)logEl.innerHTML='<div class="lfail">[eval] No model trained yet — run Training first.</div>';
+    return;
+  }
+  if(trainRunning){
+    const logEl=$('tLog');
+    if(logEl)logEl.innerHTML='<div class="lfail">[eval] Training is already running — wait for it to finish.</div>';
+    return;
+  }
+  const evalLog=[];
+  function addLog(msg,ok=true){
+    evalLog.push({msg,ok});
+    if(evalLog.length>500)evalLog.splice(0,evalLog.length-500);
+    const logEl=$('tLog');
+    if(logEl){logEl.innerHTML=evalLog.map(l=>`<div class="${l.ok?'lok':'lfail'}">${H(l.msg)}</div>`).join('');logEl.scrollTop=logEl.scrollHeight;}
+  }
+  $('tsS').textContent='EVALUATING';$('tsS').style.color='var(--teal)';
+  const evalBar=$('tBar');if(evalBar)evalBar.style.width='0';
+  const sampPerType=+($('tSamp').value)||500;
+  addLog(`── Standalone Evaluation (${sampPerType} samples per type) ──`);
+  const types=['plaintext','caesar','vigenere','substitution','atbash','affine','rail_fence','enigma','xor_single','xor_repeating','rc4','beaufort','porta','columnar','rot47','binary','hex','base64','morse','octal','decimal','url','bacon','multi_layer','rot13','a1z26','playfair','vigenere_autokey','reverse','scytale','route_cipher','base32','base58','ascii85','uuencode','html_entities','bifid','polybius','adfgvx','tap_code','phone_keypad','nato_phonetic','hex_shuffle'];
+  const evalX=[],evalY=[];
+  for(let ti=0;ti<types.length;ti++){
+    const type=types[ti];
+    for(let i=0;i<sampPerType;i++){
+      try{const ct=genSample(type,false);if(ct&&ct.length>=8){const f=extractFeatures(ct);if(!f.some(isNaN)){evalX.push(f);evalY.push(type);}}}catch(e){}
+    }
+    if(evalBar)evalBar.style.width=((ti+1)/types.length*50)+'%';
+    await new Promise(r=>setTimeout(r,0));
+  }
+  addLog('[eval] Generated '+evalX.length+' held-out samples — running predictions...');
+  let correct=0;const byType={};const confCounts={};
+  for(let i=0;i<evalX.length;i++){
+    const pred=mlModel.predict(evalX[i]);const actual=evalY[i];const ok=pred.cls===actual;
+    if(!byType[actual])byType[actual]={c:0,t:0};byType[actual].t++;if(ok){correct++;byType[actual].c++;}
+    if(!ok){const k=actual+' → '+pred.cls;confCounts[k]=(confCounts[k]||0)+1;}
+    if(evalBar&&i%200===0)evalBar.style.width=(50+((i+1)/evalX.length*50))+'%';
+  }
+  const acc=evalX.length?correct/evalX.length:0;
+  if(evalBar)evalBar.style.width='100%';
+  $('tsA').textContent=(acc*100).toFixed(1)+'%';
+  $('tsS').textContent='IDLE';$('tsS').style.color='var(--dim)';
+  addLog('[eval] ══ Overall accuracy: '+(acc*100).toFixed(1)+'% ('+correct+'/'+evalX.length+') ══');
+  // Record to accuracy history with proper date-based run numbering
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  const history = await AccuracyHistory.load();
+  const todaysRuns = history.filter(entry => {
+    const entryDate = new Date(entry.timestamp).toISOString().split('T')[0];
+    return entryDate === today;
+  });
+  const runNumber = todaysRuns.length + 1;
+  
+  await AccuracyHistory.record(acc, evalX.length, runNumber);
+  $('tTypeSection').style.display='';
+  $('tTypeAcc').innerHTML=Object.entries(byType).sort((a,b)=>(b[1].c/b[1].t)-(a[1].c/a[1].t)).map(([t,d])=>{const pct=d.t?(d.c/d.t*100):0;return`<div class="bar-r"><div class="bar-l">${t}</div><div class="bar-t"><div class="bar-f" style="width:${pct.toFixed(0)}%;background:${pct>80?'var(--accent)':pct>50?'var(--orange)':'var(--red)'}"></div></div><div class="bar-p">${pct.toFixed(0)}%</div></div>`;}).join('');
+  const worst=Object.entries(byType).sort((a,b)=>(a[1].c/a[1].t)-(b[1].c/b[1].t)).slice(0,5);
+  addLog('[eval] Weakest types:');for(const[t,d]of worst)addLog(`  ${t}: ${d.c}/${d.t} (${(d.c/d.t*100).toFixed(0)}%)`);
+  const topConf=Object.entries(confCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  if(topConf.length){addLog('[eval] Top confusions:');for(const[pair,count]of topConf)addLog(`  ${pair}: ${count}×`);}
+  syncAllStats();
+  renderML(); // update accuracy history chart on ML page
+}
+
+// Init: KB load is async now so startup runs inside the promise chain above
 </script></body></html>

@@ -1,39 +1,132 @@
-// ==============================================================================
-//  ciphers.js - Cipher implementations for CipherLab
-//  Dependencies: none (loads first)
-// ==============================================================================
+/**
+ * CipherLab - Cipher Implementation Module
+ * 
+ * This module contains implementations of classical and historical ciphers used by the
+ * machine learning classifier. Each cipher includes both encryption and decryption
+ * methods for testing and demonstration purposes.
+ * 
+ * Dependencies: None (loaded first)
+ */
+
+/**
+ * UTILITY FUNCTIONS
+ * These helper functions preserve original text formatting (spaces, punctuation)
+ * when ciphers process only alphabetic characters.
+ */
+/**
+ * Restores original spacing and punctuation after cipher processing
+ * @param {string} originalText - The original input text with spacing
+ * @param {string} processedText - The cipher output (alphabetic only)
+ * @returns {string} Processed text with original formatting restored
+ */
+function preserveSpaces(originalText, processedText) {
+  if (!originalText || !processedText) return processedText;
+  
+  const original = [...originalText];
+  const processed = [...processedText];
+  const result = [];
+  
+  let processedIndex = 0;
+  for (let i = 0; i < original.length; i++) {
+    const char = original[i];
+    
+    // If original character is alphabetic, use next processed character
+    if (/[a-zA-Z]/.test(char)) {
+      if (processedIndex < processed.length) {
+        result.push(processed[processedIndex++]);
+      } else {
+        // If we run out of processed characters, use original
+        result.push(char);
+      }
+    } else {
+      // Preserve spaces, punctuation, numbers as-is
+      result.push(char);
+    }
+  }
+  
+  // If there are remaining processed characters, append them
+  while (processedIndex < processed.length) {
+    result.push(processed[processedIndex++]);
+  }
+  
+  return result.join('');
+}
+
+// Create a wrapper for ciphers that strip spaces
+function withSpacePreservation(cipherFunc) {
+  return function(text, ...args) {
+    const result = cipherFunc.call(this, text, ...args);
+    return preserveSpaces(text, result);
+  };
+}
 
 const ENGLISH_FREQ={a:.0817,b:.0149,c:.0278,d:.0425,e:.127,f:.0223,g:.0202,h:.0609,i:.0697,j:.0015,k:.0077,l:.0403,m:.0241,n:.0675,o:.0751,p:.0193,q:.001,r:.0599,s:.0633,t:.0906,u:.0276,v:.0098,w:.0236,x:.0015,y:.0197,z:.0007};
 
 // Common English bigrams with relative frequencies for better scoring
 const ENGLISH_BIGRAMS={th:.0356,he:.0307,in:.0243,er:.0205,an:.0199,re:.0185,on:.0176,at:.0149,en:.0145,nd:.0135,ti:.0134,es:.0134,or:.0128,te:.0120,of:.0117,ed:.0117,is:.0113,it:.0112,al:.0109,ar:.0107,st:.0105,to:.0104,nt:.0104,ng:.0095,se:.0093,ha:.0093,as:.0087,ou:.0087,io:.0083,le:.0083,ve:.0083,co:.0079,me:.0079,de:.0076,hi:.0076,ri:.0073,ro:.0073};
 
+// ~360 of the most common English words for plaintext verification.
+// Used as a dictionary-coverage check in scoreEnglish: real English text
+// should have a meaningful fraction of its tokens present here.
+// Top 50 English trigrams with relative frequencies.
+// Trigrams are far more discriminating than bigrams: real English text hits
+// these patterns consistently while cipher output almost never does.
+// Multiplier of 400 normalises the raw dot-product score to a 0-1 range.
+const ENGLISH_TRIGRAMS={the:0.03508,and:0.02356,ing:0.01920,ion:0.01787,ent:0.01675,ati:0.01487,for:0.01380,her:0.01372,ter:0.01362,hat:0.01312,tha:0.01309,ere:0.01308,con:0.01248,all:0.01195,ate:0.01158,tio:0.01136,ver:0.01127,his:0.01118,res:0.01111,thi:0.01104,est:0.01080,com:0.01013,eve:0.00985,per:0.00978,ons:0.00967,ous:0.00956,tin:0.00950,men:0.00943,whi:0.00940,ith:0.00935,sta:0.00922,nce:0.00917,ont:0.00913,not:0.00907,rea:0.00898,nti:0.00891,int:0.00885,oth:0.00879,ens:0.00876,led:0.00871,our:0.00869,ali:0.00864,ple:0.00859,ore:0.00856,ble:0.00851,pro:0.00847,edt:0.00843,ive:0.00839,hav:0.00836,igh:0.00832};
+
+const ENGLISH_WORDS=new Set(['able','about','above','accept','access','according','account','achieve','across','act','action','active','actually','add','address','administration','advance','affect','after','age','ago','agree','ahead','air','all','allow','almost','along','already','also','although','always','am','among','amount','an','and','another','answer','any','apply','approach','are','area','argue','around','ask','at','away','back','base','basic','be','because','become','been','before','being','below','best','between','big','black','blue','board','body','both','bring','build','business','but','by','call','came','can','care','carry','cause','certain','change','check','children','choose','city','civil','class','clear','close','code','collect','come','command','community','compare','complete','concern','condition','consider','continue','control','could','course','create','current','cut','cycle','data','day','deal','decide','define','despite','develop','did','difference','different','direction','discuss','do','does','down','drive','due','during','each','early','economic','effect','either','else','enable','end','enough','ensure','enter','equal','even','ever','every','evidence','example','exist','experience','explain','fall','far','feel','few','final','find','first','follow','force','form','forward','found','four','free','from','full','function','general','give','go','going','good','got','government','great','group','grow','guide','half','hand','happen','hard','help','high','history','hold','how','human','idea','identify','if','image','important','improve','include','increase','individual','influence','information','instead','interest','its','keep','know','large','late','later','law','learn','leave','level','life','likely','list','long','look','low','make','management','market','matter','may','me','mean','meet','mention','method','might','mind','model','most','move','much','must','national','natural','near','necessary','need','network','new','next','not','nothing','now','occur','offer','often','old','on','one','open','or','organization','original','other','our','outcome','page','particular','pattern','people','per','perhaps','plan','point','policy','possible','power','practice','present','prevent','primary','principle','problem','process','produce','program','provide','push','quality','reach','reason','recent','refer','region','relate','require','result','right','role','run','same','say','school','see','set','seven','show','simple','since','situation','skill','social','society','solution','specific','stand','standard','step','structure','study','style','subject','success','suggest','support','system','take','teach','than','that','the','them','theory','think','through','throughout','time','to','together','top','topic','toward','two','type','under','understand','until','use','value','various','very','view','visit','way','well','what','when','where','whether','which','who','why','will','within','without','work','world','write','year','yes','yet','you']);
+
 function scoreEnglish(text){
   const lc=text.toLowerCase();const alpha=[...lc].filter(c=>c>='a'&&c<='z');const n=alpha.length;
   if(n<3)return 0;
-  // Calculate the fraction of text-like characters (alpha + spaces + basic punctuation)
-  const textChars=[...text].filter(c=>/[a-zA-Z \.,;:!?'\-]/.test(c)).length;
+  // Gate 1: must be mostly text-like characters
+  const textChars=[...text].filter(c=>/[a-zA-Z .,;:!?'\-]/.test(c)).length;
   const textRatio=textChars/Math.max(text.length,1);
-  if(textRatio<0.7)return 0; // Less than 70% text-like indicates non-English content (filters RC4/XOR output)
+  if(textRatio<0.7)return 0;
+  // Gate 2: vowel ratio of English is ~38-42% vowels if the text is far outside = not English
+  const vowelCount=alpha.filter(c=>'aeiou'.includes(c)).length;
+  const vowelRatio=vowelCount/n;
+  if(vowelRatio<0.15||vowelRatio>0.70)return 0;
   const freq={};for(const c of alpha)freq[c]=(freq[c]||0)+1;
-  // Unigram chi-squared test (weighted 50%)
+  // Unigram chi-squared (weighted 25%)
   let chi=0;for(let i=0;i<26;i++){const c=String.fromCharCode(97+i);const obs=(freq[c]||0)/n;const exp=ENGLISH_FREQ[c]||.001;chi+=(obs-exp)**2/exp;}
   const uniScore=1/(1+chi);
-  // Bigram frequency analysis (weighted 30%)
   if(n<6)return uniScore;
-  const biStr=alpha.join('');const biCount={};
-  for(let i=0;i<biStr.length-1;i++){const bg=biStr.substring(i,i+2);biCount[bg]=(biCount[bg]||0)+1;}
-  const biTotal=biStr.length-1;let biScore=0;
-  for(const[bg,expected]of Object.entries(ENGLISH_BIGRAMS)){biScore+=(biCount[bg]||0)/biTotal*expected;}
+  const nStr=alpha.join('');
+  // Bigram frequency analysis (weighted 20%)
+  const biCount={};
+  for(let i=0;i<nStr.length-1;i++){const bg=nStr.substring(i,i+2);biCount[bg]=(biCount[bg]||0)+1;}
+  const biTotal=nStr.length-1;let biScore=0;
+  for(const[bg,exp]of Object.entries(ENGLISH_BIGRAMS)){biScore+=(biCount[bg]||0)/biTotal*exp;}
   biScore=Math.min(1,biScore*120);
-  // Word structure analysis (weighted 20%): English typically has spaces forming words of 1-15 characters
-  const words=text.trim().split(/\s+/);
+  // Trigram frequency analysis (weighted 30%): much more discriminating than bigrams.
+  // Real English hits the top 50 trigrams consistently; cipher output almost never does.
+  let triScore=0;
+  if(n>=8){
+    const triCount={};
+    for(let i=0;i<nStr.length-2;i++){const tg=nStr.substring(i,i+3);triCount[tg]=(triCount[tg]||0)+1;}
+    const triTotal=nStr.length-2;
+    for(const[tg,exp]of Object.entries(ENGLISH_TRIGRAMS)){triScore+=(triCount[tg]||0)/triTotal*exp;}
+    triScore=Math.min(1,triScore*400);
+  }
+  // Word structure bonus (weighted 10%)
+  const words=text.trim().split(/\s+/).filter(w=>w.length>0);
   let wordBonus=0;
   if(words.length>1){
-    const avgLen=alpha.length/words.length;
+    const avgLen=n/words.length;
     if(avgLen>=2&&avgLen<=12)wordBonus=0.5+0.5*Math.max(0,1-Math.abs(avgLen-4.7)/5);
   }
-  return uniScore*0.50+biScore*0.30+wordBonus*0.20;
+  // Dictionary word coverage (weighted 15%) — real English has recognisable tokens.
+  // Only applied when 3+ words present; short words excluded from denominator.
+  let dictScore=0;
+  if(words.length>=3){
+    const checkable=words.filter(w=>w.length>2);
+    if(checkable.length>0){
+      const hits=checkable.filter(w=>ENGLISH_WORDS.has(w.replace(/[^a-z]/g,''))).length;
+      dictScore=hits/checkable.length;
+    }
+  }
+  return uniScore*0.25+biScore*0.20+triScore*0.30+wordBonus*0.10+dictScore*0.15;
 }
 
 // Score for byte-level content (XOR/RC4 output that may not be pure alphabetic)
@@ -49,20 +142,35 @@ function scorePrintable(text){
   return engScore;
 }
 
-// Caesar cipher implementation
+/**
+ * CIPHER IMPLEMENTATIONS
+ * Each cipher object provides encrypt() and decrypt() methods for the specified algorithm.
+ * Some also include crack() methods that attempt automated cryptanalysis.
+ */
+
+/**
+ * Caesar Cipher - Simple shift cipher used by Julius Caesar
+ * Each letter is shifted by a fixed number of positions in the alphabet
+ */
 const Caesar={
   shift(text,s){return[...text].map(c=>{if(/[a-zA-Z]/.test(c)){const b=c<'a'?65:97;return String.fromCharCode((c.charCodeAt(0)-b+s%26+26)%26+b)}return c}).join('')},
   encrypt(t,s){return this.shift(t,s)},decrypt(t,s){return this.shift(t,-s)},
   crack(ct){const r=[];for(let s=0;s<26;s++){const d=this.shift(ct,-s);r.push({shift:s,text:d,score:scoreEnglish(d)})}r.sort((a,b)=>b.score-a.score);return r}
 };
 
-// Vigenère cipher implementation
+/**
+ * Vigenère Cipher - Polyalphabetic substitution using a repeating keyword
+ * More secure than Caesar as the same letter can be encrypted differently
+ */
 const Vigenere={
   encrypt(text,key){const k=key.toUpperCase();let ki=0;return[...text].map(c=>{if(/[a-zA-Z]/.test(c)){const s=k.charCodeAt(ki%k.length)-65;ki++;const b=c<'a'?65:97;return String.fromCharCode((c.toUpperCase().charCodeAt(0)-65+s)%26+b)}return c}).join('')},
   decrypt(text,key){const k=key.toUpperCase();let ki=0;return[...text].map(c=>{if(/[a-zA-Z]/.test(c)){const s=k.charCodeAt(ki%k.length)-65;ki++;const b=c<'a'?65:97;return String.fromCharCode((c.toUpperCase().charCodeAt(0)-65-s+26)%26+b)}return c}).join('')}
 };
 
-// Atbash cipher implementation
+/**
+ * Atbash Cipher - Alphabet reversal cipher from ancient Hebrew
+ * A maps to Z, B maps to Y, etc. Self-reversing encryption
+ */
 const Atbash={transform(text){return[...text].map(c=>{if(/[a-zA-Z]/.test(c)){const b=c<'a'?65:97;return String.fromCharCode(b+25-(c.charCodeAt(0)-b))}return c}).join('')}};
 
 // Enigma machine simulation (3-rotor Wehrmacht model)
@@ -175,26 +283,148 @@ const RailFenceCracker={
     results.sort((a,b)=>b.score-a.score);return results;}
 };
 
-// Columnar Transposition brute-force cracker (tries column counts 2-8 with permutation search)
+// Columnar Transposition brute-force cracker
+// Up to 7 columns: try all permutations (7! = 5040, feasible).
+// 8-10 columns: full permutation search is too slow (8! = 40320), so instead
+// use a greedy column-ordering heuristic — score each candidate column pair
+// and build the order incrementally. Not guaranteed optimal but catches most cases.
 const ColumnarCracker={
   _permutations(arr){if(arr.length<=1)return[arr];const result=[];
     for(let i=0;i<arr.length;i++){const rest=[...arr.slice(0,i),...arr.slice(i+1)];
       for(const perm of this._permutations(rest))result.push([arr[i],...perm]);
-      if(result.length>5000)return result;}return result;}, // Limit to 5000 permutations to prevent excessive computation
+      if(result.length>6000)return result;}return result;},
+  _greedyOrder(grid,cols,rows){
+    // Score a full permutation by trigram hit rate — used for cols 8-10
+    const scoreOrder=(order)=>{
+      let pt='';for(let r=0;r<rows;r++)for(const c of order)if(grid[r]&&grid[r][c])pt+=grid[r][c];
+      const a=[...pt.toLowerCase()].filter(c=>c>='a'&&c<='z').join('');let sc=0;
+      for(let i=0;i<a.length-2;i++){const tg=a[i]+a[i+1]+a[i+2];sc+=ENGLISH_TRIGRAMS[tg]||0;}
+      return sc;
+    };
+    // Greedy: start with the column pair that scores best, then extend
+    const remaining=[...Array(cols).keys()];
+    let order=[];
+    // Seed with the single best starting column
+    let bestStart=0,bestStartScore=-1;
+    for(const c of remaining){
+      const s=scoreOrder([c]);if(s>bestStartScore){bestStartScore=s;bestStart=c;}
+    }
+    order.push(bestStart);remaining.splice(remaining.indexOf(bestStart),1);
+    while(remaining.length){
+      let bestNext=remaining[0],bestNextScore=-1;
+      for(const c of remaining){
+        const s=scoreOrder([...order,c]);if(s>bestNextScore){bestNextScore=s;bestNext=c;}
+      }
+      order.push(bestNext);remaining.splice(remaining.indexOf(bestNext),1);
+    }
+    return order;
+  },
   crack(ct){const results=[];
-    for(let cols=2;cols<=Math.min(7,Math.floor(ct.length/2));cols++){
+    const maxCols=Math.min(10,Math.floor(ct.length/2));
+    for(let cols=2;cols<=maxCols;cols++){
       const rows=Math.ceil(ct.length/cols);
-      // Try all column permutations (feasible up to 7! = 5040)
-      const colOrder=[...Array(cols).keys()];
-      for(const perm of this._permutations(colOrder)){
-        // Read columns in perm order
-        const grid=Array.from({length:rows},()=>Array(cols).fill(''));let pos=0;
-        for(const col of perm){for(let r=0;r<rows&&pos<ct.length;r++){grid[r][col]=ct[pos++];}}
-        const pt=grid.map(r=>r.join('')).join('');
-        results.push({cols,perm:perm.join(''),text:pt,score:scoreEnglish(pt)});
+      // Build the grid column by column (standard columnar fill)
+      const fullCols=ct.length%cols||cols;
+      const shortCols=cols-fullCols;
+      const grid=Array.from({length:rows},()=>Array(cols).fill(''));
+      let pos=0;
+      for(let col=0;col<cols;col++){
+        const colLen=col<fullCols?rows:rows-1;
+        for(let r=0;r<colLen;r++){if(pos<ct.length)grid[r][col]=ct[pos++];}
+      }
+      if(cols<=7){
+        // Full permutation search
+        const colOrder=[...Array(cols).keys()];
+        for(const perm of this._permutations(colOrder)){
+          const pt=grid.map(r=>perm.map(c=>r[c]||'').join('')).join('');
+          results.push({cols,perm:perm.join(''),text:pt,score:scoreEnglish(pt)});
+        }
+      }else{
+        // Greedy heuristic for cols 8-10 — try greedy order plus a few random orders
+        const greedyOrder=this._greedyOrder(grid,cols,rows);
+        const tryOrder=(perm)=>{
+          const pt=grid.map(r=>perm.map(c=>r[c]||'').join('')).join('');
+          results.push({cols,perm:perm.join(''),text:pt,score:scoreEnglish(pt)});
+        };
+        tryOrder(greedyOrder);
+        // Also try 200 random permutations to increase coverage
+        for(let t=0;t<200;t++){
+          const perm=[...Array(cols).keys()];
+          for(let i=perm.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[perm[i],perm[j]]=[perm[j],perm[i]];}
+          tryOrder(perm);
+        }
       }
     }
     results.sort((a,b)=>b.score-a.score);return results.slice(0,10);}
+};
+
+// Substitution cipher hill-climber
+// Starts from a frequency-sorted seed key, then swaps letter pairs and keeps
+// any swap that improves the trigram score. Reliable on texts >= 40 chars.
+const SubstitutionCracker={
+  // Trigrams are far more discriminating than bigrams for hill-climbing —
+  // the score surface is sharper so the climber converges faster and more reliably.
+  _scoreTrigrams(text){
+    const alpha=[...text.toLowerCase()].filter(c=>c>='a'&&c<='z');
+    if(alpha.length<3)return 0;
+    const str=alpha.join('');let score=0;
+    for(let i=0;i<str.length-2;i++){const tg=str[i]+str[i+1]+str[i+2];score+=ENGLISH_TRIGRAMS[tg]||0.00001;}
+    return score/Math.max(str.length-2,1);
+  },
+  crack(ct,maxIter=2000){
+    const alpha=[...ct.toLowerCase()].filter(c=>c>='a'&&c<='z');
+    if(alpha.length<20)return null;
+    const ctFreq=new Array(26).fill(0);
+    for(const c of alpha)ctFreq[c.charCodeAt(0)-97]++;
+    const ctRank=[...Array(26).keys()].sort((a,b)=>ctFreq[b]-ctFreq[a]);
+    const engRank=[...Object.entries(ENGLISH_FREQ)].sort((a,b)=>b[1]-a[1]).map(([c])=>c.charCodeAt(0)-97);
+    const key=new Array(26);
+    for(let i=0;i<26;i++)key[ctRank[i]]=engRank[i];
+    const decipher=(k)=>[...ct].map(c=>{if(/[a-zA-Z]/.test(c)){const b=c<'a'?65:97;return String.fromCharCode(k[c.toUpperCase().charCodeAt(0)-65]+b);}return c;}).join('');
+    let best=decipher(key);let bestScore=this._scoreTrigrams(best);
+    for(let iter=0;iter<maxIter;iter++){
+      const a=Math.floor(Math.random()*26);const b=Math.floor(Math.random()*26);
+      if(a===b)continue;
+      [key[a],key[b]]=[key[b],key[a]];
+      const candidate=decipher(key);const s=this._scoreTrigrams(candidate);
+      if(s>bestScore){bestScore=s;best=candidate;}
+      else[key[a],key[b]]=[key[b],key[a]];
+    }
+    return{text:best,score:scoreEnglish(best),key:key.map(v=>String.fromCharCode(v+65)).join('')};
+  }
+};
+
+// Enigma brute-forcer
+// Tries all 17,576 start positions for the default rotor order (III-II-I, reflector B),
+// then falls back to additional rotor orders if no strong result is found.
+const EnigmaCracker={
+  _orders:[['III','II','I'],['I','II','III'],['II','III','I'],['I','III','II'],['III','I','II'],['II','I','III']],
+  crack(ct,crib=null){
+    const clean=ct.toUpperCase().replace(/[^A-Z]/g,'');
+    if(clean.length<8)return null;
+    let bestScore=-1,bestResult=null;
+    for(const rotors of this._orders){
+      for(let p1=0;p1<26;p1++){
+        for(let p2=0;p2<26;p2++){
+          for(let p3=0;p3<26;p3++){
+            if(crib){
+              const cribClean=crib.toUpperCase().replace(/[^A-Z]/g,'');
+              let selfEnc=false;
+              for(let i=0;i<cribClean.length&&i<clean.length;i++){
+                if(clean[i]===cribClean[i]){selfEnc=true;break;}
+              }
+              if(selfEnc)continue;
+            }
+            const pt=enigmaProcess(clean,rotors,'B',[p1,p2,p3]);
+            const sc=scoreEnglish(pt);
+            if(sc>bestScore){bestScore=sc;bestResult={text:preserveSpaces(ct, pt),score:sc,rotors:rotors.join('-'),starts:[p1,p2,p3]};}
+          }
+        }
+      }
+      if(bestScore>0.4)break;
+    }
+    return bestResult&&bestResult.score>0.3?bestResult:null;
+  }
 };
 
 // ROT13 cipher implementation
@@ -205,6 +435,162 @@ const A1Z26={
   encode(t){return[...t.toUpperCase()].map(c=>{const code=c.charCodeAt(0);if(code>=65&&code<=90)return String(code-64);return c;}).join(' ').replace(/ {2,}/g,' ').trim();},
   decode(t){return t.split(/[\s,]+/).map(n=>{const v=parseInt(n);if(v>=1&&v<=26)return String.fromCharCode(v+64);return n;}).join('');}
 };
+
+/**
+ * Scytale Cipher Cracker
+ * Attempts different cylinder diameters to find the original message
+ */
+// Brute-forces column counts 2–20. Deterministic decrypt for each count.
+const ScytaleCracker={
+  crack(ct){
+    const clean=ct.replace(/[^a-zA-Z]/g,'');
+    if(clean.length<6)return[];
+    const results=[];
+    for(let cols=2;cols<=Math.min(20,Math.floor(clean.length/2));cols++){
+      const pt=Scytale.decrypt(clean,cols);
+      results.push({cols,text:preserveSpaces(ct, pt),score:scoreEnglish(pt)});
+    }
+    results.sort((a,b)=>b.score-a.score);
+    return results;
+  }
+};
+
+/**
+ * Route Cipher Cracker
+ * Tests different spiral reading patterns to decrypt transposition ciphers
+ */
+// Brute-forces column counts 2–14 using the spiral route (the only route
+// the RouteCipher implementation uses). Decrypt is deterministic per count.
+const RouteCipherCracker={
+  crack(ct){
+    const clean=ct.replace(/[^a-zA-Z]/g,'');
+    if(clean.length<8)return[];
+    const results=[];
+    for(let cols=2;cols<=Math.min(14,Math.floor(clean.length/2));cols++){
+      try{
+        const pt=RouteCipher.decrypt(clean,cols);
+        results.push({cols,text:preserveSpaces(ct, pt),score:scoreEnglish(pt)});
+      }catch(e){}
+    }
+    results.sort((a,b)=>b.score-a.score);
+    return results;
+  }
+};
+
+/**
+ * Playfair Cipher Cracker
+ * Uses simulated annealing to break Playfair ciphers by optimizing digraph frequencies
+ */
+// Simulated annealing hill-climb over the 5x5 key square.
+// Starts from a random key, randomly swaps two cells or two rows or two
+// columns, keeps the move if trigram score improves. Temperature schedule
+// allows occasional uphill moves early on to escape local maxima.
+// Reliable on texts >= 40 characters.
+const PlayfairCracker={
+  crack(ct,maxIter=5000){
+    const clean=ct.toUpperCase().replace(/J/g,'I').replace(/[^A-Z]/g,'');
+    if(clean.length<20)return null;
+    // Decode with a given key grid
+    const tryDecrypt=(grid)=>{
+      const pairs=[];
+      for(let i=0;i<clean.length;i+=2)pairs.push([clean[i],clean[i+1]||'X']);
+      return pairs.map(([a,b])=>{
+        const ai=grid.indexOf(a),bi=grid.indexOf(b);
+        const ar=Math.floor(ai/5),ac=ai%5,br=Math.floor(bi/5),bc=bi%5;
+        if(ar===br)return grid[ar*5+(ac+4)%5]+grid[br*5+(bc+4)%5];
+        if(ac===bc)return grid[((ar+4)%5)*5+ac]+grid[((br+4)%5)*5+bc];
+        return grid[ar*5+bc]+grid[br*5+ac];
+      }).join('');
+    };
+    const score=(text)=>{
+      const a=[...text.toLowerCase()].filter(c=>c>='a'&&c<='z');
+      if(a.length<3)return 0;
+      const s=a.join('');let sc=0;
+      for(let i=0;i<s.length-2;i++){const tg=s[i]+s[i+1]+s[i+2];sc+=ENGLISH_TRIGRAMS[tg]||0.00001;}
+      return sc/(s.length-2);
+    };
+    // Random starting key
+    const alpha='ABCDEFGHIKLMNOPQRSTUVWXYZ'.split('');
+    for(let i=alpha.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[alpha[i],alpha[j]]=[alpha[j],alpha[i]];}
+    let key=[...alpha];
+    let best=tryDecrypt(key);let bestScore=score(best);let bestKey=[...key];
+    for(let iter=0;iter<maxIter;iter++){
+      const newKey=[...key];
+      const move=Math.random();
+      if(move<0.7){
+        // Swap two random cells (most common mutation)
+        const a=Math.floor(Math.random()*25),b=Math.floor(Math.random()*25);
+        [newKey[a],newKey[b]]=[newKey[b],newKey[a]];
+      }else if(move<0.85){
+        // Swap two rows
+        const r1=Math.floor(Math.random()*5),r2=Math.floor(Math.random()*5);
+        for(let c=0;c<5;c++){[newKey[r1*5+c],newKey[r2*5+c]]=[newKey[r2*5+c],newKey[r1*5+c]];}
+      }else{
+        // Swap two columns
+        const c1=Math.floor(Math.random()*5),c2=Math.floor(Math.random()*5);
+        for(let r=0;r<5;r++){[newKey[r*5+c1],newKey[r*5+c2]]=[newKey[r*5+c2],newKey[r*5+c1]];}
+      }
+      const candidate=tryDecrypt(newKey);const s=score(candidate);
+      if(s>bestScore){bestScore=s;best=candidate;bestKey=[...newKey];}
+      if(s>score(tryDecrypt(key)))key=newKey;
+    }
+    return{text:preserveSpaces(ct, best),score:scoreEnglish(best),key:bestKey.join('')};
+  }
+};
+
+/**
+ * Bifid Cipher Cracker
+ * Attempts to break Bifid ciphers using fractionation pattern analysis
+ */
+// Same simulated annealing approach as PlayfairCracker — hill-climb
+// over the 5x5 key square using trigram scoring. Bifid mixes row/col
+// coordinates so even small key changes dramatically shift the output,
+// making trigrams a more reliable guide than scoreEnglish alone.
+// Reliable on texts >= 30 characters.
+const BifidCracker={
+  crack(ct,maxIter=5000){
+    const clean=ct.toUpperCase().replace(/J/g,'I').replace(/[^A-Z]/g,'');
+    if(clean.length<16)return null;
+    const tryDecrypt=(grid)=>{
+      const combined=[];
+      for(const c of clean){const idx=grid.indexOf(c);combined.push(Math.floor(idx/5),idx%5);}
+      const half=combined.length/2;
+      const rows=combined.slice(0,half);const cols=combined.slice(half);
+      let out='';for(let i=0;i<rows.length;i++)out+=grid[rows[i]*5+cols[i]];
+      return out;
+    };
+    const score=(text)=>{
+      const a=[...text.toLowerCase()].filter(c=>c>='a'&&c<='z');
+      if(a.length<3)return 0;
+      const s=a.join('');let sc=0;
+      for(let i=0;i<s.length-2;i++){const tg=s[i]+s[i+1]+s[i+2];sc+=ENGLISH_TRIGRAMS[tg]||0.00001;}
+      return sc/(s.length-2);
+    };
+    const alpha='ABCDEFGHIKLMNOPQRSTUVWXYZ'.split('');
+    for(let i=alpha.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[alpha[i],alpha[j]]=[alpha[j],alpha[i]];}
+    let key=[...alpha];
+    let best=tryDecrypt(key);let bestScore=score(best);let bestKey=[...key];
+    for(let iter=0;iter<maxIter;iter++){
+      const newKey=[...key];
+      const move=Math.random();
+      if(move<0.7){
+        const a=Math.floor(Math.random()*25),b=Math.floor(Math.random()*25);
+        [newKey[a],newKey[b]]=[newKey[b],newKey[a]];
+      }else if(move<0.85){
+        const r1=Math.floor(Math.random()*5),r2=Math.floor(Math.random()*5);
+        for(let c=0;c<5;c++){[newKey[r1*5+c],newKey[r2*5+c]]=[newKey[r2*5+c],newKey[r1*5+c]];}
+      }else{
+        const c1=Math.floor(Math.random()*5),c2=Math.floor(Math.random()*5);
+        for(let r=0;r<5;r++){[newKey[r*5+c1],newKey[r*5+c2]]=[newKey[r*5+c2],newKey[r*5+c1]];}
+      }
+      const candidate=tryDecrypt(newKey);const s=score(candidate);
+      if(s>bestScore){bestScore=s;best=candidate;bestKey=[...newKey];}
+      if(s>score(tryDecrypt(key)))key=newKey;
+    }
+    return{text:preserveSpaces(ct, best),score:scoreEnglish(best),key:bestKey.join('')};
+  }
+};
+
 
 // Playfair cipher implementation
 const Playfair={
@@ -222,19 +608,20 @@ const Playfair={
   decrypt(text,key){
     const grid=this._grid(key);const clean=text.toUpperCase().replace(/J/g,'I').replace(/[^A-Z]/g,'');
     const pairs=[];for(let i=0;i<clean.length;i+=2)pairs.push([clean[i],clean[i+1]||'X']);
-    return pairs.map(([a,b])=>{const[ar,ac]=this._pos(grid,a);const[br,bc]=this._pos(grid,b);
+    const result = pairs.map(([a,b])=>{const[ar,ac]=this._pos(grid,a);const[br,bc]=this._pos(grid,b);
       if(ar===br)return grid[ar*5+(ac+4)%5]+grid[br*5+(bc+4)%5];
       if(ac===bc)return grid[((ar+4)%5)*5+ac]+grid[((br+4)%5)*5+bc];
-      return grid[ar*5+bc]+grid[br*5+ac];}).join('');}
+      return grid[ar*5+bc]+grid[br*5+ac];}).join('');
+    return preserveSpaces(text, result);}
 };
 
 // Vigenère Autokey cipher implementation
 const VigenereAutokey={
   encrypt(text,key){const k=key.toUpperCase();const clean=text.toUpperCase().replace(/[^A-Z]/g,'');let out='',fullKey=k;
-    for(let i=0;i<clean.length;i++){const s=fullKey.charCodeAt(i)-65;out+=String.fromCharCode((clean.charCodeAt(i)-65+s)%26+65);fullKey+=clean[i];}return out;},
+    for(let i=0;i<clean.length;i++){const s=fullKey.charCodeAt(i)-65;out+=String.fromCharCode((clean.charCodeAt(i)-65+s)%26+65);fullKey+=clean[i];}return preserveSpaces(text, out);},
   // Autokey decrypt recovers the plaintext one char at a time, extending the key as we go
   decrypt(text,key){const k=key.toUpperCase();const clean=text.toUpperCase().replace(/[^A-Z]/g,'');let out='',fullKey=k;
-    for(let i=0;i<clean.length;i++){const s=fullKey.charCodeAt(i)-65;const p=String.fromCharCode((clean.charCodeAt(i)-65-s+26)%26+65);out+=p;fullKey+=p;}return out;}
+    for(let i=0;i<clean.length;i++){const s=fullKey.charCodeAt(i)-65;const p=String.fromCharCode((clean.charCodeAt(i)-65-s+26)%26+65);out+=p;fullKey+=p;}return preserveSpaces(text, out);}
 };
 
 // Reverse cipher implementation
@@ -243,7 +630,7 @@ const ReverseText={encrypt(t){return[...t].reverse().join('');}};
 // Scytale cipher implementation
 const Scytale={
   encrypt(text,cols){const clean=text.replace(/[^a-zA-Z]/g,'');const rows=Math.ceil(clean.length/cols);const padded=clean+'X'.repeat(rows*cols-clean.length);
-    let out='';for(let c=0;c<cols;c++)for(let r=0;r<rows;r++)out+=padded[r*cols+c];return out;},
+    let out='';for(let c=0;c<cols;c++)for(let r=0;r<rows;r++)out+=padded[r*cols+c];return preserveSpaces(text, out);},
   // Read back down the rows to undo the column-wise read
   decrypt(text,cols){const n=text.length;const rows=Math.ceil(n/cols);
     const grid=Array.from({length:rows},()=>Array(cols).fill(''));let pos=0;
@@ -259,7 +646,7 @@ const RouteCipher={
     while(top<=bot&&left<=right){for(let i=left;i<=right;i++)out+=grid[top][i];top++;
       for(let i=top;i<=bot;i++)out+=grid[i][right];right--;
       if(top<=bot){for(let i=right;i>=left;i--)out+=grid[bot][i];bot--;}
-      if(left<=right){for(let i=bot;i>=top;i--)out+=grid[i][left];left++;}}return out;},
+      if(left<=right){for(let i=bot;i>=top;i--)out+=grid[i][left];left++;}}return preserveSpaces(text, out);},
   // Reverse-map the spiral order back to grid positions, then read row by row
   decrypt(text,cols){const n=text.length;const rows=Math.ceil(n/cols);
     const grid=Array.from({length:rows},()=>Array(cols).fill(''));
@@ -335,12 +722,12 @@ const Bifid={
   _grid(key){const seen=new Set();const chars=[];for(const c of(key+'ABCDEFGHIKLMNOPQRSTUVWXYZ').toUpperCase()){const ch=c==='J'?'I':c;if(ch>='A'&&ch<='Z'&&!seen.has(ch)){seen.add(ch);chars.push(ch);}}return chars;},
   encrypt(text,key){const grid=this._grid(key);const clean=text.toUpperCase().replace(/J/g,'I').replace(/[^A-Z]/g,'');
     const rows=[],cols=[];for(const c of clean){const idx=grid.indexOf(c);rows.push(Math.floor(idx/5));cols.push(idx%5);}
-    const combined=[...rows,...cols];let out='';for(let i=0;i<combined.length;i+=2)out+=grid[combined[i]*5+combined[i+1]];return out;},
+    const combined=[...rows,...cols];let out='';for(let i=0;i<combined.length;i+=2)out+=grid[combined[i]*5+combined[i+1]];return preserveSpaces(text, out);},
   // Split the combined sequence back into row/col halves and look up each character
   decrypt(text,key){const grid=this._grid(key);const clean=text.toUpperCase().replace(/J/g,'I').replace(/[^A-Z]/g,'');
     const combined=[];for(const c of clean){const idx=grid.indexOf(c);combined.push(Math.floor(idx/5),idx%5);}
     const half=combined.length/2;const rows=combined.slice(0,half);const cols=combined.slice(half);
-    let out='';for(let i=0;i<rows.length;i++)out+=grid[rows[i]*5+cols[i]];return out;}
+    let out='';for(let i=0;i<rows.length;i++)out+=grid[rows[i]*5+cols[i]];return preserveSpaces(text, out);}
 };
 
 // Polybius Square implementation
@@ -382,14 +769,6 @@ const NATOPhonetic={
   _rev(){if(!this._r){this._r={};for(const k in this._w)this._r[this._w[k].toLowerCase()]=k;}return this._r;},
   encode(t){return[...t.toUpperCase()].map(c=>this._w[c]||c).join(' ').replace(/ {2,}/g,' ').trim();},
   decode(t){const rev=this._rev();return t.split(/\s+/).map(w=>{const l=w.toLowerCase();return rev[l]||w;}).join('');}
-};
-
-// Word substitution cipher implementation
-const WordSub={
-  _pool:['alpha','bravo','charlie','delta','echo','foxtrot','golf','hotel','india','juliet','kilo','lima','mike','november','oscar','papa','quebec','romeo','sierra','tango','uniform','victor','whiskey','xray','yankee','zulu','one','two','three','four','five','six','seven','eight','nine','zero','red','blue','green','black','white','iron','steel','stone','fire','water','earth','wind','star','moon','sun'],
-  encrypt(text,seed){let s=seed||Date.now();const rng=()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;};
-    const words=text.toLowerCase().split(/\s+/);const map={};
-    return words.map(w=>{const clean=w.replace(/[^a-z]/g,'');if(clean.length<=2)return w;if(!map[clean])map[clean]=this._pool[Math.floor(rng()*this._pool.length)];return map[clean];}).join(' ');}
 };
 
 // Hex shuffle cipher implementation

@@ -1,11 +1,17 @@
-// ═══════════════════════════════════════════════════════════════════════
-//  crackers.js — Vigenère/Beaufort auto-cracker + smart decrypt pipeline
-//  Dependencies: ciphers.js, encoders.js
-// ═══════════════════════════════════════════════════════════════════════
+/**
+ * CipherLab - Cryptanalysis Module
+ * 
+ * This module implements automated cryptanalysis techniques for breaking
+ * polyalphabetic ciphers. It uses classical methods like Kasiski examination
+ * and Friedman testing, combined with intelligent decryption pipelines.
+ * 
+ * Dependencies: ciphers.js, encoders.js
+ */
 
-// ═══════════════════════════════════════════════════════════════════════
-//  VIGENÈRE / BEAUFORT / PORTA AUTO-CRACKER (Kasiski + Friedman)
-// ═══════════════════════════════════════════════════════════════════════
+/**
+ * POLYALPHABETIC CIPHER ANALYSIS
+ * Implements Kasiski examination and Friedman testing for Vigenère-type ciphers
+ */
 
 function computeIC(text){
   const a=[...text.toLowerCase()].filter(c=>c>='a'&&c<='z');const n=a.length;if(n<=1)return 0;
@@ -75,12 +81,50 @@ function crackVigenere(ct,mode='vigenere'){
   return bestResult;
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-//  SMART DECRYPT PIPELINE (tries everything, picks best)
-// ═══════════════════════════════════════════════════════════════════════
+/**
+ * SMART DECRYPTION PIPELINE
+ * Comprehensive decryption system that tries multiple approaches and selects
+ * the best result based on English text scoring and ML hints.
+ */
 
-function decodeInput(text){
+function decodeInput(text, mlHint){
   const enc=detectEncoding(text);const steps=[];let decoded=text;
+
+  // Build ML boost table from the hint — maps canonical cipher type names to score bonuses.
+  // Top ML prediction gets +0.12, 2nd gets +0.06, 3rd gets +0.03.
+  // Only applied when ML confidence is meaningful (above 30% and not flagged lowMargin).
+  const mlBoost={};
+  if(mlHint&&!mlHint.lowMargin&&mlHint.confidence>=0.30){
+    const sorted=Object.entries(mlHint.probs).sort((a,b)=>b[1]-a[1]);
+    const boosts=[0.12,0.06,0.03];
+    sorted.slice(0,3).forEach(([cls],i)=>{ mlBoost[cls]=boosts[i]; });
+  }
+
+  // Map candidate names to ML type keys for boost lookup
+  function mlBoostFor(candidateName){
+    const n=candidateName.toLowerCase();
+    if(n.startsWith('caesar'))return mlBoost['caesar']||0;
+    if(n.startsWith('atbash'))return mlBoost['atbash']||0;
+    if(n.startsWith('rot13'))return mlBoost['rot13']||0;
+    if(n.startsWith('rot47'))return mlBoost['rot47']||0;
+    if(n.startsWith('affine'))return mlBoost['affine']||0;
+    if(n.startsWith('vigenère')||n.startsWith('vigenere'))return mlBoost['vigenere']||0;
+    if(n.startsWith('beaufort'))return mlBoost['beaufort']||0;
+    if(n.startsWith('porta'))return mlBoost['porta']||0;
+    if(n.startsWith('rail fence'))return mlBoost['rail_fence']||0;
+    if(n.startsWith('columnar'))return mlBoost['columnar']||0;
+    if(n.startsWith('substitution'))return mlBoost['substitution']||0;
+    if(n.startsWith('enigma'))return mlBoost['enigma']||0;
+    if(n.startsWith('xor repeating'))return mlBoost['xor_repeating']||0;
+    if(n.startsWith('xor'))return mlBoost['xor_single']||0;
+    if(n.startsWith('rc4'))return mlBoost['rc4']||0;
+    if(n.startsWith('playfair'))return mlBoost['playfair']||0;
+    if(n.startsWith('bifid'))return mlBoost['bifid']||0;
+    if(n.startsWith('autokey'))return mlBoost['vigenere_autokey']||0;
+    if(n.startsWith('scytale'))return mlBoost['scytale']||0;
+    if(n.startsWith('route'))return mlBoost['route_cipher']||0;
+    return 0;
+  }
   // Phase 1: Try multi-layer decoding first
   const ml=Encoders.multi.decode(text);
   if(ml.depth>0){decoded=ml.final;ml.layers.forEach((l,i)=>steps.push({l:`Layer ${i+1}: ${l}`,d:i===ml.layers.length-1?ml.final.substring(0,80):'...'}));
@@ -130,7 +174,10 @@ function decodeInput(text){
   }
 
   const origScore=scoreEnglish(decoded);
-  if(origScore>0.6)return{decoded,encoding:enc,steps,method:steps.length?steps[steps.length-1].l:'plaintext'};
+  // Plaintext fast-exit — but veto it if the ML is confident this isn't plaintext.
+  // A high scoreEnglish alone isn't enough if the ML sees cipher structure in the features.
+  const mlSaysNotPlaintext=mlHint&&!mlHint.lowMargin&&mlHint.confidence>=0.50&&mlHint.cls!=='plaintext';
+  if(origScore>0.6&&!mlSaysNotPlaintext)return{decoded,encoding:enc,steps,method:steps.length?steps[steps.length-1].l:'plaintext',runners:[]};
 
   // Phase 2: Try all cipher crackers in parallel, collect candidates
   const candidates=[];
@@ -139,15 +186,37 @@ function decodeInput(text){
   const cRes=Caesar.crack(decoded);
   if(cRes[0].shift!==0)candidates.push({name:`Caesar shift ${cRes[0].shift}`,text:cRes[0].text,score:cRes[0].score});
 
-  // Atbash
-  const atb=Atbash.transform(decoded);candidates.push({name:'Atbash',text:atb,score:scoreEnglish(atb)});
+  // Atbash — check explicitly before Affine since Affine a=25,b=0 is mathematically
+  // identical to Atbash and the Affine cracker might report a=25,b=12 (wrong offset)
+  // instead of the canonical a=25,b=0. Atbash gets its own named slot here.
+  const atb=Atbash.transform(decoded);
+  const atbScore=scoreEnglish(atb);
+  candidates.push({name:'Atbash',text:atb,score:atbScore});
 
   // ROT47
   const r47=ROT47.transform(decoded);candidates.push({name:'ROT47',text:r47,score:scoreEnglish(r47)});
 
-  // Affine brute-force (312 keys)
+  // Affine brute-force (312 keys) — exclude a=25 since that's Atbash, already handled above
   try{const affRes=AffineCracker.crack(decoded);
-    if(affRes[0]&&(affRes[0].a!==1||affRes[0].b!==0))candidates.push({name:`Affine a=${affRes[0].a} b=${affRes[0].b}`,text:affRes[0].text,score:affRes[0].score});}catch(e){}
+    if(affRes[0]&&(affRes[0].a!==1||affRes[0].b!==0)&&affRes[0].a!==25)candidates.push({name:`Affine a=${affRes[0].a} b=${affRes[0].b}`,text:affRes[0].text,score:affRes[0].score});}catch(e){}
+
+  // Scytale brute-force (cols 2-20)
+  try{const scRes=ScytaleCracker.crack(decoded);
+    if(scRes[0]&&scRes[0].score>origScore+0.05)candidates.push({name:`Scytale cols=${scRes[0].cols}`,text:scRes[0].text,score:scRes[0].score});}catch(e){}
+
+  // Route Cipher brute-force (cols 2-14, spiral route)
+  try{const rcRes=RouteCipherCracker.crack(decoded);
+    if(rcRes[0]&&rcRes[0].score>origScore+0.05)candidates.push({name:`Route Cipher cols=${rcRes[0].cols}`,text:rcRes[0].text,score:rcRes[0].score});}catch(e){}
+
+  // Playfair hill-climb (needs >= 20 alpha chars, key-based 5x5 grid)
+  if(decoded.length>=20&&/^[a-zA-Z\s]+$/.test(decoded)){
+    try{const pfRes=PlayfairCracker.crack(decoded);
+      if(pfRes&&pfRes.score>origScore+0.08)candidates.push({name:'Playfair (hill-climb)',text:pfRes.text,score:pfRes.score});}catch(e){}}
+
+  // Bifid hill-climb (needs >= 16 alpha chars, key-based 5x5 grid)
+  if(decoded.length>=16&&/^[a-zA-Z\s]+$/.test(decoded)){
+    try{const bfRes=BifidCracker.crack(decoded);
+      if(bfRes&&bfRes.score>origScore+0.08)candidates.push({name:'Bifid (hill-climb)',text:bfRes.text,score:bfRes.score});}catch(e){}}
 
   // Rail Fence (try rails 2-20)
   try{const rfRes=RailFenceCracker.crack(decoded);
@@ -184,8 +253,20 @@ function decodeInput(text){
       if(rcRes[0]){const rcScore=Math.max(rcRes[0].score,scorePrintable(rcRes[0].text));
         candidates.push({name:`RC4 key=0x${rcRes[0].key}`,text:rcRes[0].text,score:rcScore});}}catch(e){}}
 
-  // Pick the best candidate that beats the original
-  candidates.sort((a,b)=>b.score-a.score);
+  // Substitution cipher hill-climber (needs >= 40 chars to be reliable)
+  if(decoded.length>=40&&/^[a-zA-Z\s.,!?;:'\-]+$/.test(decoded)){
+    try{const subRes=SubstitutionCracker.crack(decoded);
+      if(subRes&&subRes.score>origScore+0.08)candidates.push({name:'Substitution (hill-climb)',text:subRes.text,score:subRes.score});}catch(e){}}
+
+  // Enigma brute-force (all 17,576 start positions, 6 rotor orders)
+  if(decoded.length>=8&&decoded.length<=300&&/^[a-zA-Z\s]+$/.test(decoded)){
+    try{const engRes=EnigmaCracker.crack(decoded);
+      if(engRes&&engRes.score>origScore+0.08)candidates.push({name:`Enigma ${engRes.rotors} [${engRes.starts.join(',')}]`,text:engRes.text,score:engRes.score});}catch(e){}}
+
+  // Sort candidates — apply ML boost to effective score so the model's top predictions
+  // are promoted when they're close to another candidate. Raw scores are preserved
+  // in the object so the runner-up display still shows honest scoreEnglish values.
+  candidates.sort((a,b)=>(b.score+mlBoostFor(b.name))-(a.score+mlBoostFor(a.name)));
   const best=candidates[0];
   if(best&&best.score>origScore+0.05){
     steps.push({l:best.name,d:best.text.substring(0,100)});

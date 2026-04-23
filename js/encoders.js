@@ -1,11 +1,17 @@
-// ═══════════════════════════════════════════════════════════════════════
-//  encoders.js — All encoding/decoding implementations
-//  Dependencies: none
-// ═══════════════════════════════════════════════════════════════════════
+/**
+ * CipherLab - Encoding/Decoding Module
+ * 
+ * This module implements various encoding and decoding schemes used for
+ * data representation and obfuscation. These are not cryptographic ciphers
+ * but rather different ways to represent the same data.
+ * 
+ * Dependencies: None
+ */
 
-// ═══════════════════════════════════════════════════════════════════════
-//  ENCODING IMPLEMENTATIONS (encoders + decoders)
-// ═══════════════════════════════════════════════════════════════════════
+/**
+ * Encoding Implementations
+ * Each encoder provides encode() and decode() methods for data transformation
+ */
 
 const Encoders={
   binary:{encode(t){return[...t].map(c=>c.charCodeAt(0).toString(2).padStart(8,'0')).join(' ')},

@@ -1,15 +1,22 @@
-// ═══════════════════════════════════════════════════════════════════════
-//  ml.js — 128-feature extraction + Decision Forest classifier
-//  PERFORMANCE-OPTIMIZED: single-pass feature extraction, sort-based
-//  tree splits, typed array internals, no .filter() in hot paths.
-//  Dependencies: ciphers.js (ENGLISH_FREQ), encoders.js (detectEncoding)
-// ═══════════════════════════════════════════════════════════════════════
+/**
+ * CipherLab - Machine Learning Module
+ * 
+ * This module handles feature extraction and classification using a Random Forest
+ * approach. It extracts 128 statistical features from input text and uses them
+ * to identify cipher types with high accuracy.
+ * 
+ * The feature extraction is optimized for performance using single-pass algorithms
+ * and typed arrays for computational efficiency.
+ * 
+ * Dependencies: ciphers.js (ENGLISH_FREQ), encoders.js (detectEncoding)
+ */
 
 const FEATURE_COUNT = 128;
 
-// ═══════════════════════════════════════════════════════════════════════
-//  REFERENCE DATA (precomputed for speed)
-// ═══════════════════════════════════════════════════════════════════════
+/**
+ * REFERENCE DATA
+ * Pre-computed constants for fast feature extraction without repeated calculations
+ */
 
 const COMMON_BI=['th','he','in','er','an','re','on','at','en','nd','ti','es','or','te','of','ed','is','it','al','ar'];
 const COMMON_TRI=['the','and','ing','her','hat','his','tha','ere','for','ent'];
@@ -17,16 +24,24 @@ const TOP_QUADS={'tion':1,'ther':1,'that':1,'ment':1,'with':1,'ness':1,'ight':1,
 // Precompute common bigram/trigram sets for O(1) lookup
 const COMMON_BI_SET=new Set(COMMON_BI);
 const COMMON_TRI_SET=new Set(COMMON_TRI);
-// English freq as array for fast indexed access
+// English letter frequencies for computational efficiency
 const ENG_FREQ_ARR=new Float64Array(26);
 for(let i=0;i<26;i++)ENG_FREQ_ARR[i]=ENGLISH_FREQ[String.fromCharCode(97+i)]||0;
 
 const RANDOM_IC=0.0385;
 
-// ═══════════════════════════════════════════════════════════════════════
-//  128-FEATURE EXTRACTION — SINGLE-PASS OPTIMIZED
-//  All character iteration happens once; stats accumulated in arrays.
-// ═══════════════════════════════════════════════════════════════════════
+/**
+ * MAIN FEATURE EXTRACTION FUNCTION
+ * Processes input text and extracts 128 statistical features in a single pass
+ * for optimal performance. Features include frequency analysis, entropy calculations,
+ * pattern detection, and structural analysis.
+ */
+
+/**
+ * Extracts all 128 features from input text for ML classification
+ * @param {string} text - Input text to analyze
+ * @returns {Float64Array} Array of 128 feature values
+ */
 
 function extractFeatures(text){
   const F=new Float64Array(FEATURE_COUNT);
@@ -79,7 +94,7 @@ function extractFeatures(text){
 
   const n=alphaCount;
 
-  // A. Frequency distribution features (F0-F8) - how letters are distributed
+  // A. Frequency distribution features (F0-F8): how letters are distributed
   if(n>=2){
     let icSum=0;for(let i=0;i<26;i++){const v=letterFreq[i];icSum+=v*(v-1);}
     F[0]=icSum/(n*(n-1));
@@ -102,7 +117,7 @@ function extractFeatures(text){
     F[8]=Math.sqrt(fVar/26);
   }
 
-  // B. N-gram analysis (F9-F22) - looking at letter pairs, triples, etc.
+  // B. N-gram analysis (F9-F22): looking at letter pairs, triples, etc.
   if(n>=3){
     // Bigrams: encode as (a*26+b) → int key
     const biCounts=new Int32Array(676);
@@ -161,7 +176,7 @@ function extractFeatures(text){
     if(n>1){let vcT=0;for(let i=1;i<n;i++){if(vowels[alphaArr[i-1]]!==vowels[alphaArr[i]])vcT++;}F[22]=vcT/(n-1);}
   }
 
-  // C. Index of Coincidence at different key lengths (F23-F36) - for polyalphabetic detection
+  // C. Index of Coincidence at different key lengths (F23-F36): for polyalphabetic detection
   if(n>=10){
     for(let kl=2;kl<=11;kl++){
       const sf=new Int32Array(kl*26);const sn=new Int32Array(kl);
@@ -181,7 +196,7 @@ function extractFeatures(text){
     const ic=F[0];if(ic>RANDOM_IC&&n>1){const est=0.0273*n/((n-1)*ic-RANDOM_IC*n+0.0273);F[36]=Math.max(1,Math.min(20,Math.round(est)))/20;}else F[36]=1;
   }
 
-  // D. Autocorrelation (F37-F46) - patterns repeating at different offsets
+  // D. Autocorrelation (F37-F46): patterns repeating at different offsets
   if(n>=8){
     let acMax=0,acMaxIdx=0,acSum=0;
     for(let off=1;off<=8;off++){let m=0;const denom=n-off;
@@ -190,7 +205,7 @@ function extractFeatures(text){
     const acMean=acSum/8;F[45]=acMean>0?acMax/acMean:1;F[46]=acMaxIdx/8;
   }
 
-  // E. Structural shape (F47-F60) - case, spaces, word lengths, etc.
+  // E. Structural shape (F47-F60): case, spaces, word lengths, etc.
   if(n>=2){let vc=0;const vowels=new Uint8Array([1,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0]);
     for(let i=0;i<n;i++)if(vowels[alphaArr[i]])vc++;F[47]=vc/n;}
   F[48]=spaceCount>0?1:0;
@@ -222,7 +237,7 @@ function extractFeatures(text){
     let wSum=0;for(let i=0;i<wc;i++)wSum+=words[i].length;const wM=wSum/wc;F[59]=wM/20;
     if(wc>1){let wVar=0;for(let i=0;i<wc;i++){const d=words[i].length-wM;wVar+=d*d;}F[60]=Math.sqrt(wVar/wc)/10;}}}
 
-  // F. Byte-level features (F61-F80) - looking at raw bytes
+  // F. Byte-level features (F61-F80): looking at raw bytes
   let bent=0,distinctB=0;
   for(let i=0;i<256;i++){if(bfreq[i]>0){distinctB++;const p=bfreq[i]/len;bent-=p*Math.log2(p);}}
   F[61]=bent;
@@ -258,7 +273,7 @@ function extractFeatures(text){
   F[78]=upperCount/len;F[79]=lowerCount/len;
   F[80]=Math.min(upperCount,lowerCount)/Math.max(upperCount,lowerCount,1);
 
-  // G. Positional and regional features (F81-F99) - entropy in different parts
+  // G. Positional and regional features (F81-F99): entropy in different parts
   F[81]=bytes[0]/255;F[82]=bytes[len-1]/255;
   let trailEq=0;for(let i=len-1;i>=0&&bytes[i]===61;i--)trailEq++;
   F[83]=Math.min(trailEq,3)/3;
@@ -284,7 +299,7 @@ function extractFeatures(text){
   if(len>=2){let mono=0;for(let i=0;i<len-1;i++)if(bytes[i+1]>=bytes[i])mono++;F[95]=mono/(len-1);}
   if(len>=2){let maxR=1,curR=1;for(let i=1;i<len;i++){if(bytes[i]===bytes[i-1]){curR++;if(curR>maxR)maxR=curR;}else curR=1;}F[96]=maxR/len;}
 
-  // Byte range, median, IQR — use bfreq histogram instead of sorting
+  // Byte range, median, IQR: use bfreq histogram instead of sorting
   {let bMin=255,bMax=0;for(let i=0;i<256;i++){if(bfreq[i]>0){if(i<bMin)bMin=i;if(i>bMax)bMax=i;}}
     F[97]=(bMax-bMin)/255;
     // Median and IQR from cumulative histogram
@@ -458,6 +473,13 @@ function treeFeatureImportance(tree,imp,depth){
   treeFeatureImportance(tree.left,imp,depth+1);treeFeatureImportance(tree.right,imp,depth+1);
 }
 
+/**
+ * DecisionForest Class - Random Forest Implementation
+ * 
+ * Implements a random forest classifier optimized for cipher type detection.
+ * Uses bootstrap sampling and random feature selection for robust classification.
+ * Includes out-of-bag accuracy estimation and model merging capabilities.
+ */
 class DecisionForest{
   constructor(){this.trees=[];this.trained=false;this.total=0;this.classes=[];this.importances={};this.oobAccuracy=0;}
   train(X,Y,nTrees=20,maxDepth=14,minSize=3){
@@ -487,7 +509,7 @@ class DecisionForest{
     this.trained=true;this.total=X.length;
   }
 
-  // Async version of train — yields the event loop between each tree so the
+  // Async version of train: yields the event loop between each tree so the
   // main thread stays responsive. Used by the fallback training path in ui.js.
   // The worker uses the synchronous train() instead since it runs off-thread.
   async trainAsync(X,Y,nTrees=20,maxDepth=14,minSize=3,onProgress=null){
@@ -647,4 +669,8 @@ class DecisionForest{
   }
 }
 
+/**
+ * Global ML model instance used throughout CipherLab
+ * Initialized as empty forest, populated during training
+ */
 let mlModel=new DecisionForest();
