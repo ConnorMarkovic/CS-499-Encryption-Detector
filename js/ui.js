@@ -952,9 +952,12 @@ function decRetryNext(retryId){
 }
 
 // Encrypt
-let curC='caesar';let xorMode='single';
-function selC(c,btn){curC=c;
-  document.querySelectorAll('#cBtns .bs, #eBtns .bs').forEach(b=>b.classList.remove('on'));if(btn)btn.classList.add('on');
+let curC=localStorage.getItem('cipherlab_curC')||'caesar';let xorMode='single';
+function selC(c,btn){curC=c;localStorage.setItem('cipherlab_curC',c);
+  document.querySelectorAll('#cBtns .bs, #eBtns .bs').forEach(b=>b.classList.remove('on'));
+  // Highlight the correct button whether called with or without a btn reference
+  const activeBtn=btn||document.querySelector(`#cBtns .bs[onclick*="'${c}'"], #eBtns .bs[onclick*="'${c}'"]`);
+  if(activeBtn)activeBtn.classList.add('on');
   const m={
     caesar:'<div class="lbl" style="margin-top:12px">SHIFT</div><input type="number" id="cS" value="3" min="1" max="25" style="width:100px">',
     vigenere:'<div class="lbl" style="margin-top:12px">KEY</div><input type="text" id="vK" value="SECRET" style="width:200px">',
