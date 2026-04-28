@@ -160,6 +160,10 @@ const COL_KEYS=['ZEBRA','CASTLE','STORM','PYTHON','MATRIX','FALCON','CRYPTO','HI
 // ═══════════════════════════════════════════════════════════════════════
 
 let trainRunning=false,trainAbort=false,trainWorker=null;
+let _challengerWinStreak=0,_bestChampionAcc=0,_lastOob=0;
+// While the eval handler is doing async work, incoming worker log
+// messages are held here instead of being logged immediately.
+let _logHold=null;
 function rndChoice(arr){return arr[Math.floor(Math.random()*arr.length)]}
 
 function genSample(type,short=false){
@@ -410,6 +414,7 @@ self.postMessage({type:'ready'});
 
 async function startTrain(){
   if(trainRunning)return;trainRunning=true;trainAbort=false;
+  _challengerWinStreak=0;_bestChampionAcc=0;
   $('bStart').style.display='none';$('bStop').style.display='';
   $('tDot').innerHTML='<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px rgba(0,255,136,.5);margin-right:5px" class="pulse"></span>';
   const continuous=$('tContinuous')&&$('tContinuous').checked;
@@ -440,7 +445,10 @@ async function startTrain(){
       const msg=e.data;
       if(msg.type==='ready')return; // handshake messages — ignore after startup
       if(msg.type==='error'){addLog('[Worker] '+msg.msg,false);return;}
-      if(msg.type==='log')addLog(msg.msg,msg.ok!==false);
+      if(msg.type==='log'){
+        if(_logHold)_logHold.push({msg:msg.msg,ok:msg.ok!==false});
+        else addLog(msg.msg,msg.ok!==false);
+      }
       else if(msg.type==='progress'){
         $('tsS').textContent=continuous?'RUNNING ∞ [Worker]':'RUNNING [Worker]';$('tsS').style.color='var(--accent)';
         $('tsI').textContent=msg.iter;
@@ -465,69 +473,86 @@ async function startTrain(){
       }
       else if(msg.type==='eval'){
         const challengerAcc=msg.acc;
-
-        // ── FEDERATED MODEL MERGING ────────────────────────
-        // Instead of replacing the champion entirely, merge the best
-        // challenger trees into the champion, replacing its worst trees.
-        // Every training session contributes — no learning is ever lost.
-
-        // Build test arrays for tree evaluation
+        _lastOob=msg.oob||0; // store challenger OOB for display on ML page
+        // Hold incoming worker log messages while we do async work so
+        // next-iteration lines don't interleave with this iteration's output.
+        _logHold=[];
         const testX=msg.testSamples.map(ts=>new Float64Array(ts.features));
         const testY=msg.testSamples.map(ts=>ts.actual);
 
+        // Collect all log lines and the save promise synchronously first.
+        // This ensures [merge] and [eval] lines are queued before the handler
+        // yields to any awaits, so they always appear in the correct iteration
+        // rather than after the next iteration's [data]/[ml] lines.
+        const pendingLogs=[];
+        const plog=(msg,ok=true)=>pendingLogs.push({msg,ok});
+        let savePromise=null;
+
         if(!mlModel.trained){
           // No champion yet — accept challenger as first model
-          if(msg.challengerJson){mlModel.load(msg.challengerJson);await ModelStore.save(mlModel);}
-          addLog(`[champion] ▲ First model accepted: ${(challengerAcc*100).toFixed(1)}% (${mlModel.trees.length} trees)`);
+          if(msg.challengerJson){mlModel.load(msg.challengerJson);savePromise=ModelStore.save(mlModel);}
+          _bestChampionAcc=challengerAcc;
+          plog(`[champion] ▲ First model accepted: ${(challengerAcc*100).toFixed(1)}% (${mlModel.trees.length} trees)`);
         }else{
-          // Evaluate champion on same test data
+          // Evaluate champion on the same fresh test batch the worker used
           let championCorrect=0;
           for(let i=0;i<testX.length;i++){if(mlModel.predict(testX[i]).cls===testY[i])championCorrect++;}
           const championAcc=testX.length>0?championCorrect/testX.length:0;
 
-          // Load challenger as a temporary forest for merging
           const challenger=new DecisionForest();
           if(msg.challengerJson)challenger.load(msg.challengerJson);
           else if(trainWorker._pendingModel)challenger.load(trainWorker._pendingModel);
 
-          // Decisive threshold: if challenger beats champion by >= 3 percentage
-          // points, do a full replacement then backfill the best old champion
-          // trees back in. Otherwise do the conservative selective tree merge.
-          const DECISIVE_THRESHOLD=0.03;
-          if(challengerAcc>championAcc+DECISIVE_THRESHOLD){
-            const result=mlModel.replaceWithBestOf(challenger,testX,testY,30);
-            if(result.replaced){
-              await ModelStore.save(mlModel);
-              addLog(`[replace] ▲ Decisive win — replaced champion with challenger (${(challengerAcc*100).toFixed(1)}% vs ${(championAcc*100).toFixed(1)}%)`);
-              addLog(`[replace] Backfilled ${result.backfilled} old champion trees — final: ${(result.afterAcc*100).toFixed(1)}% (${result.totalTrees} trees)`);
-            }else{
-              addLog(`[replace] ▬ Replacement skipped: ${result.reason}`,false);
+          // challengerAcc = msg.acc, already scored on same batch by the worker
+          const cmpAcc=challengerAcc;
+
+          const DECISIVE_THRESHOLD=0.05;
+          const MERGE_THRESHOLD=0.01;
+          const WIN_STREAK_NEEDED=2;
+
+          plog(`[eval] Champion: ${(championAcc*100).toFixed(1)}% | Challenger: ${(cmpAcc*100).toFixed(1)}%`);
+          if(cmpAcc>championAcc+DECISIVE_THRESHOLD){
+            _challengerWinStreak++;
+            plog(`[replace] Challenger leads by ${((cmpAcc-championAcc)*100).toFixed(1)}% — streak ${_challengerWinStreak}/${WIN_STREAK_NEEDED}`);
+            if(_challengerWinStreak>=WIN_STREAK_NEEDED){
+              const result=mlModel.replaceWithBestOf(challenger,testX,testY,30);
+              if(result.replaced){
+                _bestChampionAcc=result.afterAcc;_challengerWinStreak=0;
+                savePromise=ModelStore.save(mlModel);
+                plog(`[replace] ▲ Decisive win confirmed — replaced champion (${(cmpAcc*100).toFixed(1)}% vs ${(championAcc*100).toFixed(1)}%)`);
+                plog(`[replace] Backfilled ${result.backfilled} old champion trees — final: ${(result.afterAcc*100).toFixed(1)}% (${result.totalTrees} trees)`);
+              }else{
+                plog(`[replace] ▬ Replacement skipped: ${result.reason}`,false);
+              }
             }
-          }else{
+          }else if(cmpAcc>championAcc+MERGE_THRESHOLD){
+            _challengerWinStreak=0;
             const result=mlModel.mergeFrom(challenger,testX,testY,5,30);
             if(result.merged){
-              await ModelStore.save(mlModel);
-              addLog(`[merge] ▲ Merged ${result.added} trees into champion (replaced ${result.removed} worst) — ${mlModel.trees.length} total trees`);
-              addLog(`[merge] Champion: ${(championAcc*100).toFixed(1)}% → ${(result.newAcc*100).toFixed(1)}% | Challenger: ${(challengerAcc*100).toFixed(1)}%`);
+              _bestChampionAcc=Math.max(_bestChampionAcc,result.newAcc);
+              savePromise=ModelStore.save(mlModel);
+              plog(`[merge] ▲ Merged ${result.added} trees into champion (replaced ${result.removed} worst) — ${mlModel.trees.length} total trees`);
+              plog(`[merge] Champion: ${(championAcc*100).toFixed(1)}% → ${(result.newAcc*100).toFixed(1)}% | Challenger: ${(cmpAcc*100).toFixed(1)}%`);
             }else{
-              addLog(`[merge] ▬ No merge: ${result.reason} (champion ${(championAcc*100).toFixed(1)}% already optimal)`,false);
+              plog(`[merge] ▬ No merge: ${result.reason} (champion ${(championAcc*100).toFixed(1)}% already optimal)`,false);
             }
+          }else{
+            _challengerWinStreak=0;
+            plog(`[merge] ▬ Challenger did not beat champion — keeping champion`,false);
           }
         }
         trainWorker._pendingModel=null;
 
         const finalAcc=mlModel.trained?(function(){let c=0;for(let i=0;i<testX.length;i++)if(mlModel.predict(testX[i]).cls===testY[i])c++;return testX.length?c/testX.length:0;})():challengerAcc;
-        addLog(`[eval] Active model: ${(finalAcc*100).toFixed(1)}% (${mlModel.trees.length} trees, ${msg.correct}/${msg.total} challenger eval)`);
-        addLog(`[eval] OOB estimate: ${(msg.oob*100).toFixed(1)}%`);
+        plog(`[eval] Active model: ${(finalAcc*100).toFixed(1)}% (${mlModel.trees.length} trees, ${msg.correct}/${msg.total} challenger eval)`);
+        plog(`[eval] OOB estimate: ${(msg.oob*100).toFixed(1)}%`);
 
-        // Record confusion + calibration using batch methods (save once at end)
-        // Also collect misclassified samples for future training reinforcement
+        // Record confusion + calibration synchronously (no awaits yet)
         const misclassified=[];
         for(const c of msg.confusion){
           ConfusionTracker.recordBatch(c.actual,c.predicted);
           CalibrationTracker.recordBatch(c.confidence,c.ok);
           if(!c.ok){
-            // Find the feature vector for this misclassified sample
             const ts=msg.testSamples.find(s=>s.actual===c.actual&&msg.confusion.indexOf(c)>=0);
             if(ts)misclassified.push({features:new Float64Array(ts.features),actual:c.actual,predicted:c.predicted});
           }
@@ -536,40 +561,66 @@ async function startTrain(){
             if(KB[c.actual].icObs.length>200)KB[c.actual].icObs=KB[c.actual].icObs.slice(-200);
             if(KB[c.actual].entObs.length>200)KB[c.actual].entObs=KB[c.actual].entObs.slice(-200);}
         }
-        await ConfusionTracker.save();await CalibrationTracker.save();
-        // Save misclassified samples to IndexedDB + UnsolvedStore
-        if(misclassified.length>0){
-          const toSave=misclassified.slice(0,500);
-          SampleDB.saveMisclassifiedBatch(toSave).then(()=>{
-            addLog(`[store] Saved ${toSave.length} misclassified samples for future training`);
-          });
-          // Add to unsolved store (persistent JSON, up to 100K)
-          await UnsolvedStore.addUnsolved(toSave);
-          const uStats=await UnsolvedStore.getStats();
-          addLog(`[unsolved] Added ${toSave.length} unsolved samples (${uStats.unsolved.toLocaleString()} unsolved, ${uStats.solved.toLocaleString()} solved total)`);
-        }
-        // Test unsolved samples against the current champion — mark solved if model now gets them right
-        if(mlModel.trained){
-          const solveResult=await UnsolvedStore.testAndSolve(mlModel);
-          if(solveResult.solved>0){
-            addLog(`[unsolved] ★ SOLVED ${solveResult.solved}/${solveResult.tested} previously unsolved samples! (${solveResult.remaining.toLocaleString()} remaining)`);
-            const solvedTypes={};
-            for(const s of solveResult.solvedSamples){solvedTypes[s.actual]=(solvedTypes[s.actual]||0)+1;}
-            const solvedList=Object.entries(solvedTypes).sort((a,b)=>b[1]-a[1]).slice(0,5);
-            if(solvedList.length)addLog(`[unsolved] Solved types: ${solvedList.map(([t,n])=>t+':'+n).join(', ')}`);
-          }
-          await UnsolvedStore.save();
-        }
-        // Per-type display
+        // Per-type and confusion lines into pendingLogs
         const typeEntries=Object.entries(msg.byType).sort((a,b)=>(b[1].c/b[1].t)-(a[1].c/a[1].t));
-        for(const[t,d]of typeEntries)addLog(`  ${t}: ${d.c}/${d.t} (${(d.c/d.t*100).toFixed(0)}%)`);
+        for(const[t,d]of typeEntries)pendingLogs.push({msg:`  ${t}: ${d.c}/${d.t} (${(d.c/d.t*100).toFixed(0)}%)`,ok:true});
+        const confPairs=ConfusionTracker.getConfusedPairs(3);
+        if(confPairs.length){pendingLogs.push({msg:'[confusion] Top misclassifications:',ok:true});confPairs.slice(0,5).forEach(p=>pendingLogs.push({msg:`  ${p.actual} → ${p.predicted}: ${p.count}× (${(p.rate*100).toFixed(0)}%)`,ok:false}));}
+        // ── Single flush point: ALL log lines committed before any await ──
+        for(const l of pendingLogs)addLog(l.msg,l.ok);
         $('tsA').textContent=(finalAcc*100).toFixed(1)+'%';syncAllStats();
         $('tTypeSection').style.display='';
         $('tTypeAcc').innerHTML=typeEntries.map(([t,d])=>{const pct=d.t?(d.c/d.t*100):0;const color=pct>80?'var(--accent)':pct>50?'var(--orange)':'var(--red)';
           return`<div class="bar-r"><div class="bar-l">${t}</div><div class="bar-t"><div class="bar-f" style="width:${pct.toFixed(0)}%;background:${color}"></div></div><div class="bar-p">${pct.toFixed(0)}%</div></div>`;}).join('');
-        // Confusion pairs
-        const confPairs=ConfusionTracker.getConfusedPairs(3);
-        if(confPairs.length){addLog('[confusion] Top misclassifications:');confPairs.slice(0,5).forEach(p=>addLog(`  ${p.actual} → ${p.predicted}: ${p.count}× (${(p.rate*100).toFixed(0)}%)`,false));}
+        $('tLog').innerHTML=log.map(l=>`<div class="${l.ok?'lok':'lfail'}">${H(l.msg)}</div>`).join('');
+        $('tLog').scrollTop=$('tLog').scrollHeight;
+        // Async storage work happens after the flush — interleaving is fine
+        // because all visible log lines are already committed above.
+        // Run all async storage work first so the results can be collected
+        // into pendingLogs and flushed in one synchronous block — this keeps
+        // [unsolved] and [store] lines in the same iteration they belong to.
+        if(savePromise)await savePromise;
+        await ConfusionTracker.save();await CalibrationTracker.save();
+        const postLogs=[];
+        if(misclassified.length>0){
+          const toSave=misclassified.slice(0,500);
+          await SampleDB.saveMisclassifiedBatch(toSave);
+          postLogs.push({msg:`[store] Saved ${toSave.length} misclassified samples for future training`,ok:true});
+          await UnsolvedStore.addUnsolved(toSave);
+          const uStats=await UnsolvedStore.getStats();
+          postLogs.push({msg:`[unsolved] Added ${toSave.length} unsolved samples (${uStats.unsolved.toLocaleString()} unsolved, ${uStats.solved.toLocaleString()} solved total)`,ok:true});
+        }
+        if(mlModel.trained){
+          const solveResult=await UnsolvedStore.testAndSolve(mlModel);
+          if(solveResult.solved>0){
+            postLogs.push({msg:`[unsolved] ★ SOLVED ${solveResult.solved}/${solveResult.tested} previously unsolved samples! (${solveResult.remaining.toLocaleString()} remaining)`,ok:true});
+            const solvedTypes={};
+            for(const s of solveResult.solvedSamples){solvedTypes[s.actual]=(solvedTypes[s.actual]||0)+1;}
+            const solvedList=Object.entries(solvedTypes).sort((a,b)=>b[1]-a[1]).slice(0,5);
+            if(solvedList.length)postLogs.push({msg:`[unsolved] Solved types: ${solvedList.map(([t,n])=>t+':'+n).join(', ')}`,ok:true});
+          }
+          await UnsolvedStore.save();
+        }
+        // Flush store/unsolved lines, then drain any buffered worker log
+        // messages that arrived during the async work — this guarantees
+        // [store]/[unsolved] lines appear before the next iteration header.
+        for(const l of postLogs)addLog(l.msg,l.ok);
+        const held=_logHold||[];_logHold=null;
+        // Drain buffered log lines, then process any deferred done message last
+        let deferredDone=null;
+        for(const l of held){if(l.__done){deferredDone=l.__done;}else addLog(l.msg,l.ok);}
+        if(postLogs.length||held.length){$('tLog').innerHTML=log.map(l=>`<div class="${l.ok?'lok':'lfail'}">${H(l.msg)}</div>`).join('');$('tLog').scrollTop=$('tLog').scrollHeight;}
+        if(deferredDone){
+          const finalIter=+($('tsI').textContent)||0;
+          $('tBar').style.width='100%';$('tsS').textContent=deferredDone.aborted?'STOPPED':'DONE';$('tsS').style.color=deferredDone.aborted?'var(--orange)':'var(--teal)';
+          DataStore.getStats().then(dsStats=>{
+            addLog(`═══ Training ${deferredDone.aborted?'stopped':'complete'} after ${finalIter} iterations! ═══`);
+            addLog(`[db] ${dsStats.total.toLocaleString()} total samples stored`);
+            $('tLog').innerHTML=log.map(l=>`<div class="${l.ok?'lok':'lfail'}">${H(l.msg)}</div>`).join('');$('tLog').scrollTop=$('tLog').scrollHeight;
+          });
+          syncAllStats();$('bStart').style.display='';$('bStop').style.display='none';$('tDot').innerHTML='';
+          trainRunning=false;trainWorker=null;worker.terminate();
+        }
         // KB discovery
         for(const type of types){if(KB[type]&&KB[type].icObs.length>=5){
           const ics=KB[type].icObs;const icMean=ics.reduce((a,b)=>a+b,0)/ics.length;const icStd=Math.sqrt(ics.reduce((a,v)=>a+(v-icMean)**2,0)/ics.length);
@@ -585,11 +636,16 @@ async function startTrain(){
         renderKB(); // refresh KB grid so IC values update live during training
       }
       else if(msg.type==='done'){
+        // If the eval handler is still doing async work, defer the done
+        // processing until after it finishes so store/unsolved lines appear
+        // before the training complete banner.
+        if(_logHold){_logHold.push({__done:msg});return;}
         const finalIter=+($('tsI').textContent)||0;
         $('tBar').style.width='100%';$('tsS').textContent=msg.aborted?'STOPPED':'DONE';$('tsS').style.color=msg.aborted?'var(--orange)':'var(--teal)';
         DataStore.getStats().then(dsStats=>{
           addLog(`═══ Training ${msg.aborted?'stopped':'complete'} after ${finalIter} iterations! ═══`);
           addLog(`[db] ${dsStats.total.toLocaleString()} total samples stored`);
+          $('tLog').innerHTML=log.map(l=>`<div class="${l.ok?'lok':'lfail'}">${H(l.msg)}</div>`).join('');$('tLog').scrollTop=$('tLog').scrollHeight;
         });
         syncAllStats();$('bStart').style.display='';$('bStop').style.display='none';$('tDot').innerHTML='';
         trainRunning=false;trainWorker=null;worker.terminate();
@@ -654,15 +710,25 @@ async function startTrain(){
       }else{
         let champCorrect=0;for(let i=0;i<testX.length;i++){if(mlModel.predict(testX[i]).cls===testY[i])champCorrect++;}
         const champAcc=testX.length?champCorrect/testX.length:0;
-        const DECISIVE_THRESHOLD=0.03;
+        const DECISIVE_THRESHOLD=0.05;
+        const MERGE_THRESHOLD=0.01;
+        const WIN_STREAK_NEEDED=2;
         if(challengerAcc>champAcc+DECISIVE_THRESHOLD){
-          const result=mlModel.replaceWithBestOf(challenger,testX,testY,30);
-          if(result.replaced){await ModelStore.save(mlModel);addLog(`[replace] ▲ Decisive win — replaced champion with challenger (${(challengerAcc*100).toFixed(1)}% vs ${(champAcc*100).toFixed(1)}%)`);addLog(`[replace] Backfilled ${result.backfilled} old champion trees — final: ${(result.afterAcc*100).toFixed(1)}% (${result.totalTrees} trees)`);}
-          else addLog(`[replace] ▬ Replacement skipped: ${result.reason}`,false);
-        }else{
+          _challengerWinStreak++;
+          addLog(`[replace] Challenger leads by ${((challengerAcc-champAcc)*100).toFixed(1)}% — streak ${_challengerWinStreak}/${WIN_STREAK_NEEDED}`);
+          if(_challengerWinStreak>=WIN_STREAK_NEEDED){
+            const result=mlModel.replaceWithBestOf(challenger,testX,testY,30);
+            if(result.replaced){_bestChampionAcc=result.afterAcc;_challengerWinStreak=0;await ModelStore.save(mlModel);addLog(`[replace] ▲ Decisive win confirmed — replaced champion (${(challengerAcc*100).toFixed(1)}% vs ${(champAcc*100).toFixed(1)}%)`);addLog(`[replace] Backfilled ${result.backfilled} old champion trees — final: ${(result.afterAcc*100).toFixed(1)}% (${result.totalTrees} trees)`);}
+            else addLog(`[replace] ▬ Replacement skipped: ${result.reason}`,false);
+          }
+        }else if(challengerAcc>champAcc+MERGE_THRESHOLD){
+          _challengerWinStreak=0;
           const result=mlModel.mergeFrom(challenger,testX,testY,5,30);
-          if(result.merged){await ModelStore.save(mlModel);addLog(`[merge] ▲ Merged ${result.added} trees — ${(champAcc*100).toFixed(1)}%→${(result.newAcc*100).toFixed(1)}% (${mlModel.trees.length} trees)`);}
+          if(result.merged){_bestChampionAcc=Math.max(_bestChampionAcc,result.newAcc);await ModelStore.save(mlModel);addLog(`[merge] ▲ Merged ${result.added} trees — ${(champAcc*100).toFixed(1)}%→${(result.newAcc*100).toFixed(1)}% (${mlModel.trees.length} trees)`);}
           else addLog(`[merge] ▬ No merge: ${result.reason}`,false);
+        }else{
+          _challengerWinStreak=0;
+          addLog(`[merge] ▬ Challenger (${(challengerAcc*100).toFixed(1)}%) did not beat champion (${(champAcc*100).toFixed(1)}%) — keeping champion`,false);
         }
       }
       if(trainAbort)break;
@@ -952,7 +1018,7 @@ function decRetryNext(retryId){
 }
 
 // Encrypt
-let curC=localStorage.getItem('cipherlab_curC')||'caesar';let xorMode='single';
+let curC='caesar'; // always start on caesar; localStorage saves within-session onlylet xorMode='single';
 function selC(c,btn){curC=c;localStorage.setItem('cipherlab_curC',c);
   document.querySelectorAll('#cBtns .bs, #eBtns .bs').forEach(b=>b.classList.remove('on'));
   // Highlight the correct button whether called with or without a btn reference
@@ -968,7 +1034,7 @@ function selC(c,btn){curC=c;localStorage.setItem('cipherlab_curC',c);
     rot47:'<p style="margin-top:12px;font-size:.78rem;color:var(--dim)">Self-inverse. All printable ASCII rotated by 47.</p>',
     xor:'<div class="lbl" style="margin-top:12px">MODE</div><div class="row"><button class="bs on" id="xm1" onclick="xorMode=\'single\';this.classList.add(\'on\');$$(\'xm2\').classList.remove(\'on\');$$(\'xkDiv\').innerHTML=\'<div class=lbl>KEY BYTE (0-255)</div><input type=number id=xK value=42 min=0 max=255 style=width:100px>\'">SINGLE BYTE</button><button class="bs" id="xm2" onclick="xorMode=\'repeat\';this.classList.add(\'on\');$$(\'xm1\').classList.remove(\'on\');$$(\'xkDiv\').innerHTML=\'<div class=lbl>KEY STRING</div><input type=text id=xRK value=SECRET style=width:200px>\'">REPEATING KEY</button></div><div id="xkDiv"><div class="lbl">KEY BYTE (0-255)</div><input type="number" id="xK" value="42" min="0" max="255" style="width:100px"></div>',
     rc4:'<div class="lbl" style="margin-top:12px">KEY</div><input type="text" id="rcK" value="AB" style="width:200px"><p style="margin-top:6px;font-size:.7rem;color:var(--dim)">Short keys are brute-forceable.</p>',
-    enigma:'<div class="lbl" style="margin-top:12px">START POSITIONS (0-25)</div><div class="row"><input type="number" id="eP1" value="0" min="0" max="25" style="width:60px"><input type="number" id="eP2" value="0" min="0" max="25" style="width:60px"><input type="number" id="eP3" value="0" min="0" max="25" style="width:60px"></div>',
+    enigma:'<div class="lbl" style="margin-top:12px">START POSITIONS (0-25)</div><div class="row"><input type="number" id="eP1" value="0" min="0" max="25" style="width:80px"><input type="number" id="eP2" value="0" min="0" max="25" style="width:80px"><input type="number" id="eP3" value="0" min="0" max="25" style="width:80px"></div>',
     binary:'<p style="margin-top:12px;font-size:.78rem;color:var(--dim)">Converts each character to its 8-bit binary representation.</p>',
     hex:'<p style="margin-top:12px;font-size:.78rem;color:var(--dim)">Converts each character to 2-digit hexadecimal.</p>',
     base64:'<p style="margin-top:12px;font-size:.78rem;color:var(--dim)">Standard Base64 encoding (RFC 4648).</p>',
@@ -1246,8 +1312,9 @@ function showKB(key){
 async function renderML(){
   syncAllStats();
   // OOB accuracy
-  if(mlModel.trained&&mlModel.oobAccuracy){
-    if($('mlOOB'))$('mlOOB').textContent=(mlModel.oobAccuracy*100).toFixed(1)+'%';
+  if(mlModel.trained){
+    const oobVal=typeof _lastOob!=='undefined'&&_lastOob>0?_lastOob:mlModel.oobAccuracy;
+    if($('mlOOB')&&oobVal)$('mlOOB').textContent=(oobVal*100).toFixed(1)+'%';
   }
   // Feature importances
   if(mlModel.trained&&Object.keys(mlModel.importances).length){
@@ -1291,7 +1358,7 @@ async function renderML(){
       const expected=(c.confidence*100).toFixed(0);const actual=(c.accuracy*100).toFixed(0);
       const gap=Math.abs(c.accuracy-c.confidence);
       const color=gap<.1?'var(--accent)':gap<.2?'var(--orange)':'var(--red)';
-      return`<div class="bar-r"><div class="bar-l" style="min-width:80px">${expected}% conf</div><div class="bar-t"><div class="bar-f" style="width:${actual}%;background:${color}"></div></div><div class="bar-p">${actual}% actual (n=${c.total})</div></div>`;
+      return`<div class="bar-r"><div class="bar-l" style="min-width:80px">${expected}% conf</div><div class="bar-t"><div class="bar-f" style="width:${Math.min(actual,99)}%;background:${color}"></div></div><div class="bar-p" style="min-width:140px;text-align:right">${actual}% actual (n=${c.total})</div></div>`;
     }).join('');
   }
   // DataStore stats (async)
