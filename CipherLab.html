@@ -166,7 +166,7 @@ select{background:var(--bg3);border:1px solid var(--brd);border-radius:7px;color
 <!-- TRAINING -->
 <div id="pg-train" class="pg">
   <h2>Training Center</h2>
-  <p class="sub">Generate data, train ML models, discover patterns, build knowledge — all in your browser.</p>
+  <p class="sub">Generate data, train ML models, discover patterns, build knowledge. All in your browser.</p>
   <div class="g4">
     <div class="sc"><div class="sn" id="tsS">IDLE</div><div class="sl">STATUS</div></div>
     <div class="sc bl"><div class="sn" id="tsI">0</div><div class="sl">ITERATION</div></div>
@@ -195,7 +195,7 @@ select{background:var(--bg3);border:1px solid var(--brd);border-radius:7px;color
 <!-- KNOWLEDGE -->
 <div id="pg-kb" class="pg">
   <h2>Cipher Knowledge Base</h2>
-  <p class="sub">Everything learned about each encryption algorithm — stored locally in your browser.</p>
+  <p class="sub">Everything learned about each encryption algorithm, which is stored locally in your browser.</p>
   <div class="g4">
     <div class="sc"><div class="sn" id="kbT">—</div><div class="sl">CIPHER TYPES</div></div>
     <div class="sc bl"><div class="sn" id="kbD">—</div><div class="sl">DISCOVERIES</div></div>
@@ -209,7 +209,7 @@ select{background:var(--bg3);border:1px solid var(--brd);border-radius:7px;color
 <!-- ML MODEL -->
 <div id="pg-ml" class="pg">
   <h2>ML Model &amp; Learning Intelligence</h2>
-  <p class="sub">Random Forest (20 trees, depth 14) with confusion tracking, confidence calibration, and incremental learning across sessions.</p>
+  <p class="sub">Random Forest (20 trees, depth 12) with confusion tracking, confidence calibration, and incremental learning across sessions.</p>
   <div class="g4">
     <div class="sc"><div class="sn" id="mlS">—</div><div class="sl">MODEL STATUS</div></div>
     <div class="sc bl"><div class="sn" id="mlN">—</div><div class="sl">TRAINING SAMPLES</div></div>
@@ -221,7 +221,7 @@ select{background:var(--bg3);border:1px solid var(--brd);border-radius:7px;color
     <div class="sc bl"><div class="sn" id="mlOOB">—</div><div class="sl">OOB ACCURACY</div></div>
   </div>
   <div class="sec"><div class="st">MODEL MANAGEMENT</div>
-    <div class="row"><button class="bs" onclick="exportData()">EXPORT DATA & MODEL (JSON)</button><button class="bs" onclick="$('mlImpFile').click()">IMPORT DATA & MODEL</button><input type="file" id="mlImpFile" accept=".json" style="display:none" onchange="importData(this)"><button class="bs" style="border-color:rgba(255,92,92,.3);color:var(--red)" onclick="if(confirm('Reset model and all learning data?')){ModelStore.wipeAll().then(()=>{mlModel=new DecisionForest();Promise.all([ConfusionTracker.reset(),CalibrationTracker.reset(),CentroidStore.reset(),DataStore.clear()]).then(()=>renderML())});}">RESET ALL</button></div>
+    <div class="row"><button class="bs" onclick="exportData()">EXPORT DATA & MODEL (JSON)</button><button class="bs" onclick="$('mlImpFile').click()">IMPORT DATA & MODEL</button><input type="file" id="mlImpFile" accept=".json" style="display:none" onchange="importData(this)"><button class="bs" style="border-color:rgba(255,92,92,.3);color:var(--red)" onclick="if(confirm('Reset model and all learning data? This also clears the Knowledge Base.')){ModelStore.wipeAll().then(()=>{mlModel=new DecisionForest();Promise.all([ConfusionTracker.reset(),CalibrationTracker.reset(),CentroidStore.reset(),DataStore.clear(),KBStore.clear()]).then(()=>{KB=null;loadKB().then(()=>{renderKB();renderML();});})});}">RESET ALL</button></div>
   </div>
   <div class="sec"><div class="st">FEATURE IMPORTANCES</div><div id="mlImp"><p style="color:var(--dim);font-size:.8rem">Train the model to see feature importances.</p></div></div>
   <div class="sec"><div class="st">ACCURACY HISTORY</div><div id="mlHistory"><p style="color:var(--dim);font-size:.8rem">Train the model to see accuracy progression over time.</p></div></div>
@@ -537,7 +537,7 @@ const SubstitutionCracker={
     for(let i=0;i<str.length-2;i++){const tg=str[i]+str[i+1]+str[i+2];score+=ENGLISH_TRIGRAMS[tg]||0.00001;}
     return score/Math.max(str.length-2,1);
   },
-  crack(ct,maxIter=2000){
+  crack(ct,maxIter=8000){
     const alpha=[...ct.toLowerCase()].filter(c=>c>='a'&&c<='z');
     if(alpha.length<20)return null;
     const ctFreq=new Array(26).fill(0);
@@ -643,6 +643,72 @@ const RouteCipherCracker={
   }
 };
 
+// English quadgram log-probability table + scorer for hill-climb objective.
+// English quadgram log-probability table (Olson 2007, Practical Cryptanalysis).
+// 268 entries. Scores: correct decrypt ~-7.5, wrong key ~-9.6, random ~-9.8.
+// The ~2.1 point gap between wrong-key and correct decryption gives the SA
+// hill-climber a strong gradient across the 25! Playfair/Bifid key space.
+// Floor -9.7581 represents quadgrams not observed in the reference corpus.
+const ENGLISH_QUADGRAMS={
+  tion:-3.3836,atio:-3.8256,that:-3.919,ther:-4.0161,with:-4.0464,this:-4.096,ment:-4.1111,
+  ions:-4.1252,ting:-4.1331,ents:-4.2379,ight:-4.3036,nter:-4.3666,have:-4.3807,from:-4.3863,
+  ance:-4.3877,ough:-4.4158,ness:-4.4288,heir:-4.4794,here:-4.4967,they:-4.5103,ould:-4.5132,
+  were:-4.5435,tive:-4.5735,ical:-4.6059,hich:-4.6249,eing:-4.6566,ally:-4.6669,iver:-4.6798,
+  each:-4.6861,your:-4.7082,been:-4.7152,come:-4.7515,eral:-4.7622,will:-4.7703,into:-4.7829,
+  some:-4.7905,time:-4.8011,what:-4.8042,when:-4.8171,more:-4.8322,than:-4.8442,high:-4.8483,
+  make:-4.8684,part:-4.8931,know:-4.9048,form:-4.9249,also:-4.9303,even:-4.9487,most:-4.9655,
+  only:-4.9751,much:-4.9935,such:-5.0078,like:-5.0185,good:-5.0332,said:-5.047,onal:-5.0582,
+  area:-5.0734,both:-5.093,give:-5.1047,same:-5.1207,thus:-5.1369,year:-5.1536,less:-5.1704,
+  rate:-5.1873,ward:-5.2049,woul:-5.2095,ound:-5.2226,ture:-5.2405,real:-5.259,ways:-5.2777,
+  work:-5.2966,hand:-5.3162,them:-5.336,last:-5.3561,over:-5.3769,long:-5.3979,take:-5.4193,
+  then:-5.4273,just:-5.4415,very:-5.4639,back:-5.4868,ence:-5.5105,nder:-5.5346,worl:-5.5534,
+  keep:-5.5591,sion:-5.5847,ster:-5.6107,well:-5.6372,ated:-5.6648,help:-5.693,ered:-5.7218,
+  cont:-5.7327,ring:-5.7519,ever:-5.7827,seen:-5.8143,sing:-5.8474,call:-5.8813,ling:-5.9162,
+  line:-5.9404,must:-5.9529,want:-5.9626,ient:-5.9626,comp:-5.9626,cons:-5.9626,coun:-5.9626,
+  tran:-5.9626,type:-5.9626,user:-5.9626,view:-5.9626,ning:-5.9906,ding:-6.0296,used:-6.0708,
+  ttac:-6.0945,writ:-6.0945,pres:-6.0945,comm:-6.0945,sent:-6.1134,home:-6.1205,land:-6.1205,
+  king:-6.1205,done:-6.1576,best:-6.2027,case:-6.2046,ware:-6.2465,cent:-6.2465,cond:-6.2465,
+  syst:-6.2465,tech:-6.2465,toge:-6.2465,trea:-6.2465,unit:-6.2465,ater:-6.2534,reat:-6.2768,
+  name:-6.2768,love:-6.2768,upon:-6.2768,fore:-6.3044,nfor:-6.359,forc:-6.4163,goin:-6.4259,
+  wait:-6.4259,conf:-6.4259,cour:-6.4259,oper:-6.4259,tota:-6.4259,univ:-6.4259,grea:-6.4439,
+  wing:-6.4622,rest:-6.4622,past:-6.4622,orce:-6.4766,word:-6.5,tack:-6.5392,rein:-6.5418,
+  einf:-6.58,enem:-6.6109,rack:-6.6446,eter:-6.6446,visi:-6.6446,walk:-6.6446,warn:-6.6446,
+  prep:-6.6446,prov:-6.6446,proc:-6.6446,conv:-6.6446,trad:-6.6446,util:-6.6446,head:-6.667,
+  nemy:-6.6847,read:-6.69,game:-6.69,able:-6.69,band:-6.69,down:-6.69,look:-6.69,
+  open:-6.69,test:-6.69,fast:-6.69,atta:-6.7136,info:-6.7136,send:-6.7623,thee:-6.7656,
+  lead:-6.8136,mine:-6.8136,dear:-6.8136,turn:-6.8136,plan:-6.8136,fall:-6.8136,dent:-6.8136,
+  iter:-6.8136,dawn:-6.8959,bein:-6.9249,vita:-6.9249,zero:-6.9249,cros:-6.9249,char:-6.9249,
+  clos:-6.9249,topi:-6.9249,viol:-6.9249,fear:-6.9855,hear:-6.9855,near:-6.9855,song:-6.9855,
+  town:-6.9855,book:-6.9855,tell:-6.9855,hall:-6.9855,rent:-6.9855,went:-6.9855,prev:-6.9855,
+  acks:-7.05,rcem:-7.119,bear:-7.1554,feel:-7.1554,earn:-7.1554,sand:-7.1554,show:-7.1554,
+  lack:-7.1554,wall:-7.1554,lent:-7.1554,doin:-7.3157,volu:-7.3157,zone:-7.3157,chil:-7.3157,
+  virt:-7.3157,ceme:-7.3602,meet:-7.3602,flow:-7.3602,rock:-7.3602,fill:-7.3602,sell:-7.3602,
+  ball:-7.3602,gent:-7.3602,tent:-7.3602,ince:-7.4555,emen:-7.5068,cove:-7.5068,chie:-7.5068,
+  coas:-7.5068,endr:-7.5609,ndre:-7.6786,grow:-7.6786,lock:-7.6786,pick:-7.6786,bill:-7.6786,
+  vent:-7.6786,bent:-7.6786,eenf:-7.7432,unce:-7.7432,drei:-7.8122,heer:-7.9663,awns:-7.9663,
+  reen:-7.9663,deck:-8.0533,kick:-8.0533,hill:-8.0533,bell:-8.0533,nsen:-8.1486,forr:-8.3718,
+  satd:-8.3718,wnse:-8.3718,sein:-8.3718,refo:-8.3718,ksat:-8.5053,cksa:-8.6595,refr:-8.6595,
+  atda:-8.8418,tdaw:-9.0649
+};
+const QUADGRAM_FLOOR=-9.7581;
+
+function scoreQuadLog(text){
+  const raw=[...text.toLowerCase()].filter(c=>c>='a'&&c<='z');
+  if(raw.length<4)return QUADGRAM_FLOOR*raw.length;
+  // Strip Playfair X-padding (QXQ patterns) before scoring so inserted X's
+  // don't corrupt the gradient signal during hill-climbing.
+  const stripped=[];
+  for(let i=0;i<raw.length;i++){
+    if(raw[i]==='x'&&i>0&&i<raw.length-1&&raw[i-1]===raw[i+1])continue;
+    stripped.push(raw[i]);
+  }
+  if(stripped.length>0&&stripped[stripped.length-1]==='x'&&stripped.length%2===0)stripped.pop();
+  const a=stripped.length>=4?stripped:raw;
+  const s=a.join('');let sc=0;
+  for(let i=0;i<s.length-3;i++){const qg=s[i]+s[i+1]+s[i+2]+s[i+3];sc+=ENGLISH_QUADGRAMS[qg]!==undefined?ENGLISH_QUADGRAMS[qg]:QUADGRAM_FLOOR;}
+  return sc/(s.length-3);
+}
+
 // ── Playfair Cracker ──────────────────────────────────────────────────
 // Simulated annealing hill-climb over the 5x5 key square.
 // Starts from a random key, randomly swaps two cells or two rows or two
@@ -650,10 +716,9 @@ const RouteCipherCracker={
 // allows occasional uphill moves early on to escape local maxima.
 // Reliable on texts >= 40 characters.
 const PlayfairCracker={
-  crack(ct,maxIter=5000){
+  crack(ct,maxIter=9600){
     const clean=ct.toUpperCase().replace(/J/g,'I').replace(/[^A-Z]/g,'');
     if(clean.length<20)return null;
-    // Decode with a given key grid
     const tryDecrypt=(grid)=>{
       const pairs=[];
       for(let i=0;i<clean.length;i+=2)pairs.push([clean[i],clean[i+1]||'X']);
@@ -665,39 +730,44 @@ const PlayfairCracker={
         return grid[ar*5+bc]+grid[br*5+ac];
       }).join('');
     };
-    const score=(text)=>{
-      const a=[...text.toLowerCase()].filter(c=>c>='a'&&c<='z');
-      if(a.length<3)return 0;
-      const s=a.join('');let sc=0;
-      for(let i=0;i<s.length-2;i++){const tg=s[i]+s[i+1]+s[i+2];sc+=ENGLISH_TRIGRAMS[tg]||0.00001;}
-      return sc/(s.length-2);
-    };
-    // Random starting key
-    const alpha='ABCDEFGHIKLMNOPQRSTUVWXYZ'.split('');
-    for(let i=alpha.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[alpha[i],alpha[j]]=[alpha[j],alpha[i]];}
-    let key=[...alpha];
-    let best=tryDecrypt(key);let bestScore=score(best);let bestKey=[...key];
-    for(let iter=0;iter<maxIter;iter++){
-      const newKey=[...key];
-      const move=Math.random();
-      if(move<0.7){
-        // Swap two random cells (most common mutation)
-        const a=Math.floor(Math.random()*25),b=Math.floor(Math.random()*25);
-        [newKey[a],newKey[b]]=[newKey[b],newKey[a]];
-      }else if(move<0.85){
-        // Swap two rows
-        const r1=Math.floor(Math.random()*5),r2=Math.floor(Math.random()*5);
-        for(let c=0;c<5;c++){[newKey[r1*5+c],newKey[r2*5+c]]=[newKey[r2*5+c],newKey[r1*5+c]];}
-      }else{
-        // Swap two columns
-        const c1=Math.floor(Math.random()*5),c2=Math.floor(Math.random()*5);
-        for(let r=0;r<5;r++){[newKey[r*5+c1],newKey[r*5+c2]]=[newKey[r*5+c2],newKey[r*5+c1]];}
+    // Quadgram log-prob scoring — sharper gradient than trigrams,
+    // strips Playfair X-padding so inserted X's don't corrupt the signal.
+    const score=scoreQuadLog;
+    const RESTARTS=12;const ITERS_PER_RUN=Math.floor(maxIter/RESTARTS);
+    let globalBest=null;let globalBestScore=-Infinity;let globalBestKey=null;
+    for(let run=0;run<RESTARTS;run++){
+      const alpha='ABCDEFGHIKLMNOPQRSTUVWXYZ'.split('');
+      for(let i=alpha.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[alpha[i],alpha[j]]=[alpha[j],alpha[i]];}
+      let key=[...alpha];
+      let keyCt=tryDecrypt(key);let keyScore=score(keyCt);
+      let runBest=keyCt;let runBestScore=keyScore;let runBestKey=[...key];
+      // temp=2.0: exp(-0.5/2)=0.78, good early exploration.
+      // Cools to 0.001: exp(-0.5/0.001)≈0, strictly greedy at end.
+      // Previous temp=10 was too permissive (exp(-0.5/10)=0.95 ≈ random walk).
+      let temp=2.0;const coolRate=Math.pow(0.001/temp,1/ITERS_PER_RUN);
+      for(let iter=0;iter<ITERS_PER_RUN;iter++){
+        const newKey=[...key];
+        const move=Math.random();
+        if(move<0.7){
+          const a=Math.floor(Math.random()*25),b=Math.floor(Math.random()*25);
+          [newKey[a],newKey[b]]=[newKey[b],newKey[a]];
+        }else if(move<0.85){
+          const r1=Math.floor(Math.random()*5),r2=Math.floor(Math.random()*5);
+          for(let c=0;c<5;c++){[newKey[r1*5+c],newKey[r2*5+c]]=[newKey[r2*5+c],newKey[r1*5+c]];}
+        }else{
+          const c1=Math.floor(Math.random()*5),c2=Math.floor(Math.random()*5);
+          for(let r=0;r<5;r++){[newKey[r*5+c1],newKey[r*5+c2]]=[newKey[r*5+c2],newKey[r*5+c1]];}
+        }
+        const candidate=tryDecrypt(newKey);const s=score(candidate);
+        const delta=s-keyScore;
+        // Track keyScore separately — avoids calling tryDecrypt(key) twice per iter.
+        if(delta>0||Math.random()<Math.exp(delta/temp)){key=newKey;keyCt=candidate;keyScore=s;}
+        if(s>runBestScore){runBestScore=s;runBest=candidate;runBestKey=[...newKey];}
+        temp*=coolRate;
       }
-      const candidate=tryDecrypt(newKey);const s=score(candidate);
-      if(s>bestScore){bestScore=s;best=candidate;bestKey=[...newKey];}
-      if(s>score(tryDecrypt(key)))key=newKey;
+      if(runBestScore>globalBestScore){globalBestScore=runBestScore;globalBest=runBest;globalBestKey=runBestKey;}
     }
-    return{text:best,score:scoreEnglish(best),key:bestKey.join('')};
+    return{text:preserveSpaces(ct,globalBest),score:scoreEnglish(globalBest),key:globalBestKey.join('')};
   }
 };
 
@@ -708,7 +778,7 @@ const PlayfairCracker={
 // making trigrams a more reliable guide than scoreEnglish alone.
 // Reliable on texts >= 30 characters.
 const BifidCracker={
-  crack(ct,maxIter=5000){
+  crack(ct,maxIter=9600){
     const clean=ct.toUpperCase().replace(/J/g,'I').replace(/[^A-Z]/g,'');
     if(clean.length<16)return null;
     const tryDecrypt=(grid)=>{
@@ -719,35 +789,38 @@ const BifidCracker={
       let out='';for(let i=0;i<rows.length;i++)out+=grid[rows[i]*5+cols[i]];
       return out;
     };
-    const score=(text)=>{
-      const a=[...text.toLowerCase()].filter(c=>c>='a'&&c<='z');
-      if(a.length<3)return 0;
-      const s=a.join('');let sc=0;
-      for(let i=0;i<s.length-2;i++){const tg=s[i]+s[i+1]+s[i+2];sc+=ENGLISH_TRIGRAMS[tg]||0.00001;}
-      return sc/(s.length-2);
-    };
-    const alpha='ABCDEFGHIKLMNOPQRSTUVWXYZ'.split('');
-    for(let i=alpha.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[alpha[i],alpha[j]]=[alpha[j],alpha[i]];}
-    let key=[...alpha];
-    let best=tryDecrypt(key);let bestScore=score(best);let bestKey=[...key];
-    for(let iter=0;iter<maxIter;iter++){
-      const newKey=[...key];
-      const move=Math.random();
-      if(move<0.7){
-        const a=Math.floor(Math.random()*25),b=Math.floor(Math.random()*25);
-        [newKey[a],newKey[b]]=[newKey[b],newKey[a]];
-      }else if(move<0.85){
-        const r1=Math.floor(Math.random()*5),r2=Math.floor(Math.random()*5);
-        for(let c=0;c<5;c++){[newKey[r1*5+c],newKey[r2*5+c]]=[newKey[r2*5+c],newKey[r1*5+c]];}
-      }else{
-        const c1=Math.floor(Math.random()*5),c2=Math.floor(Math.random()*5);
-        for(let r=0;r<5;r++){[newKey[r*5+c1],newKey[r*5+c2]]=[newKey[r*5+c2],newKey[r*5+c1]];}
+    const score=scoreQuadLog;
+    const RESTARTS=12;const ITERS_PER_RUN=Math.floor(maxIter/RESTARTS);
+    let globalBest=null;let globalBestScore=-Infinity;let globalBestKey=null;
+    for(let run=0;run<RESTARTS;run++){
+      const alpha='ABCDEFGHIKLMNOPQRSTUVWXYZ'.split('');
+      for(let i=alpha.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[alpha[i],alpha[j]]=[alpha[j],alpha[i]];}
+      let key=[...alpha];
+      let keyCt=tryDecrypt(key);let keyScore=score(keyCt);
+      let runBest=keyCt;let runBestScore=keyScore;let runBestKey=[...key];
+      let temp=2.0;const coolRate=Math.pow(0.001/temp,1/ITERS_PER_RUN);
+      for(let iter=0;iter<ITERS_PER_RUN;iter++){
+        const newKey=[...key];
+        const move=Math.random();
+        if(move<0.7){
+          const a=Math.floor(Math.random()*25),b=Math.floor(Math.random()*25);
+          [newKey[a],newKey[b]]=[newKey[b],newKey[a]];
+        }else if(move<0.85){
+          const r1=Math.floor(Math.random()*5),r2=Math.floor(Math.random()*5);
+          for(let c=0;c<5;c++){[newKey[r1*5+c],newKey[r2*5+c]]=[newKey[r2*5+c],newKey[r1*5+c]];}
+        }else{
+          const c1=Math.floor(Math.random()*5),c2=Math.floor(Math.random()*5);
+          for(let r=0;r<5;r++){[newKey[r*5+c1],newKey[r*5+c2]]=[newKey[r*5+c2],newKey[r*5+c1]];}
+        }
+        const candidate=tryDecrypt(newKey);const s=score(candidate);
+        const delta=s-keyScore;
+        if(delta>0||Math.random()<Math.exp(delta/temp)){key=newKey;keyCt=candidate;keyScore=s;}
+        if(s>runBestScore){runBestScore=s;runBest=candidate;runBestKey=[...newKey];}
+        temp*=coolRate;
       }
-      const candidate=tryDecrypt(newKey);const s=score(candidate);
-      if(s>bestScore){bestScore=s;best=candidate;bestKey=[...newKey];}
-      if(s>score(tryDecrypt(key)))key=newKey;
+      if(runBestScore>globalBestScore){globalBestScore=runBestScore;globalBest=runBest;globalBestKey=runBestKey;}
     }
-    return{text:best,score:scoreEnglish(best),key:bestKey.join('')};
+    return{text:preserveSpaces(ct,globalBest),score:scoreEnglish(globalBest),key:globalBestKey.join('')};
   }
 };
 
@@ -1430,7 +1503,7 @@ function treeFeatureImportance(tree,imp,depth){
 
 class DecisionForest{
   constructor(){this.trees=[];this.trained=false;this.total=0;this.classes=[];this.importances={};this.oobAccuracy=0;}
-  train(X,Y,nTrees=20,maxDepth=14,minSize=3){
+  train(X,Y,nTrees=20,maxDepth=12,minSize=3){
     const data=X.map((x,i)=>({x,y:Y[i]}));
     this.classes=[...new Set(Y)];
     const nFeatures=Math.max(4,Math.floor(Math.sqrt(X[0].length)));
@@ -1459,7 +1532,7 @@ class DecisionForest{
   // Async version of train: yields the event loop between each tree so the
   // main thread stays responsive. Used by the fallback training path in ui.js.
   // The worker uses the synchronous train() instead since it runs off-thread.
-  async trainAsync(X,Y,nTrees=20,maxDepth=14,minSize=3,onProgress=null){
+  async trainAsync(X,Y,nTrees=20,maxDepth=12,minSize=3,onProgress=null){
     const data=X.map((x,i)=>({x,y:Y[i]}));
     this.classes=[...new Set(Y)];
     const nFeatures=Math.max(4,Math.floor(Math.sqrt(X[0].length)));
@@ -1614,7 +1687,95 @@ class DecisionForest{
     const totalCorr=toAdd.reduce((s,t)=>s+t.corrections,0);
     return{merged:true,added:toAdd.length,removed:toRemove.length,totalTrees:this.trees.length,newAcc:afterAcc,beforeAcc:beforeAcc,corrections:totalCorr,champErrors:champErrors.size};
   }
-}
+
+  // Full replacement with a second backfill pass from the old champion.
+  // Called when the challenger beats the champion by a decisive margin —
+  // the champion's forest is replaced wholesale, but then the best trees
+  // from the OLD champion are tested against the new model's worst trees
+  // and swapped in where they improve accuracy, so no good learning is lost.
+  replaceWithBestOf(challenger, testX, testY, maxTrees=30){
+    if(!challenger.trained||!challenger.trees.length)
+      return{replaced:false,reason:'challenger not trained'};
+    if(!testX.length)return{replaced:false,reason:'no test data'};
+
+    // Measure champion accuracy before replacement
+    let beforeCorrect=0;
+    for(let i=0;i<testX.length;i++){if(this.predict(testX[i]).cls===testY[i])beforeCorrect++;}
+    const beforeAcc=testX.length?beforeCorrect/testX.length:0;
+
+    // Snapshot the old champion trees for the backfill pass
+    const oldTrees=[...this.trees];
+
+    // Step 1: full replacement — champion becomes the challenger forest
+    this.trees=challenger.trees.map(t=>t); // copy references
+    while(this.trees.length>maxTrees)this.trees.shift();
+
+    // Merge classes from both forests
+    const cls=new Set(this.classes);
+    for(const c of challenger.classes)cls.add(c);
+    this.classes=[...cls];
+
+    // Step 2: backfill pass — score old champion trees and replace the
+    // worst trees in the new model if the old champion trees do better
+    const newChampErrors=new Set();
+    for(let i=0;i<testX.length;i++){
+      if(this.predict(testX[i]).cls!==testY[i])newChampErrors.add(i);
+    }
+
+    // Score old champion trees by how many NEW champion errors they correct
+    const oldScores=oldTrees.map((tree,idx)=>{
+      let corrections=0,acc=0;
+      for(let i=0;i<testX.length;i++){
+        const pred=treePredict(tree,testX[i]);
+        if(pred===testY[i]){acc++;if(newChampErrors.has(i))corrections++;}
+      }
+      return{idx,corrections,accuracy:testX.length?acc/testX.length:0};
+    }).sort((a,b)=>b.corrections-a.corrections||(b.accuracy-a.accuracy));
+
+    // Score new model trees — find the worst ones to potentially replace
+    const newWorst=this.evaluateTrees(testX,testY); // sorted worst-first
+
+    // Backfill: swap old champion trees in where strictly better
+    const backfillCount=Math.min(5,oldScores.length,newWorst.length);
+    const toAdd=[];const toRemove=[];
+    for(let i=0;i<backfillCount;i++){
+      if(oldScores[i].accuracy>newWorst[i].accuracy){
+        toAdd.push(oldTrees[oldScores[i].idx]);
+        toRemove.push(newWorst[i].index);
+      }
+    }
+
+    let backfilled=0;
+    if(toAdd.length){
+      const removeSet=new Set(toRemove);
+      this.trees=this.trees.filter((_,i)=>!removeSet.has(i));
+      for(const tree of toAdd){this.trees.push(tree);backfilled++;}
+      while(this.trees.length>maxTrees)this.trees.shift();
+    }
+
+    // Measure accuracy after full replacement + backfill
+    let afterCorrect=0;
+    for(let i=0;i<testX.length;i++){if(this.predict(testX[i]).cls===testY[i])afterCorrect++;}
+    const afterAcc=testX.length?afterCorrect/testX.length:0;
+
+    // Rollback if somehow worse (safety net)
+    if(afterAcc<beforeAcc){
+      this.trees=oldTrees;
+      return{replaced:false,reason:'replacement reduced accuracy ('+((beforeAcc*100).toFixed(1))+'%→'+((afterAcc*100).toFixed(1))+'%)'};
+    }
+
+    // Recalculate importances from new tree set
+    this.importances={};
+    for(const tree of this.trees)treeFeatureImportance(tree,this.importances,0);
+    const maxImp=Math.max(...Object.values(this.importances),1);
+    for(const k in this.importances)this.importances[k]/=maxImp;
+
+    this.oobAccuracy=afterAcc;
+    this.total+=challenger.total;
+
+    return{replaced:true,backfilled,totalTrees:this.trees.length,beforeAcc,afterAcc};
+  }
+
 
 let mlModel=new DecisionForest();
 </script><script>
@@ -2852,7 +3013,7 @@ function decodeInput(text, mlHint){
   // Playfair hill-climb (needs >= 20 alpha chars, key-based 5x5 grid)
   if(decoded.length>=20&&/^[a-zA-Z\s]+$/.test(decoded)){
     try{const pfRes=PlayfairCracker.crack(decoded);
-      if(pfRes&&pfRes.score>origScore+0.08)candidates.push({name:'Playfair (hill-climb)',text:pfRes.text,score:pfRes.score});}catch(e){}}
+      if(pfRes&&pfRes.score>origScore+0.08)candidates.push({name:'Playfair (hill-climb)',text:pfRes.text,score:pfRes.score,key:pfRes.key});}catch(e){}}
 
   // Bifid hill-climb (needs >= 16 alpha chars, key-based 5x5 grid)
   if(decoded.length>=16&&/^[a-zA-Z\s]+$/.test(decoded)){
@@ -2910,7 +3071,9 @@ function decodeInput(text, mlHint){
   candidates.sort((a,b)=>(b.score+mlBoostFor(b.name))-(a.score+mlBoostFor(a.name)));
   const best=candidates[0];
   if(best&&best.score>origScore+0.05){
-    steps.push({l:best.name,d:best.text.substring(0,100)});
+    const stepEntry={l:best.name,d:best.text.substring(0,100)};
+    if(best.key)stepEntry.key=best.key;
+    steps.push(stepEntry);
     decoded=best.text;
   }
   // Show runner-up attempts
@@ -3407,7 +3570,7 @@ function ctfAutoSolve() {
       const porta = crackVigenere(input, 'porta');
       if (porta && porta.score > 0.4) {
         const flags = findFlags(porta.text);
-        results.push({ method: `Porta (key="${porta.key}")`, text: porta.text, flags });
+        results.push({ method: `Porta key="${porta.key}" (${porta.key.split('').map(c=>{const row=Math.floor((c.charCodeAt(0)-65)/2);const a=String.fromCharCode(row*2+65);const b=String.fromCharCode(row*2+1+65);return c===a?a+'/'+b:b+'/'+a;}).join('')})`, text: porta.text, flags });
       }
     } catch(e) {}
   }
@@ -3878,6 +4041,7 @@ function go(id,btn){
   $('pg-'+id).classList.add('on');btn.classList.add('on');
   syncAllStats();
   if(id==='kb')renderKB();if(id==='ml')renderML();
+  if(id==='enc')selC(curC);
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -4151,20 +4315,17 @@ self.onmessage=function(e){
     const missY=[...storedY];
     if(existingModel){try{model.load(existingModel);}catch(e){}}
     const types=['plaintext','caesar','vigenere','substitution','atbash','affine','rail_fence','enigma','xor_single','xor_repeating','rc4','beaufort','porta','columnar','rot47','binary','hex','base64','morse','octal','decimal','url','bacon','multi_layer','rot13','a1z26','playfair','vigenere_autokey','reverse','scytale','route_cipher','base32','base58','ascii85','uuencode','html_entities','bifid','polybius','adfgvx','tap_code','phone_keypad','nato_phonetic','hex_shuffle'];
-    let confusedTypes=new Set(); // tracks which types the model struggles with
 
     for(let iter=1;iter<=maxIter&&!abort;iter++){
       self.postMessage({type:'log',msg:'── Iteration '+iter+(continuous?' (continuous)':'/'+maxIter)+' ──'});
       self.postMessage({type:'progress',iter:iter,phase:'generating'});
 
-      // Phase 1: Generate fresh samples for ALL types
+      // Phase 1: Generate fresh samples — flat count per type, no double-sampling
       const freshX=[],freshY=[],freshTexts=[];
       for(const type of types){
-        // Confused types get 2x samples to help the model learn them
-        const count=confusedTypes.has(type)?sampPerType*2:sampPerType;
-        for(let i=0;i<count;i++){
+        for(let i=0;i<sampPerType;i++){
           try{
-            const isShort=i>=count*0.8;
+            const isShort=i>=sampPerType*0.8;
             const ct=genSample(type,isShort);
             if(ct&&ct.length>=8){const f=extractFeatures(ct);if(!f.some(isNaN)){freshX.push(f);freshY.push(type);freshTexts.push(ct);}}
           }catch(e){}
@@ -4172,13 +4333,13 @@ self.onmessage=function(e){
         if(abort)break;
       }
       if(abort)break;
-      self.postMessage({type:'log',msg:'[data] Generated '+freshX.length+' fresh samples'+(confusedTypes.size?' ('+confusedTypes.size+' confused types boosted 2x)':'')+(missX.length?' + '+missX.length+' misclassified reinforcement':'')});
+      self.postMessage({type:'log',msg:'[data] Generated '+freshX.length+' fresh samples'+(missX.length?' + '+missX.length+' misclassified reinforcement':'')});
 
       // Phase 2: Train on fresh samples + misclassified reinforcement
       self.postMessage({type:'progress',iter:iter,phase:'training'});
       const trainX=[...freshX,...missX];const trainY=[...freshY,...missY];
-      model.train(trainX,trainY,20,10,3);
-      self.postMessage({type:'log',msg:'[ml] Trained on '+trainX.length+' samples (20 trees, depth 10), OOB: '+(model.oobAccuracy*100).toFixed(1)+'%'});
+      model.train(trainX,trainY,20,12,3);
+      self.postMessage({type:'log',msg:'[ml] Trained on '+trainX.length+' samples (20 trees, depth 12), OOB: '+(model.oobAccuracy*100).toFixed(1)+'%'});
       self.postMessage({type:'model',json:model.save()});
 
       // Send fresh samples back for storage
@@ -4200,15 +4361,6 @@ self.onmessage=function(e){
         }catch(e){}
       }
       const acc=total?correct/total:0;
-      
-      // Update confused types for next iteration and types below 80% get boosted
-      confusedTypes=new Set();
-      for(const type in byType){
-        if(byType[type].t>=3){
-          const typeAcc=byType[type].c/byType[type].t;
-          if(typeAcc<0.8)confusedTypes.add(type);
-        }
-      }
       
       self.postMessage({type:'eval',acc:acc,total:total,correct:correct,byType:byType,confusion:confusion,oob:model.oobAccuracy,iter:iter,testSamples:testSamples,challengerJson:model.save()});
     }
@@ -4237,11 +4389,7 @@ async function startTrain(){
   const continuous=$('tContinuous')&&$('tContinuous').checked;
   const maxIter=continuous?999999:(+($('tIter').value)||3);
   const baseSampPerType=+($('tSamp').value)||25;
-  // Confusion-adaptive: hard types get more samples, easy types get fewer
-  const confMatrix=ConfusionTracker.matrix;
-  const confusedTypes=new Set();
-  for(const actual in confMatrix){let total=0,errors=0;for(const pred in confMatrix[actual]){total+=confMatrix[actual][pred];if(pred!==actual)errors+=confMatrix[actual][pred];}if(total>10&&errors/total>0.05)confusedTypes.add(actual);}
-  const sampPerType=baseSampPerType; // base rate the worker uses this
+  const sampPerType=baseSampPerType;
   const types=['plaintext','caesar','vigenere','substitution','atbash','affine','rail_fence','enigma','xor_single','xor_repeating','rc4','beaufort','porta','columnar','rot47','binary','hex','base64','morse','octal','decimal','url','bacon','multi_layer','rot13','a1z26','playfair','vigenere_autokey','reverse','scytale','route_cipher','base32','base58','ascii85','uuencode','html_entities','bifid','polybius','adfgvx','tap_code','phone_keypad','nato_phonetic','hex_shuffle'];
   const log=[];
   function addLog(msg,ok=true){log.push({msg,ok});if(log.length>500)log.splice(0,log.length-500);
@@ -4325,15 +4473,25 @@ async function startTrain(){
           if(msg.challengerJson)challenger.load(msg.challengerJson);
           else if(trainWorker._pendingModel)challenger.load(trainWorker._pendingModel);
 
-          // Merge best 5 challenger trees into champion, replacing worst 5
-          const result=mlModel.mergeFrom(challenger,testX,testY,5,30);
-
-          if(result.merged){
-            ModelStore.save(mlModel);
-            addLog(`[merge] ▲ Merged ${result.added} trees into champion (replaced ${result.removed} worst) — ${mlModel.trees.length} total trees`);
-            addLog(`[merge] Champion: ${(championAcc*100).toFixed(1)}% → ${(result.newAcc*100).toFixed(1)}% | Challenger: ${(challengerAcc*100).toFixed(1)}%`);
+          const DECISIVE_THRESHOLD=0.03;
+          if(challengerAcc>championAcc+DECISIVE_THRESHOLD){
+            const result=mlModel.replaceWithBestOf(challenger,testX,testY,30);
+            if(result.replaced){
+              ModelStore.save(mlModel);
+              addLog(`[replace] ▲ Decisive win — replaced champion with challenger (${(challengerAcc*100).toFixed(1)}% vs ${(championAcc*100).toFixed(1)}%)`);
+              addLog(`[replace] Backfilled ${result.backfilled} old champion trees — final: ${(result.afterAcc*100).toFixed(1)}% (${result.totalTrees} trees)`);
+            }else{
+              addLog(`[replace] ▬ Replacement skipped: ${result.reason}`,false);
+            }
           }else{
-            addLog(`[merge] ▬ No merge: ${result.reason} (champion ${(championAcc*100).toFixed(1)}% already optimal)`,false);
+            const result=mlModel.mergeFrom(challenger,testX,testY,5,30);
+            if(result.merged){
+              ModelStore.save(mlModel);
+              addLog(`[merge] ▲ Merged ${result.added} trees into champion (replaced ${result.removed} worst) — ${mlModel.trees.length} total trees`);
+              addLog(`[merge] Champion: ${(championAcc*100).toFixed(1)}% → ${(result.newAcc*100).toFixed(1)}% | Challenger: ${(challengerAcc*100).toFixed(1)}%`);
+            }else{
+              addLog(`[merge] ▬ No merge: ${result.reason} (champion ${(championAcc*100).toFixed(1)}% already optimal)`,false);
+            }
           }
         }
         trainWorker._pendingModel=null;
@@ -4429,7 +4587,6 @@ async function startTrain(){
     addLog('[fallback] Training on main thread (Worker unavailable)');
     const fallbackMiss=await SampleDB.loadMisclassified(200);
     if(fallbackMiss.count>0)addLog(`[store] Loaded ${fallbackMiss.count} misclassified samples for reinforcement`);
-    let confusedTypes=new Set();
     for(let iter=1;iter<=maxIter&&!trainAbort;iter++){
       $('tsS').textContent=continuous?'RUNNING ∞':'RUNNING';$('tsS').style.color='var(--accent)';$('tsI').textContent=iter;
       if(!continuous)$('tBar').style.width=((iter-1)/maxIter*100)+'%';
@@ -4437,21 +4594,20 @@ async function startTrain(){
       addLog(`── Iteration ${iter}${continuous?' (continuous)':'/'+maxIter} ──`);
       const freshX=[],freshY=[],freshTexts=[];
       for(const type of types){
-        const count=confusedTypes.has(type)?sampPerType*2:sampPerType;
-        for(let i=0;i<count;i++){try{const isShort=i>=count*0.8;const ct=genSample(type,isShort);if(ct&&ct.length>=8){const f=extractFeatures(ct);if(!f.some(isNaN)){freshX.push(f);freshY.push(type);freshTexts.push(ct);}}}catch(e){}}
+        for(let i=0;i<sampPerType;i++){try{const isShort=i>=sampPerType*0.8;const ct=genSample(type,isShort);if(ct&&ct.length>=8){const f=extractFeatures(ct);if(!f.some(isNaN)){freshX.push(f);freshY.push(type);freshTexts.push(ct);}}}catch(e){}}
         await new Promise(r=>setTimeout(r,0));if(trainAbort)break;
       }
-      addLog(`[data] Generated ${freshX.length} fresh samples${confusedTypes.size?' ('+confusedTypes.size+' confused types boosted 2x)':''}${fallbackMiss.count?' + '+fallbackMiss.count+' misclassified reinforcement':''}`);
+      addLog(`[data] Generated ${freshX.length} fresh samples${fallbackMiss.count?' + '+fallbackMiss.count+' misclassified reinforcement':''}`);
       const trainX=[...freshX,...fallbackMiss.X];const trainY=[...freshY,...fallbackMiss.Y];
       addLog(`[ml] Training challenger (${trainX.length} samples, ${FEATURE_COUNT} features)...`);
       await new Promise(r=>setTimeout(r,10));
       const challenger=new DecisionForest();
       // trainAsync yields between trees so the main thread doesn't freeze
-      await challenger.trainAsync(trainX,trainY,20,10,3,(done,total)=>{
+      await challenger.trainAsync(trainX,trainY,20,12,3,(done,total)=>{
         if(!continuous)$('tBar').style.width=(((iter-1)/maxIter)+(done/total/maxIter))*100+'%';
       });
       if(trainAbort)break;
-      addLog(`[ml] Trained on ${trainX.length} samples (20 trees, depth 10), OOB: ${(challenger.oobAccuracy*100).toFixed(1)}%`);
+      addLog(`[ml] Trained on ${trainX.length} samples (20 trees, depth 12), OOB: ${(challenger.oobAccuracy*100).toFixed(1)}%`);
       await DataStore.saveWithTexts(freshX,freshY,freshTexts,{iteration:iter});
       if(trainAbort)break;
       const cbt={};for(let i=0;i<freshX.length;i++){if(!cbt[freshY[i]])cbt[freshY[i]]=[];cbt[freshY[i]].push(freshX[i]);}
@@ -4467,9 +4623,16 @@ async function startTrain(){
       }else{
         let champCorrect=0;for(let i=0;i<testX.length;i++){if(mlModel.predict(testX[i]).cls===testY[i])champCorrect++;}
         const champAcc=testX.length?champCorrect/testX.length:0;
-        const result=mlModel.mergeFrom(challenger,testX,testY,5,30);
-        if(result.merged){ModelStore.save(mlModel);addLog(`[merge] ▲ Merged ${result.added} trees — ${champAcc.toFixed(3)}→${result.newAcc.toFixed(3)} (${mlModel.trees.length} trees)`);}
-        else addLog(`[merge] ▬ No merge: ${result.reason}`,false);
+        const DECISIVE_THRESHOLD=0.03;
+        if(challengerAcc>champAcc+DECISIVE_THRESHOLD){
+          const result=mlModel.replaceWithBestOf(challenger,testX,testY,30);
+          if(result.replaced){ModelStore.save(mlModel);addLog(`[replace] ▲ Decisive win — replaced champion with challenger (${(challengerAcc*100).toFixed(1)}% vs ${(champAcc*100).toFixed(1)}%)`);addLog(`[replace] Backfilled ${result.backfilled} old champion trees — final: ${(result.afterAcc*100).toFixed(1)}% (${result.totalTrees} trees)`);}
+          else addLog(`[replace] ▬ Replacement skipped: ${result.reason}`,false);
+        }else{
+          const result=mlModel.mergeFrom(challenger,testX,testY,5,30);
+          if(result.merged){ModelStore.save(mlModel);addLog(`[merge] ▲ Merged ${result.added} trees — ${(champAcc*100).toFixed(1)}%→${(result.newAcc*100).toFixed(1)}% (${mlModel.trees.length} trees)`);}
+          else addLog(`[merge] ▬ No merge: ${result.reason}`,false);
+        }
       }
       if(trainAbort)break;
       // Record confusion/calibration (batched — save once) + collect misclassified
@@ -4496,9 +4659,6 @@ async function startTrain(){
       }
       let fCorrect=0;for(let i=0;i<testX.length;i++)if(mlModel.predict(testX[i]).cls===testY[i])fCorrect++;
       const finalAcc=testX.length?fCorrect/testX.length:0;
-      // Update confused types for next iteration
-      confusedTypes=new Set();
-      for(const type in byType){if(byType[type].t>=3&&byType[type].c/byType[type].t<0.8)confusedTypes.add(type);}
       addLog(`[eval] Active: ${(finalAcc*100).toFixed(1)}% (${mlModel.trees.length} trees)`);
       AccuracyHistory.record(finalAcc,freshX.length,iter);
       $('tsA').textContent=(finalAcc*100).toFixed(1)+'%';syncAllStats();
@@ -4522,6 +4682,31 @@ function stopTrain(){
 
 // Decrypt
 function copyText(text){navigator.clipboard?navigator.clipboard.writeText(text):prompt('Copy:',text);}
+function extractKeyFromMethod(method){
+  if(!method)return null;
+  let m=method.match(/key=["']?([^"'\s,)]+)["']?/i);
+  if(m)return{label:'Key',value:m[1]};
+  // Caesar: 'Caesar shift 3' (space) or 'shift=3' (equals)
+  m=method.match(/shift[=\s]+(\d+)/i);
+  if(m)return{label:'Shift',value:m[1]};
+  m=method.match(/a=(\d+)\s+b=(\d+)/i);
+  if(m)return{label:'Key',value:'a='+m[1]+' b='+m[2]};
+  m=method.match(/\[([^\]]+)\]/);
+  if(m)return{label:'Rotor positions',value:m[1]};
+  // Columnar / columnar key in parens — only match digits/letters, not 'hill-climb' etc.
+  m=method.match(/\((\w+)\)/);
+  if(m)return{label:'Key',value:m[1]};
+  m=method.match(/(\d+)\s+rails?/i);
+  if(m)return{label:'Rails',value:m[1]};
+  m=method.match(/width=(\d+)/i);
+  if(m)return{label:'Width',value:m[1]};
+  // Scytale / Route Cipher: 'Scytale cols=7' or 'Route Cipher cols=5'
+  m=method.match(/cols=(\d+)/i);
+  if(m)return{label:'Columns',value:m[1]};
+  m=method.match(/(\d+)\s+cols?/i);
+  if(m)return{label:'Columns',value:m[1]};
+  return null;
+}
 function doDec(){
   const text=$('dIn').value.trim();if(!text)return;const o=$('dOut');
   // Run ML first so its prediction can inform the pipeline's candidate ranking
@@ -4542,15 +4727,20 @@ function doDec(){
 
   let h='';
   const hasRunners=dec.runners&&dec.runners.length>0;
+  const keyInfo=extractKeyFromMethod(dec.method);
   if(dec.decoded!==text||dec.steps.length){
-    h+=`<div class="rb"><div class="rl">DECODED OUTPUT`;
+    h+=`<div class="rb" id="decOrigBlock"><div class="rl">DECODED OUTPUT`;
     h+=`<span style="float:right;display:flex;gap:6px">`;
+    h+=`<button class="bs" style="font-size:.55rem;padding:3px 10px;border-color:rgba(255,159,67,.4);color:var(--orange)" onclick="decRetry()">RETRY</button>`;
     if(hasRunners)h+=`<button class="bs" style="font-size:.55rem;padding:3px 10px;border-color:rgba(0,200,150,.35);color:var(--teal)" onclick="decNextAnswer()">TRY NEXT ANSWER</button>`;
     h+=`<button class="bs" style="font-size:.55rem;padding:3px 10px" onclick="copyText(this.closest('.rb').querySelector('.rv').textContent)">COPY</button>`;
     h+=`</span></div>`;
     h+=`<div class="rv" id="decMainOut">${H(dec.decoded)}</div>`;
-    if(hasRunners)h+=`<div style="font-family:var(--mono);font-size:.6rem;color:var(--dim);margin-top:6px" id="decAnswerLabel">Answer 1 of ${dec.runners.length+1} — method: ${H(dec.method)}</div>`;
+    if(keyInfo)h+=`<div style="font-family:var(--mono);font-size:.65rem;margin-top:6px"><span style="color:var(--dim)">${H(keyInfo.label)}:</span> <span style="color:var(--accent);font-weight:600">${H(keyInfo.value)}</span> &nbsp;<span style="color:var(--dim);font-size:.6rem">— ${H(dec.method)}</span></div>`;
+    else h+=`<div style="font-family:var(--mono);font-size:.65rem;color:var(--dim);margin-top:6px">Method: ${H(dec.method)}</div>`;
+    if(hasRunners)h+=`<div style="font-family:var(--mono);font-size:.6rem;color:var(--dim);margin-top:4px" id="decAnswerLabel">Answer 1 of ${dec.runners.length+1}</div>`;
     h+=`</div>`;
+    h+=`<div id="decRetryBlock"></div>`;
   }
   h+=`<div class="rb blu"><div class="rl">DETECTION</div><div style="font-family:var(--mono);font-size:.75rem;color:var(--text);line-height:2">`;
   h+=`<span style="color:var(--dim);font-size:.65rem">PIPELINE (rule-based decoder):</span><br>`;
@@ -4594,6 +4784,7 @@ function doDec(){
   }
   h+=`<div class="rb blu"><div class="rl">STATISTICS</div><div style="font-family:var(--mono);font-size:.75rem;color:var(--text);line-height:2">`;
   h+=`IC:${feats[0].toFixed(4)} Chi²:${feats[1].toFixed(2)} Entropy:${feats[3].toFixed(3)} FreqCorr:${feats[2].toFixed(3)} ByteEnt:${feats[61].toFixed(3)}<br></div></div>`;
+  if(dec.method&&dec.method.toLowerCase().includes('playfair')){const pfStep=dec.steps.find(s=>s.l&&s.l.toLowerCase().includes('playfair'));const displayKey=pfStep&&pfStep.key?pfStep.key:null;if(displayKey&&displayKey.length===25){h+=`<div class="rb" style="border-color:rgba(0,255,136,.15)"><div class="rl">RECOVERED PLAYFAIR KEY SQUARE</div><div style="display:grid;grid-template-columns:repeat(5,32px);gap:3px;margin-bottom:10px">`;for(const c of displayKey)h+=`<div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--bg3);border:1px solid var(--brd);border-radius:5px;font-family:var(--mono);font-size:.75rem;font-weight:600;color:var(--accent)">${H(c)}</div>`;h+=`</div><div style="font-family:var(--mono);font-size:.62rem;color:var(--dim)">Key string: ${H(displayKey)}</div></div>`;}}
   if(dec.steps.length){h+=`<div class="pipe"><div class="pt">PIPELINE</div>`;dec.steps.forEach((s,i)=>h+=`<div class="ps"><div class="pn">${i+1}</div><div class="pl">${H(s.l)}</div><div class="pd">${H(s.d)}</div></div>`);h+=`</div>`;}
   if(dec.runners&&dec.runners.length){h+=`<div class="pipe"><div class="pt">RUNNER-UP ATTEMPTS (${dec.runners.length})</div>`;dec.runners.forEach(r=>h+=`<div class="ps"><div class="pn">~</div><div class="pl">${H(r.name)}</div><div class="pd">score: ${r.score.toFixed(3)}</div></div>`);h+=`</div>`;}
   h+=`<div class="pipe"><div class="pt">EXTRACTED METADATA (${FEATURE_COUNT} features)</div><div class="fg" id="decFG">`;
@@ -4634,10 +4825,65 @@ function decNextAnswer(){
   if(lblEl)lblEl.textContent=`Answer ${window._decRunnerIdx+1} of ${window._decRunners.length} — method: ${r.name||'unknown'}`;
 }
 
+function decRetry(){
+  const text=$('dIn').value.trim();if(!text)return;
+  const retryBlock=$('decRetryBlock');if(!retryBlock)return;
+  let mlResult=null;
+  if($('dML').checked&&mlModel.trained){
+    const f=extractFeatures(text);
+    mlResult=mlModel.predict(f);
+    const sorted=Object.entries(mlResult.probs).sort((a,b)=>b[1]-a[1]);
+    const top=sorted[0]?.[1]||0,second=sorted[1]?.[1]||0;
+    if(top-second<0.08)mlResult.lowMargin=true;
+  }
+  const dec=decodeInput(text,mlResult);
+  const keyInfo=extractKeyFromMethod(dec.method);
+  const hasRunners=dec.runners&&dec.runners.length>0;
+  const prevRetries=retryBlock.querySelectorAll('.decRetryResult').length;
+  const retryNum=prevRetries+1;
+  // Each retry gets a unique id so its TRY NEXT ANSWER button can target it
+  const retryId=`decRetry_${retryNum}`;
+  // Store runners on window keyed by retryId so decRetryNext can access them
+  window._retryRunners=window._retryRunners||{};
+  window._retryRunners[retryId]=[{text:dec.decoded,name:dec.method,score:99},...(dec.runners||[])];
+  window._retryRunnerIdx=window._retryRunnerIdx||{};
+  window._retryRunnerIdx[retryId]=0;
+  let h=`<div class="rb decRetryResult" id="${retryId}" style="border-color:rgba(255,159,67,.3);margin-top:4px">`;
+  h+=`<div class="rl" style="color:var(--orange)">RETRY ${retryNum} — DECODED OUTPUT`;
+  h+=`<span style="float:right;display:flex;gap:6px">`;
+  if(hasRunners)h+=`<button class="bs" style="font-size:.55rem;padding:3px 10px;border-color:rgba(0,200,150,.35);color:var(--teal)" onclick="decRetryNext('${retryId}')">TRY NEXT ANSWER</button>`;
+  h+=`<button class="bs" style="font-size:.55rem;padding:3px 10px" onclick="copyText(this.closest('.rb').querySelector('.rv').textContent)">COPY</button>`;
+  h+=`</span></div>`;
+  h+=`<div class="rv" id="${retryId}_out">${H(dec.decoded)}</div>`;
+  if(keyInfo)h+=`<div style="font-family:var(--mono);font-size:.65rem;margin-top:6px" id="${retryId}_key"><span style="color:var(--dim)">${H(keyInfo.label)}:</span> <span style="color:var(--accent);font-weight:600">${H(keyInfo.value)}</span> &nbsp;<span style="color:var(--dim);font-size:.6rem">— ${H(dec.method)}</span></div>`;
+  else h+=`<div style="font-family:var(--mono);font-size:.65rem;color:var(--dim);margin-top:6px" id="${retryId}_key">Method: ${H(dec.method)}</div>`;
+  if(hasRunners)h+=`<div style="font-family:var(--mono);font-size:.6rem;color:var(--dim);margin-top:4px" id="${retryId}_lbl">Answer 1 of ${dec.runners.length+1}</div>`;
+  h+=`</div>`;
+  retryBlock.insertAdjacentHTML('beforeend',h);
+}
+
+function decRetryNext(retryId){
+  const runners=window._retryRunners&&window._retryRunners[retryId];
+  if(!runners||runners.length<2)return;
+  window._retryRunnerIdx[retryId]=(window._retryRunnerIdx[retryId]+1)%runners.length;
+  const idx=window._retryRunnerIdx[retryId];
+  const r=runners[idx];
+  const outEl=$(retryId+'_out');
+  const lblEl=$(retryId+'_lbl');
+  const keyEl=$(retryId+'_key');
+  if(outEl)outEl.innerHTML=H(r.text||'');
+  if(lblEl)lblEl.textContent=`Answer ${idx+1} of ${runners.length} — method: ${r.name||'unknown'}`;
+  if(keyEl){
+    const ki=extractKeyFromMethod(r.name||'');
+    if(ki)keyEl.innerHTML=`<span style="color:var(--dim)">${H(ki.label)}:</span> <span style="color:var(--accent);font-weight:600">${H(ki.value)}</span> &nbsp;<span style="color:var(--dim);font-size:.6rem">— ${H(r.name||'')}</span>`;
+    else keyEl.innerHTML=`<span style="color:var(--dim)">Method: ${H(r.name||'')}</span>`;
+  }
+}
+
 // Encrypt
 let curC='caesar';let xorMode='single';
 function selC(c,btn){curC=c;
-  document.querySelectorAll('#cBtns .bs, #eBtns .bs').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
+  document.querySelectorAll('#cBtns .bs, #eBtns .bs').forEach(b=>b.classList.remove('on'));if(btn)btn.classList.add('on');
   const m={
     caesar:'<div class="lbl" style="margin-top:12px">SHIFT</div><input type="number" id="cS" value="3" min="1" max="25" style="width:100px">',
     vigenere:'<div class="lbl" style="margin-top:12px">KEY</div><input type="text" id="vK" value="SECRET" style="width:200px">',
@@ -4661,13 +4907,33 @@ function selC(c,btn){curC=c;
     rot13:'<p style="margin-top:12px;font-size:.78rem;color:var(--dim)">Caesar shift-13. Self-inverse. The internet\'s favorite "encryption."</p>',
     affine:'<div class="lbl" style="margin-top:12px">a (coprime to 26)</div><input type="number" id="afA" value="5" min="1" max="25" style="width:80px"><div class="lbl">b (0-25)</div><input type="number" id="afB" value="8" min="0" max="25" style="width:80px">',
     rail_fence:'<div class="lbl" style="margin-top:12px">RAILS</div><input type="number" id="rfR" value="3" min="2" max="20" style="width:80px">',
-    playfair:'<div class="lbl" style="margin-top:12px">KEY</div><input type="text" id="pfK" value="CIPHER" style="width:200px">',
+    playfair:`<div class="lbl" style="margin-top:12px">KEY</div>
+<input type="text" id="pfK" value="CIPHER" style="width:200px;margin-bottom:8px" oninput="buildPlayfairGrid()" onchange="buildPlayfairGrid()">
+<div id="pfErr" style="font-family:var(--mono);font-size:.68rem;color:var(--red);margin-bottom:6px;display:none"></div>
+<div class="lbl" style="margin-top:8px;margin-bottom:6px">5×5 KEY SQUARE</div>
+<div id="pfGrid" style="display:grid;grid-template-columns:repeat(5,32px);gap:3px;margin-bottom:10px"></div>
+<div class="lbl" style="margin-top:4px;margin-bottom:4px">REMAINING LETTERS</div>
+<div id="pfRem" style="font-family:var(--mono);font-size:.72rem;color:var(--dim);letter-spacing:2px;word-spacing:4px"></div>
+<p style="margin-top:12px;font-size:.75rem;color:var(--dim);line-height:1.6">
+  <span style="color:var(--orange);font-weight:600">J is treated as I.</span>
+  The Playfair grid has 25 cells but the alphabet has 26 letters, so one letter must be dropped.
+  By convention, J is merged with I — any J in your key or message is automatically converted to I before encryption.
+  This means <span style="color:var(--bright)">JOHN</span> encrypts identically to <span style="color:var(--bright)">IOHN</span>,
+  and the decrypted output will always show I where you originally typed J.
+</p>`,
     vigenere_autokey:'<div class="lbl" style="margin-top:12px">KEY</div><input type="text" id="akK" value="SECRET" style="width:200px">',
     reverse:'<p style="margin-top:12px;font-size:.78rem;color:var(--dim)">Reverses the text character by character. Self-inverse.</p>',
     scytale:'<div class="lbl" style="margin-top:12px">DIAMETER (columns)</div><input type="number" id="scD" value="5" min="2" max="20" style="width:80px">',
     route_cipher:'<div class="lbl" style="margin-top:12px">COLUMNS</div><input type="number" id="rtC" value="5" min="2" max="20" style="width:80px">',
     bifid:'<div class="lbl" style="margin-top:12px">KEY</div><input type="text" id="biK" value="CIPHER" style="width:200px">',
-    substitution:'<p style="margin-top:12px;font-size:.78rem;color:var(--dim)">Random alphabet permutation. 26! possible keys.</p>',
+    substitution:`<div class="lbl" style="margin-top:12px;margin-bottom:8px">SUBSTITUTION KEY — each plaintext letter maps to the output letter below it</div>
+<div id="subGrid" style="display:grid;grid-template-columns:repeat(13,46px);gap:4px;margin-bottom:8px"></div>
+<div id="subErr" style="font-family:var(--mono);font-size:.68rem;color:var(--red);min-height:1.2em;margin-bottom:6px"></div>
+<div style="display:flex;gap:8px;margin-top:4px">
+  <button onclick="buildSubGrid(true)" style="font-family:var(--mono);font-size:.7rem;padding:4px 10px;background:var(--bg3);border:1px solid var(--brd);border-radius:5px;color:var(--dim);cursor:pointer">Randomize</button>
+  <button onclick="buildSubGrid(false,true)" style="font-family:var(--mono);font-size:.7rem;padding:4px 10px;background:var(--bg3);border:1px solid var(--brd);border-radius:5px;color:var(--dim);cursor:pointer">Reset A→A</button>
+</div>
+<p style="margin-top:10px;font-size:.73rem;color:var(--dim);line-height:1.7">Each of the 26 letters maps to a unique output letter. Two plaintext letters cannot share the same output — the red indicator will appear until the conflict is fixed. There are 26! (≈ 4×10²⁶) possible keys.</p>`,
     hex_shuffle:'<p style="margin-top:12px;font-size:.78rem;color:var(--dim)">Hex-encodes then shuffles byte pairs randomly.</p>',
     base32:'<p style="margin-top:12px;font-size:.78rem;color:var(--dim)">RFC 4648. Uses A-Z, 2-7, and = padding. Case-insensitive.</p>',
     base58:'<p style="margin-top:12px;font-size:.78rem;color:var(--dim)">Bitcoin alphabet. No 0/O/I/l to avoid visual confusion.</p>',
@@ -4680,10 +4946,89 @@ function selC(c,btn){curC=c;
     phone_keypad:'<p style="margin-top:12px;font-size:.78rem;color:var(--dim)">ABC=2, DEF=3, GHI=4... Lossy (one-way).</p>',
     nato_phonetic:'<p style="margin-top:12px;font-size:.78rem;color:var(--dim)">Alpha Bravo Charlie... NATO/ICAO phonetic alphabet.</p>',
     uuencode:'<p style="margin-top:12px;font-size:.78rem;color:var(--dim)">Legacy Unix encoding with begin/end markers.</p>',
-  };$('cOpts').innerHTML=m[c]||'';}
+  };$('cOpts').innerHTML=m[c]||'';if(c==='playfair')buildPlayfairGrid();if(c==='substitution')buildSubGrid();}
 
-function doEnc(){
-  const t=$('eIn').value.trim();if(!t)return;const o=$('eOut');let ct;
+function buildPlayfairGrid(){
+  const raw=($('pfK')||{value:''}).value.toUpperCase().replace(/J/g,'I');
+  const errEl=$('pfErr');const gridEl=$('pfGrid');const remEl=$('pfRem');
+  if(!errEl||!gridEl||!remEl)return;
+  const keyOnly=raw.replace(/[^A-Z]/g,'');
+  const seen={};let hasDup=false;let dupLetter='';
+  for(const c of keyOnly){if(seen[c]){hasDup=true;dupLetter=c;break;}seen[c]=true;}
+  if(hasDup){errEl.textContent='Every letter must be different — "'+dupLetter+'" appears more than once.';errEl.style.display='';}
+  else{errEl.style.display='none';}
+  const used=new Set();const grid=[];
+  for(const c of (raw+'ABCDEFGHIKLMNOPQRSTUVWXYZ')){if(c>='A'&&c<='Z'&&!used.has(c)){used.add(c);grid.push(c);}}
+  gridEl.innerHTML=grid.map(c=>{const inKey=keyOnly.length>0&&keyOnly.includes(c);const bg=inKey?'rgba(0,255,136,.12)':'var(--bg3)';const color=inKey?'var(--accent)':'var(--text)';const brd=inKey?'rgba(0,255,136,.35)':'var(--brd)';return`<div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:${bg};border:1px solid ${brd};border-radius:5px;font-family:var(--mono);font-size:.75rem;font-weight:600;color:${color}">${c}</div>`;}).join('');
+  const remaining='ABCDEFGHIKLMNOPQRSTUVWXYZ'.split('').filter(c=>!used.has(c));
+  remEl.textContent=remaining.length?remaining.join(' '):'— all letters used —';
+  remEl.style.color=remaining.length?'var(--dim)':'var(--accent)';
+}
+
+function buildSubGrid(randomize=false, reset=false){
+  const grid=$('subGrid');const errEl=$('subErr');
+  if(!grid)return;
+  const existing=grid.querySelectorAll('input');
+  let key=[...Array(26)].map((_,i)=>i);
+  if(existing.length===26&&!randomize&&!reset){
+    key=[...existing].map(inp=>{const v=inp.value.toUpperCase();return v&&v>='A'&&v<='Z'?v.charCodeAt(0)-65:-1;});
+  } else if(randomize){
+    for(let i=25;i>0;i--){const j=Math.floor(Math.random()*(i+1));[key[i],key[j]]=[key[j],key[i]];}
+  }
+  grid.innerHTML='';
+  for(let i=0;i<26;i++){
+    const ptLetter=String.fromCharCode(65+i);
+    const ctLetter=key[i]>=0?String.fromCharCode(65+key[i]):ptLetter;
+    const cell=document.createElement('div');
+    cell.style.cssText='display:flex;flex-direction:column;align-items:center;gap:2px';
+    cell.innerHTML=
+      `<div style="font-family:var(--mono);font-size:.7rem;color:var(--dim);font-weight:600">${ptLetter}</div>`+
+      `<div style="font-family:var(--mono);font-size:.65rem;color:var(--brd2)">↓</div>`+
+      `<input maxlength="1" value="${ctLetter}" data-idx="${i}" `+
+        `style="width:34px;height:34px;text-align:center;font-family:var(--mono);font-size:.85rem;font-weight:700;`+
+        `background:var(--bg3);border:1px solid var(--brd);border-radius:5px;color:var(--text);text-transform:uppercase" `+
+        `oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'').slice(-1);validateSubGrid()">`;
+    grid.appendChild(cell);
+  }
+  validateSubGrid();
+}
+
+function validateSubGrid(){
+  const grid=$('subGrid');const errEl=$('subErr');
+  if(!grid||!errEl)return;
+  const inputs=[...grid.querySelectorAll('input')];
+  const vals=inputs.map(inp=>inp.value.toUpperCase());
+  inputs.forEach(inp=>{inp.style.borderColor='var(--brd)';inp.style.color='var(--text)';});
+  const seen={};const dupes=new Set();
+  vals.forEach((v,i)=>{
+    if(!v){return;}
+    if(seen[v]!==undefined){dupes.add(v);dupes.add(seen[v]);}
+    else seen[v]=i;
+  });
+  const empty=vals.filter(v=>!v).length;
+  if(dupes.size){
+    inputs.forEach((inp,i)=>{if(dupes.has(vals[i])){inp.style.borderColor='var(--red)';inp.style.color='var(--red)';}});
+    const dupList=[...dupes].join(', ');
+    errEl.textContent=`Output letter${dupes.size>1?'s':''} used more than once: ${dupList}. Each output letter must be unique.`;
+  } else if(empty){
+    errEl.textContent=`${empty} cell${empty>1?'s are':' is'} empty — fill all 26 letters before encrypting.`;
+  } else {
+    errEl.textContent='';
+  }
+}
+
+function getSubKey(){
+  const grid=$('subGrid');
+  if(!grid)return null;
+  const vals=[...grid.querySelectorAll('input')].map(inp=>inp.value.toUpperCase());
+  if(vals.some(v=>!v||!/^[A-Z]$/.test(v)))return null;
+  const seen=new Set();
+  const key=vals.map(v=>{const idx=v.charCodeAt(0)-65;if(seen.has(idx))return -1;seen.add(idx);return idx;});
+  if(key.includes(-1))return null;
+  return key;
+}
+
+function doEnc(){  const t=$('eIn').value.trim();if(!t)return;const o=$('eOut');let ct;
   try{const v=id=>{const e=$(id);return e?e.value:''};
     if(curC==='caesar')ct=Caesar.encrypt(t,+(v('cS'))||3);
     else if(curC==='vigenere')ct=Vigenere.encrypt(t,v('vK')||'KEY');
@@ -4708,13 +5053,19 @@ function doEnc(){
     else if(curC==='rot13')ct=ROT13_cipher.encrypt(t);
     else if(curC==='affine')ct=affineEnc(t,+(v('afA'))||5,+(v('afB'))||8);
     else if(curC==='rail_fence')ct=railEnc(t,+(v('rfR'))||3);
-    else if(curC==='playfair')ct=Playfair.encrypt(t,v('pfK')||'CIPHER');
+    else if(curC==='playfair'){const pfErr=$('pfErr');if(pfErr&&pfErr.style.display!=='none'){o.innerHTML='<span style="color:var(--red)">'+H(pfErr.textContent)+'</span>';return;}ct=Playfair.encrypt(t,v('pfK')||'CIPHER');}
     else if(curC==='vigenere_autokey')ct=VigenereAutokey.encrypt(t,v('akK')||'SECRET');
     else if(curC==='reverse')ct=ReverseText.encrypt(t);
     else if(curC==='scytale')ct=Scytale.encrypt(t,+(v('scD'))||5);
     else if(curC==='route_cipher')ct=RouteCipher.encrypt(t,+(v('rtC'))||5);
     else if(curC==='bifid')ct=Bifid.encrypt(t,v('biK')||'CIPHER');
-    else if(curC==='substitution')ct=applySub(t,genSubKey(()=>Math.floor(Math.random()*1e9)));
+    else if(curC==='substitution'){
+      const subErrEl=$('subErr');
+      if(subErrEl&&subErrEl.textContent){o.innerHTML='<span style="color:var(--red)">'+H(subErrEl.textContent)+'</span>';return;}
+      const subKey=getSubKey();
+      if(!subKey){o.innerHTML='<span style="color:var(--red)">Fix the substitution key before encrypting.</span>';return;}
+      ct=applySub(t,subKey);
+    }
     else if(curC==='hex_shuffle')ct=HexShuffle.encrypt(t,Math.floor(Math.random()*1e9));
     else if(curC==='base32')ct=Base32.encode(t);
     else if(curC==='base58')ct=Base58.encode(t);

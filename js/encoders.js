@@ -51,6 +51,13 @@ const Encoders={
 function detectEncoding(text){
   const clean=text.replace(/\s/g,'');
   if(/^[01]+$/.test(clean)&&clean.length>=8)return'binary';
+  // Polybius: space-separated digit pairs where each digit is 1-5.
+  // MUST be before binary, octal, and hex — Polybius cleaned (spaces removed) matches
+  // all three: all digits, even length (hex), digits 0-7 with length divisible by 3 (octal).
+  if(/^[\d\s]+$/.test(text.trim())&&/^[1-5]+$/.test(clean)&&clean.length%2===0&&clean.length>=4){
+    const _pp=text.trim().split(/\s+/);
+    if(_pp.length>=2&&_pp.every(p=>p.length===2&&+p[0]>=1&&+p[0]<=5&&+p[1]>=1&&+p[1]<=5))return'polybius';
+  }
   if(/^[0-7]+$/.test(clean)&&clean.length>=3&&clean.length%3===0)return'octal';
   if(/^(\d{2,3}\s+)*\d{2,3}$/.test(text.trim())){const nums=text.trim().split(/\s+/).map(Number);if(nums.every(n=>n>=32&&n<=126))return'decimal';}
   const upper=clean.toUpperCase();if(/^[AB]+$/.test(upper)&&upper.length>=5&&upper.length%5===0)return'bacon';
@@ -61,7 +68,18 @@ function detectEncoding(text){
     if((hasLower&&hasUpper)||hasDigit||hasSpecial)return'base64';
   }
   if(/%[0-9A-Fa-f]{2}/.test(text)&&text.split('%').length>3)return'url';
+  // TapCode: dots and spaces only (no dashes), optionally / as word separator.
+  // Must be checked BEFORE Morse because Morse regex also matches dot-only text.
+  // TapCode never uses dashes; if there are no dashes, it cannot be Morse.
+  if(/^[.\s/]+$/.test(text.trim())&&text.includes('.')&&!text.includes('-'))return'tap_code';
   if(/^[.\-\s/|]+$/.test(text.trim()))return'morse';
+  // Base58: uses 1-9, A-H, J-N, P-Z, a-k, m-z — no 0, O, I, or l
+  // Require lowercase or digits to distinguish from uppercase-only cipher text like ADFGVX —
+  // real base58 in practice almost always has mixed case or numeric characters
+  if(/^[1-9A-HJ-NP-Za-km-z]+$/.test(clean)&&clean.length>=8){
+    const hasLower=/[a-km-z]/.test(clean),hasDigit=/[1-9]/.test(clean);
+    if(hasLower||hasDigit)return'base58';
+  }
   return'plaintext';
 }
 

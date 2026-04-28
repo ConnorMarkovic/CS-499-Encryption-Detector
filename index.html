@@ -100,7 +100,7 @@
 <!-- Training page -->
 <div id="pg-train" class="pg">
   <h2>Training Center</h2>
-  <p class="sub">Generate data, train ML models, discover patterns, build knowledge — all in your browser.</p>
+  <p class="sub">Generate data, train ML models, discover patterns, build knowledge. All in your browser.</p>
   <div class="g4">
     <div class="sc"><div class="sn" id="tsS">IDLE</div><div class="sl">STATUS</div></div>
     <div class="sc bl"><div class="sn" id="tsI">0</div><div class="sl">ITERATION</div></div>
@@ -129,7 +129,7 @@
 <!-- Knowledge Base page -->
 <div id="pg-kb" class="pg">
   <h2>Cipher Knowledge Base</h2>
-  <p class="sub">Everything learned about each encryption algorithm — stored locally in your browser.</p>
+  <p class="sub">Everything learned about each encryption algorithm, which is stored locally in your browser.</p>
   <div class="g4">
     <div class="sc"><div class="sn" id="kbT">—</div><div class="sl">CIPHER TYPES</div></div>
     <div class="sc bl"><div class="sn" id="kbD">—</div><div class="sl">DISCOVERIES</div></div>
@@ -143,7 +143,7 @@
 <!-- ML Model page -->
 <div id="pg-ml" class="pg">
   <h2>ML Model &amp; Learning Intelligence</h2>
-  <p class="sub">Random Forest (20 trees, depth 14) with confusion tracking, confidence calibration, and incremental learning across sessions.</p>
+  <p class="sub">Random Forest (20 trees, depth 12) with confusion tracking, confidence calibration, and incremental learning across sessions.</p>
   <div class="g4">
     <div class="sc"><div class="sn" id="mlS">—</div><div class="sl">MODEL STATUS</div></div>
     <div class="sc bl"><div class="sn" id="mlN">—</div><div class="sl">TRAINING SAMPLES</div></div>
@@ -155,7 +155,7 @@
     <div class="sc bl"><div class="sn" id="mlOOB">—</div><div class="sl">OOB ACCURACY</div></div>
   </div>
   <div class="sec"><div class="st">MODEL MANAGEMENT</div>
-    <div class="row"><button class="bs" onclick="exportData()">EXPORT DATA & MODEL (JSON)</button><button class="bs" onclick="$('mlImpFile').click()">IMPORT DATA & MODEL</button><input type="file" id="mlImpFile" accept=".json" style="display:none" onchange="importData(this)"><button class="bs" style="border-color:rgba(255,92,92,.3);color:var(--red)" onclick="if(confirm('Reset model and all learning data?')){ModelStore.wipeAll().then(()=>{mlModel=new DecisionForest();Promise.all([ConfusionTracker.reset(),CalibrationTracker.reset(),CentroidStore.reset(),DataStore.clear()]).then(()=>renderML())});}">RESET ALL</button></div>
+    <div class="row"><button class="bs" onclick="exportData()">EXPORT DATA & MODEL (JSON)</button><button class="bs" onclick="$('mlImpFile').click()">IMPORT DATA & MODEL</button><input type="file" id="mlImpFile" accept=".json" style="display:none" onchange="importData(this)"><button class="bs" style="border-color:rgba(255,92,92,.3);color:var(--red)" onclick="if(confirm('Reset model and all learning data? This also clears the Knowledge Base.')){ModelStore.wipeAll().then(()=>{mlModel=new DecisionForest();Promise.all([ConfusionTracker.reset(),CalibrationTracker.reset(),CentroidStore.reset(),DataStore.clear(),KBStore.clear()]).then(()=>{KB=null;loadKB().then(()=>{renderKB();renderML();});})});}">RESET ALL</button></div>
   </div>
   <div class="sec"><div class="st">FEATURE IMPORTANCES</div><div id="mlImp"><p style="color:var(--dim);font-size:.8rem">Train the model to see feature importances.</p></div></div>
   <div class="sec"><div class="st">ACCURACY HISTORY</div><div id="mlHistory"><p style="color:var(--dim);font-size:.8rem">Train the model to see accuracy progression over time.</p></div></div>
@@ -175,14 +175,14 @@
 </div>
 
 <!-- Load order matters: each file depends on the ones above it -->
-<script src="js/ciphers.js?v=3"></script>
-<script src="js/encoders.js?v=3"></script>
-<script src="js/ml.js?v=3"></script>
-<script src="js/storage.js?v=3"></script>
+<script src="js/ciphers.js?v=4"></script>
+<script src="js/encoders.js?v=4"></script>
+<script src="js/ml.js?v=4"></script>
+<script src="js/storage.js?v=4"></script>
 <script>ModelStore.load(mlModel).then(loaded => { if (loaded) console.log('[CipherLab] Model loaded from OPFS'); });</script>
-<script src="js/kb.js?v=3"></script>
-<script src="js/crackers.js?v=3"></script>
-<script src="js/cyber.js?v=3"></script>
-<script src="js/ui.js?v=3"></script>
+<script src="js/kb.js?v=4"></script>
+<script src="js/crackers.js?v=4"></script>
+<script src="js/cyber.js?v=4"></script>
+<script src="js/ui.js?v=4"></script>
 </body>
 </html>

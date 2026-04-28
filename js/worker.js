@@ -219,19 +219,16 @@ self.onmessage=function(e){
   const missX=storedX.map(a=>new Float64Array(a));
   const missY=[...storedY];
   if(existingModel){try{model.load(existingModel);}catch(e){}}
-  let confusedTypes=new Set();
-
   for(let iter=1;iter<=maxIter&&!abort;iter++){
     self.postMessage({type:'log',msg:'── Iteration '+iter+(continuous?' (continuous)':'/'+maxIter)+' ──'});
     self.postMessage({type:'progress',iter,phase:'generating'});
 
-    // Phase 1: Generate fresh samples for all types
+    // Phase 1: Generate fresh samples — flat count per type, no double-sampling
     const freshX=[],freshY=[],freshTexts=[];
     for(const type of TYPES){
-      const count=confusedTypes.has(type)?sampPerType*2:sampPerType;
-      for(let i=0;i<count;i++){
+      for(let i=0;i<sampPerType;i++){
         try{
-          const isShort=i>=count*0.8;
+          const isShort=i>=sampPerType*0.8;
           const ct=genSample(type,isShort);
           if(ct&&ct.length>=8){const f=extractFeatures(ct);if(!f.some(isNaN)){freshX.push(f);freshY.push(type);freshTexts.push(ct);}}
         }catch(e){}
@@ -239,13 +236,13 @@ self.onmessage=function(e){
       if(abort)break;
     }
     if(abort)break;
-    self.postMessage({type:'log',msg:'[data] Generated '+freshX.length+' fresh samples'+(confusedTypes.size?' ('+confusedTypes.size+' confused types boosted 2x)':'')+(missX.length?' + '+missX.length+' misclassified reinforcement':'')});
+    self.postMessage({type:'log',msg:'[data] Generated '+freshX.length+' fresh samples'+(missX.length?' + '+missX.length+' misclassified reinforcement':'')});
 
     // Phase 2: Train on fresh samples + misclassified reinforcement
     self.postMessage({type:'progress',iter,phase:'training'});
     const trainX=[...freshX,...missX];const trainY=[...freshY,...missY];
-    model.train(trainX,trainY,20,10,3);
-    self.postMessage({type:'log',msg:'[ml] Trained on '+trainX.length+' samples (20 trees, depth 10), OOB: '+(model.oobAccuracy*100).toFixed(1)+'%'});
+    model.train(trainX,trainY,20,12,3);
+    self.postMessage({type:'log',msg:'[ml] Trained on '+trainX.length+' samples (20 trees, depth 12), OOB: '+(model.oobAccuracy*100).toFixed(1)+'%'});
     self.postMessage({type:'model',json:model.save()});
 
     // Send fresh samples back to the main thread for IndexedDB storage
@@ -267,12 +264,6 @@ self.onmessage=function(e){
       }catch(e){}
     }
     const acc=total?correct/total:0;
-
-    // Update confused types for next iteration so types below 80% get boosted
-    confusedTypes=new Set();
-    for(const type in byType){
-      if(byType[type].t>=3&&byType[type].c/byType[type].t<0.8)confusedTypes.add(type);
-    }
 
     self.postMessage({type:'eval',acc,total,correct,byType,confusion,oob:model.oobAccuracy,iter,testSamples,challengerJson:model.save()});
   }

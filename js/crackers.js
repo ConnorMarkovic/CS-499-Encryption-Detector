@@ -90,41 +90,6 @@ function crackVigenere(ct,mode='vigenere'){
 function decodeInput(text, mlHint){
   const enc=detectEncoding(text);const steps=[];let decoded=text;
 
-  // Build ML boost table from the hint — maps canonical cipher type names to score bonuses.
-  // Top ML prediction gets +0.12, 2nd gets +0.06, 3rd gets +0.03.
-  // Only applied when ML confidence is meaningful (above 30% and not flagged lowMargin).
-  const mlBoost={};
-  if(mlHint&&!mlHint.lowMargin&&mlHint.confidence>=0.30){
-    const sorted=Object.entries(mlHint.probs).sort((a,b)=>b[1]-a[1]);
-    const boosts=[0.12,0.06,0.03];
-    sorted.slice(0,3).forEach(([cls],i)=>{ mlBoost[cls]=boosts[i]; });
-  }
-
-  // Map candidate names to ML type keys for boost lookup
-  function mlBoostFor(candidateName){
-    const n=candidateName.toLowerCase();
-    if(n.startsWith('caesar'))return mlBoost['caesar']||0;
-    if(n.startsWith('atbash'))return mlBoost['atbash']||0;
-    if(n.startsWith('rot13'))return mlBoost['rot13']||0;
-    if(n.startsWith('rot47'))return mlBoost['rot47']||0;
-    if(n.startsWith('affine'))return mlBoost['affine']||0;
-    if(n.startsWith('vigenère')||n.startsWith('vigenere'))return mlBoost['vigenere']||0;
-    if(n.startsWith('beaufort'))return mlBoost['beaufort']||0;
-    if(n.startsWith('porta'))return mlBoost['porta']||0;
-    if(n.startsWith('rail fence'))return mlBoost['rail_fence']||0;
-    if(n.startsWith('columnar'))return mlBoost['columnar']||0;
-    if(n.startsWith('substitution'))return mlBoost['substitution']||0;
-    if(n.startsWith('enigma'))return mlBoost['enigma']||0;
-    if(n.startsWith('xor repeating'))return mlBoost['xor_repeating']||0;
-    if(n.startsWith('xor'))return mlBoost['xor_single']||0;
-    if(n.startsWith('rc4'))return mlBoost['rc4']||0;
-    if(n.startsWith('playfair'))return mlBoost['playfair']||0;
-    if(n.startsWith('bifid'))return mlBoost['bifid']||0;
-    if(n.startsWith('autokey'))return mlBoost['vigenere_autokey']||0;
-    if(n.startsWith('scytale'))return mlBoost['scytale']||0;
-    if(n.startsWith('route'))return mlBoost['route_cipher']||0;
-    return 0;
-  }
   // Phase 1: Try multi-layer decoding first
   const ml=Encoders.multi.decode(text);
   if(ml.depth>0){decoded=ml.final;ml.layers.forEach((l,i)=>steps.push({l:`Layer ${i+1}: ${l}`,d:i===ml.layers.length-1?ml.final.substring(0,80):'...'}));
@@ -136,9 +101,12 @@ function decodeInput(text, mlHint){
     else if(enc==='base64'){decoded=Encoders.base64.decode(text);steps.push({l:'Base64 decode',d:decoded});}
     else if(enc==='decimal'){decoded=Encoders.decimal.decode(text);steps.push({l:'Decimal decode',d:decoded});}
     else if(enc==='octal'){decoded=Encoders.octal.decode(text);steps.push({l:'Octal decode',d:decoded});}
+    else if(enc==='polybius'){const d=PolybiusSquare.decode(text);if(d.length>1){decoded=d;steps.push({l:'Polybius decode',d:decoded});}}
+    else if(enc==='tap_code'){try{const d=TapCode.decode(text);if(d.length>1){decoded=d;steps.push({l:'Tap code decode',d:decoded});}}catch(e){}}
     else if(enc==='morse'){decoded=Encoders.morse.decode(text);steps.push({l:'Morse decode',d:decoded});}
     else if(enc==='url'){decoded=Encoders.url.decode(text);steps.push({l:'URL decode',d:decoded});}
     else if(enc==='bacon'){decoded=Encoders.bacon.decode(text);steps.push({l:'Bacon decode',d:decoded});}
+    else if(enc==='base58'){try{const d=Base58.decode(text.trim());if(d.length>0){decoded=d;steps.push({l:'Base58 decode',d:decoded});}}catch(e){}}
   }catch(e){decoded=text;}
 
   // Phase 1c: Try additional encoding decoders by pattern detection
@@ -152,10 +120,13 @@ function decodeInput(text, mlHint){
       if(decoded===text&&/^[A-Z2-7=]+$/i.test(text.trim())&&text.length>=8){try{const d=Base32.decode(text.trim());if(d.length>2&&scoreEnglish(d)>0.15){decoded=d;steps.push({l:'Base32 decode',d:decoded});}}catch(e){}}
       // Polybius: pairs of digits 1-5
       if(decoded===text&&/^[\d\s]+$/.test(text)){const pairs=text.match(/\d{2}/g);if(pairs&&pairs.every(p=>+p[0]>=1&&+p[0]<=5&&+p[1]>=1&&+p[1]<=5)){const d=PolybiusSquare.decode(text);if(d.length>2){decoded=d;steps.push({l:'Polybius decode',d:decoded});}}}
-      // ADFGVX: only A,D,F,G,V,X characters
-      if(decoded===text&&/^[ADFGVX\s]+$/i.test(text.trim())&&text.trim().length>=4){try{const d=ADFGVX.decode(text);if(d.length>1){decoded=d;steps.push({l:'ADFGVX decode',d:decoded});}}catch(e){}}
-      // Tap code: N.N pairs
-      if(decoded===text&&/^\d\.\d(\s+\d\.\d)*$/.test(text.trim())){try{const d=TapCode.decode(text);if(d.length>1){decoded=d;steps.push({l:'Tap code decode',d:decoded});}}catch(e){}}
+      // ADFGVX: only A,D,F,G,V,X characters — decode maps fractionated pairs back to plaintext chars.
+      // Note: ADFGVX output is uppercase with no spaces (the transposition layer is not recoverable
+      // without the columnar key), so we accept it even with a modest score — it's better than nothing.
+      if(decoded===text&&/^[ADFGVX\s]+$/i.test(text.trim())&&text.trim().length>=4){try{const d=ADFGVX.decode(text);if(d.length>1&&scoreEnglish(d)>scoreEnglish(text)){decoded=d;steps.push({l:'ADFGVX decode',d:decoded});}}catch(e){}}
+      // Tap code: dot groups separated by spaces — row dots, space, col dots.
+      // Letters separated by double-space; words by ' / '. Minimum ". ." pattern.
+      if(decoded===text&&/^[\.\s/]+$/.test(text.trim())&&text.includes('.')){try{const d=TapCode.decode(text);if(d.length>1){decoded=d;steps.push({l:'Tap code decode',d:decoded});}}catch(e){}}
       // NATO phonetic: known NATO words
       if(decoded===text){const words=text.trim().split(/\s+/);const natoWords=['alpha','bravo','charlie','delta','echo','foxtrot','golf','hotel','india','juliet','kilo','lima','mike','november','oscar','papa','quebec','romeo','sierra','tango','uniform','victor','whiskey','xray','yankee','zulu'];
         if(words.length>=3&&words.filter(w=>natoWords.includes(w.toLowerCase())).length>words.length*0.7){try{const d=NATOPhonetic.decode(text);if(d.length>1){decoded=d;steps.push({l:'NATO phonetic decode',d:decoded});}}catch(e){}}}
@@ -163,12 +134,37 @@ function decodeInput(text, mlHint){
       if(decoded===text&&text.trimStart().startsWith('begin 6')){try{const d=UUEncode.decode(text);if(d.length>1&&scoreEnglish(d)>0.1){decoded=d;steps.push({l:'UUEncode decode',d:decoded});}}catch(e){}}
       // Ascii85: <~ ... ~> wrapper
       if(decoded===text&&text.includes('<~')&&text.includes('~>')){try{const d=Ascii85.decode(text);if(d.length>1){decoded=d;steps.push({l:'Ascii85 decode',d:decoded});}}catch(e){}}
-      // Phone keypad: all digits 2-9
-      if(decoded===text&&/^[0-9]+$/.test(text.trim())&&text.length>=5){const digits=text.trim();if([...digits].every(d=>'023456789'.includes(d))){try{const d=PhoneKeypad.decode(digits);if(d.length>2){decoded=d;steps.push({l:'Phone keypad decode',d:decoded});}}catch(e){}}}
+      // Phone keypad: space-separated runs of a single repeated digit (e.g. "2 22 222" = ABC)
+      // Each token must be all the same digit (2-9 or 0 for space).
+      if(decoded===text&&/^[2-90]+(\s+[2-90]+)*$/.test(text.trim())){
+        const tokens=text.trim().split(/\s+/);
+        if(tokens.length>=2&&tokens.every(tok=>[...tok].every(c=>c===tok[0]))){
+          try{const d=PhoneKeypad.decode(text);if(d.length>1){decoded=d;steps.push({l:'Phone keypad decode',d:decoded});}}catch(e){}}}
+      // Atbash pre-check — must run BEFORE ROT13/Reverse because the vowel-ratio gate
+      // in scoreEnglish() returns 0 for Atbash-encoded English (A/E/I/O/U map to uncommon
+      // consonants, dropping the vowel ratio below the 0.15 threshold). When scoreEnglish
+      // of the ciphertext is 0, ROT13 and Reverse can fire spuriously from 0 → anything > 0,
+      // corrupting 'decoded' before Phase 2 even sees the original text.
+      // We detect Atbash by using a raw unigram scorer (no vowel gate) to compare:
+      // if the Atbash-transformed input scores substantially better than the raw input, commit it.
+      // Atbash pre-check — must run BEFORE ROT13/Reverse.
+      // scoreEnglish() uses a vowel-ratio gate that returns 0 for Atbash ciphertext
+      // (A/E/I/O/U → Z/V/R/L/F, killing the vowel count). This makes ROT13/Reverse
+      // appear to "improve" the score from 0 → anything, corrupting 'decoded' before
+      // Phase 2 sees the original text. We pre-empt this by applying Atbash and checking
+      // whether the result looks like genuine English (scoreEnglish > 0.18). This threshold
+      // is high enough to block Caesar/ROT13 false positives (their Atbash transforms score
+      // near 0) while reliably catching real Atbash ciphertext (scores 0.22–0.60+).
+      if(decoded===text){const atbCand=Atbash.transform(text);if(scoreEnglish(atbCand)>0.22){decoded=atbCand;steps.push({l:'Atbash',d:decoded});}}
       // ROT13
-      if(decoded===text){const r13=ROT13_cipher.decrypt(text);if(scoreEnglish(r13)>scoreEnglish(text)+0.05){decoded=r13;steps.push({l:'ROT13',d:decoded});}}
+      if(decoded===text){const r13=ROT13_cipher.decrypt(text);const r13Score=scoreEnglish(r13);if(r13Score>scoreEnglish(text)+0.15&&r13Score>0.20){decoded=r13;steps.push({l:'ROT13',d:decoded});}}
       // Reverse
       if(decoded===text){const rev=ReverseText.encrypt(text);if(scoreEnglish(rev)>scoreEnglish(text)+0.05){decoded=rev;steps.push({l:'Reverse',d:decoded});}}
+      // Base58: no 0, O, I, or l — require lowercase or digits to avoid shadowing uppercase-only
+      // cipher text like ADFGVX (all six ADFGVX chars happen to be valid base58 characters)
+      if(decoded===text&&/^[1-9A-HJ-NP-Za-km-z]+$/.test(text.trim())&&text.trim().length>=8){
+        const b58HasLower=/[a-km-z]/.test(text),b58HasDigit=/[1-9]/.test(text);
+        if(b58HasLower||b58HasDigit){try{const d=Base58.decode(text.trim());if(d.length>1&&scoreEnglish(d)>0.15){decoded=d;steps.push({l:'Base58 decode',d:decoded});}}catch(e){}}}
     }
   }catch(e){}
   }
@@ -178,6 +174,33 @@ function decodeInput(text, mlHint){
   // A high scoreEnglish alone isn't enough if the ML sees cipher structure in the features.
   const mlSaysNotPlaintext=mlHint&&!mlHint.lowMargin&&mlHint.confidence>=0.50&&mlHint.cls!=='plaintext';
   if(origScore>0.6&&!mlSaysNotPlaintext)return{decoded,encoding:enc,steps,method:steps.length?steps[steps.length-1].l:'plaintext',runners:[]};
+  // Atbash fast-exit: if the Phase 1c Atbash pre-check already decoded the text and the
+  // result looks like English (origScore > 0.15), return now. Without this, Phase 2 hill-climbers
+  // (Enigma, Affine, Columnar) will run on the already-correct plaintext and "decrypt" it
+  // further into gibberish that scores even higher due to the bigram/trigram scorer's
+  // tendency to find local optima on any letter sequence.
+  const _lastStep=steps.length?steps[steps.length-1].l:'';
+  if(_lastStep==='Atbash'&&origScore>0.20)return{decoded,encoding:enc,steps,method:'Atbash',runners:[]};
+  // Polybius and TapCode are deterministic decoders — if Phase 1 decoded them, trust it.
+  // Without this, Phase 2 hill-climbers (Enigma, Affine) will "improve" already-correct
+  // decoded text by running it through a cipher and finding a spurious local optimum.
+  // Polybius, TapCode, and Morse are all deterministic decoders — there's no "cracking" 
+  // involved, just reversing a known encoding. If Phase 1 decoded them, the result is
+  // either correct or garbage. When origScore > 0.10 the decoded text looks sufficiently
+  // English-like that we should trust it over Phase 2 hill-climbers.
+  // Lower threshold than Atbash (0.20) because these short outputs have fewer chars for
+  // the bigram/trigram scorer to work with, pushing scores lower even for correct decodes.
+  if((_lastStep==='Polybius decode'||_lastStep==='Tap code decode'||_lastStep==='Morse decode')&&origScore>0.10)
+    return{decoded,encoding:enc,steps,method:_lastStep,runners:[]};
+
+  // ADFGVX fast-exit: the decoded result is uppercase-no-spaces (transposition layer isn't recoverable
+  // without the key), so scoreEnglish will be low even though it's correct. If the ML is confident
+  // this is ADFGVX and Phase1c already decoded it, trust that and skip the cipher crackers — they'd
+  // just mangle the already-correct output with a spurious Caesar or Affine shift.
+  const lastStep=steps.length?steps[steps.length-1].l:'';
+  if(lastStep==='ADFGVX decode'&&mlHint&&mlHint.cls==='adfgvx'&&mlHint.confidence>=0.5){
+    return{decoded,encoding:enc,steps,method:'ADFGVX decode',runners:[]};
+  }
 
   // Phase 2: Try all cipher crackers in parallel, collect candidates
   const candidates=[];
@@ -196,9 +219,11 @@ function decodeInput(text, mlHint){
   // ROT47
   const r47=ROT47.transform(decoded);candidates.push({name:'ROT47',text:r47,score:scoreEnglish(r47)});
 
-  // Affine brute-force (312 keys) — exclude a=25 since that's Atbash, already handled above
-  try{const affRes=AffineCracker.crack(decoded);
-    if(affRes[0]&&(affRes[0].a!==1||affRes[0].b!==0)&&affRes[0].a!==25)candidates.push({name:`Affine a=${affRes[0].a} b=${affRes[0].b}`,text:affRes[0].text,score:affRes[0].score});}catch(e){}
+  // Affine brute-force (312 keys) — exclude a=25 since that's Atbash, already handled above.
+  // Minimum 20 chars: below this, exhaustive search finds spurious keys by chance.
+  if(decoded.replace(/[^a-zA-Z]/g,'').length>=20){
+    try{const affRes=AffineCracker.crack(decoded);
+      if(affRes[0]&&(affRes[0].a!==1||affRes[0].b!==0)&&affRes[0].a!==25&&affRes[0].score>origScore+0.08)candidates.push({name:`Affine a=${affRes[0].a} b=${affRes[0].b}`,text:affRes[0].text,score:affRes[0].score});}catch(e){}}
 
   // Scytale brute-force (cols 2-20)
   try{const scRes=ScytaleCracker.crack(decoded);
@@ -208,15 +233,27 @@ function decodeInput(text, mlHint){
   try{const rcRes=RouteCipherCracker.crack(decoded);
     if(rcRes[0]&&rcRes[0].score>origScore+0.05)candidates.push({name:`Route Cipher cols=${rcRes[0].cols}`,text:rcRes[0].text,score:rcRes[0].score});}catch(e){}
 
-  // Playfair hill-climb (needs >= 20 alpha chars, key-based 5x5 grid)
-  if(decoded.length>=20&&/^[a-zA-Z\s]+$/.test(decoded)){
+  // Playfair hill-climb (needs >= 20 alpha chars, key-based 5x5 grid).
+  // Skip when ML is >=70% confident the cipher is Bifid — Playfair and Bifid hill-climbers
+  // compete on the same letter-only ciphertext, and Playfair tends to win on raw score
+  // even when wrong, because both are unkeyed hill-climbers on the same search space.
+  const _mlBifidConf=mlHint&&!mlHint.lowMargin&&mlHint.cls==='bifid'&&mlHint.confidence>=0.70;
+  if(!_mlBifidConf&&decoded.length>=20&&/^[a-zA-Z\s]+$/.test(decoded)){
     try{const pfRes=PlayfairCracker.crack(decoded);
-      if(pfRes&&pfRes.score>origScore+0.08)candidates.push({name:'Playfair (hill-climb)',text:pfRes.text,score:pfRes.score});}catch(e){}}
+      if(pfRes&&pfRes.score>origScore+0.08)candidates.push({name:'Playfair (hill-climb)',text:pfRes.text,score:pfRes.score,key:pfRes.key});}catch(e){}}
 
-  // Bifid hill-climb (needs >= 16 alpha chars, key-based 5x5 grid)
+  // Bifid hill-climb (needs >= 16 alpha chars, key-based 5x5 grid).
+  // When ML is >=70% confident it's Bifid, lower the entry threshold from +0.08 to +0.02.
   if(decoded.length>=16&&/^[a-zA-Z\s]+$/.test(decoded)){
+    const _bifidThresh=_mlBifidConf?origScore+0.02:origScore+0.08;
     try{const bfRes=BifidCracker.crack(decoded);
-      if(bfRes&&bfRes.score>origScore+0.08)candidates.push({name:'Bifid (hill-climb)',text:bfRes.text,score:bfRes.score});}catch(e){}}
+      if(bfRes&&bfRes.score>_bifidThresh){
+        // When ML is highly confident it's Bifid, add a 0.15 score boost so Bifid
+        // wins ties against Vigenere/Columnar that happen to score slightly higher
+        // on the same ciphertext due to the hill-climber finding different local optima.
+        const _bfBoost=_mlBifidConf?0.15:0;
+        candidates.push({name:'Bifid (hill-climb)',text:bfRes.text,score:bfRes.score+_bfBoost});
+      }}catch(e){}}
 
   // Rail Fence (try rails 2-20)
   try{const rfRes=RailFenceCracker.crack(decoded);
@@ -234,6 +271,13 @@ function decodeInput(text, mlHint){
     // Beaufort auto-crack
     const beauRes=crackVigenere(decoded,'beaufort');
     if(beauRes)candidates.push({name:`Beaufort key="${beauRes.key}"`,text:beauRes.text,score:beauRes.score});
+    // Porta brute-force — tries key lengths 1-8, picks best English score
+    try{const portaRes=PortaCracker.crack(decoded);
+      if(portaRes&&portaRes.score>origScore+0.05){const portaKeyDisplay=portaRes.key.split('').map(c=>{const idx=c.charCodeAt(0)-65;const row=Math.floor(idx/2);const a=String.fromCharCode(row*2+65);const b=String.fromCharCode(row*2+1+65);return a===c?a+'/'+b:b+'/'+a;}).join('');
+      candidates.push({name:`Porta key="${portaRes.key}" (${portaKeyDisplay})`,text:portaRes.text,score:portaRes.score});}}catch(e){}
+    // Vigenère Autokey — brute-forces single/double char seeds plus common words
+    try{const akRes=AutokeyCracker.crack(decoded);
+      if(akRes&&akRes.score>origScore+0.05)candidates.push({name:`Autokey key="${akRes.key}"`,text:akRes.text,score:akRes.score});}catch(e){}
   }
 
   // XOR single-byte (use scorePrintable for byte-level content)
@@ -258,18 +302,21 @@ function decodeInput(text, mlHint){
     try{const subRes=SubstitutionCracker.crack(decoded);
       if(subRes&&subRes.score>origScore+0.08)candidates.push({name:'Substitution (hill-climb)',text:subRes.text,score:subRes.score});}catch(e){}}
 
-  // Enigma brute-force (all 17,576 start positions, 6 rotor orders)
-  if(decoded.length>=8&&decoded.length<=300&&/^[a-zA-Z\s]+$/.test(decoded)){
+  // Enigma brute-force (all 17,576 start positions, 6 rotor orders).
+  // Minimum 20 chars: with fewer chars the exhaustive search reliably finds false positives.
+  if(decoded.length>=20&&decoded.length<=300&&/^[a-zA-Z\s]+$/.test(decoded)){
     try{const engRes=EnigmaCracker.crack(decoded);
       if(engRes&&engRes.score>origScore+0.08)candidates.push({name:`Enigma ${engRes.rotors} [${engRes.starts.join(',')}]`,text:engRes.text,score:engRes.score});}catch(e){}}
 
-  // Sort candidates — apply ML boost to effective score so the model's top predictions
-  // are promoted when they're close to another candidate. Raw scores are preserved
-  // in the object so the runner-up display still shows honest scoreEnglish values.
-  candidates.sort((a,b)=>(b.score+mlBoostFor(b.name))-(a.score+mlBoostFor(a.name)));
+  // Sort candidates by raw English score — no ML boosts applied here.
+  // The ML hint is used upstream for fast-exit decisions but doesn't skew
+  // the cracker ranking, so the best cryptanalytic result always wins.
+  candidates.sort((a,b)=>b.score-a.score);
   const best=candidates[0];
   if(best&&best.score>origScore+0.05){
-    steps.push({l:best.name,d:best.text.substring(0,100)});
+    const stepEntry={l:best.name,d:best.text.substring(0,100)};
+    if(best.key)stepEntry.key=best.key;
+    steps.push(stepEntry);
     decoded=best.text;
   }
   // Show runner-up attempts

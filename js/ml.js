@@ -482,7 +482,7 @@ function treeFeatureImportance(tree,imp,depth){
  */
 class DecisionForest{
   constructor(){this.trees=[];this.trained=false;this.total=0;this.classes=[];this.importances={};this.oobAccuracy=0;}
-  train(X,Y,nTrees=20,maxDepth=14,minSize=3){
+  train(X,Y,nTrees=20,maxDepth=12,minSize=3){
     const data=X.map((x,i)=>({x,y:Y[i]}));
     this.classes=[...new Set(Y)];
     const nFeatures=Math.max(4,Math.floor(Math.sqrt(X[0].length)));
@@ -512,7 +512,7 @@ class DecisionForest{
   // Async version of train: yields the event loop between each tree so the
   // main thread stays responsive. Used by the fallback training path in ui.js.
   // The worker uses the synchronous train() instead since it runs off-thread.
-  async trainAsync(X,Y,nTrees=20,maxDepth=14,minSize=3,onProgress=null){
+  async trainAsync(X,Y,nTrees=20,maxDepth=12,minSize=3,onProgress=null){
     const data=X.map((x,i)=>({x,y:Y[i]}));
     this.classes=[...new Set(Y)];
     const nFeatures=Math.max(4,Math.floor(Math.sqrt(X[0].length)));
@@ -666,6 +666,94 @@ class DecisionForest{
 
     const totalCorr=toAdd.reduce((s,t)=>s+t.corrections,0);
     return{merged:true,added:toAdd.length,removed:toRemove.length,totalTrees:this.trees.length,newAcc:afterAcc,beforeAcc:beforeAcc,corrections:totalCorr,champErrors:champErrors.size};
+  }
+
+  // Full replacement with a second backfill pass from the old champion.
+  // Called when the challenger beats the champion by a decisive margin —
+  // the champion's forest is replaced wholesale, but then the best trees
+  // from the OLD champion are tested against the new model's worst trees
+  // and swapped in where they improve accuracy, so no good learning is lost.
+  replaceWithBestOf(challenger, testX, testY, maxTrees=30){
+    if(!challenger.trained||!challenger.trees.length)
+      return{replaced:false,reason:'challenger not trained'};
+    if(!testX.length)return{replaced:false,reason:'no test data'};
+
+    // Measure champion accuracy before replacement
+    let beforeCorrect=0;
+    for(let i=0;i<testX.length;i++){if(this.predict(testX[i]).cls===testY[i])beforeCorrect++;}
+    const beforeAcc=testX.length?beforeCorrect/testX.length:0;
+
+    // Snapshot the old champion trees for the backfill pass
+    const oldTrees=[...this.trees];
+
+    // Step 1: full replacement — champion becomes the challenger forest
+    this.trees=challenger.trees.map(t=>t); // copy references
+    while(this.trees.length>maxTrees)this.trees.shift();
+
+    // Merge classes from both forests
+    const cls=new Set(this.classes);
+    for(const c of challenger.classes)cls.add(c);
+    this.classes=[...cls];
+
+    // Step 2: backfill pass — score old champion trees and replace the
+    // worst trees in the new model if the old champion trees do better
+    const newChampErrors=new Set();
+    for(let i=0;i<testX.length;i++){
+      if(this.predict(testX[i]).cls!==testY[i])newChampErrors.add(i);
+    }
+
+    // Score old champion trees by how many NEW champion errors they correct
+    const oldScores=oldTrees.map((tree,idx)=>{
+      let corrections=0,acc=0;
+      for(let i=0;i<testX.length;i++){
+        const pred=treePredict(tree,testX[i]);
+        if(pred===testY[i]){acc++;if(newChampErrors.has(i))corrections++;}
+      }
+      return{idx,corrections,accuracy:testX.length?acc/testX.length:0};
+    }).sort((a,b)=>b.corrections-a.corrections||(b.accuracy-a.accuracy));
+
+    // Score new model trees — find the worst ones to potentially replace
+    const newWorst=this.evaluateTrees(testX,testY); // sorted worst-first
+
+    // Backfill: swap old champion trees in where strictly better
+    const backfillCount=Math.min(5,oldScores.length,newWorst.length);
+    const toAdd=[];const toRemove=[];
+    for(let i=0;i<backfillCount;i++){
+      if(oldScores[i].accuracy>newWorst[i].accuracy){
+        toAdd.push(oldTrees[oldScores[i].idx]);
+        toRemove.push(newWorst[i].index);
+      }
+    }
+
+    let backfilled=0;
+    if(toAdd.length){
+      const removeSet=new Set(toRemove);
+      this.trees=this.trees.filter((_,i)=>!removeSet.has(i));
+      for(const tree of toAdd){this.trees.push(tree);backfilled++;}
+      while(this.trees.length>maxTrees)this.trees.shift();
+    }
+
+    // Measure accuracy after full replacement + backfill
+    let afterCorrect=0;
+    for(let i=0;i<testX.length;i++){if(this.predict(testX[i]).cls===testY[i])afterCorrect++;}
+    const afterAcc=testX.length?afterCorrect/testX.length:0;
+
+    // Rollback if somehow worse (safety net)
+    if(afterAcc<beforeAcc){
+      this.trees=oldTrees;
+      return{replaced:false,reason:'replacement reduced accuracy ('+((beforeAcc*100).toFixed(1))+'%→'+((afterAcc*100).toFixed(1))+'%)'};
+    }
+
+    // Recalculate importances from new tree set
+    this.importances={};
+    for(const tree of this.trees)treeFeatureImportance(tree,this.importances,0);
+    const maxImp=Math.max(...Object.values(this.importances),1);
+    for(const k in this.importances)this.importances[k]/=maxImp;
+
+    this.oobAccuracy=afterAcc;
+    this.total+=challenger.total;
+
+    return{replaced:true,backfilled,totalTrees:this.trees.length,beforeAcc,afterAcc};
   }
 }
 
