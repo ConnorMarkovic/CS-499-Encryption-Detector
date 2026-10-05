@@ -1,3 +1,4 @@
+**[Try the live demo](https://connormarkovic.github.io/CS-499-Encryption-Detector/)**
 CipherLab is a browser-based cryptanalysis toolkit that I developed as my senior capstone project at Southeast Missouri State University. Given an encrypted message, it identifies which cipher was most likely used and attempts to decrypt it, with support for 44 cipher types and encodings. Cipher classification is handled by a random forest model (20 trees) trained on 128 statistical features of the ciphertext. The toolkit also includes a CTF solver, a code deobfuscator, and an incident response module for extracting indicators of compromise from log data.
 
 Everything runs locally in your browser. No data is sent to a server.
